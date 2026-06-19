@@ -1,1 +1,17 @@
-/* You can add global styles to this file, and also import other style files */
+/* 1. Import Tailwind CSS Core Layers */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 2. Core structural setup for Angular Material components */
+/* Change this line in src/styles.css */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+html,
+body
+{
+    height: 100%;
+    margin: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+    background-color: #0f172a;
+    /* Slate-900 background by default */
+}
