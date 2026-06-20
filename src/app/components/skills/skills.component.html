@@ -1,0 +1,115 @@
+<div class="p-8 space-y-8 text-slate-100 max-w-[1400px] mx-auto w-full">
+
+    <div>
+        <h1 class="text-2xl font-bold tracking-tight">Skills Engine</h1>
+        <p class="text-slate-400 text-xs mt-1">Manage core backend parsing structures and optimize resume keyword
+            densities.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-slate-900/40 border border-slate-900 rounded-xl p-5 space-y-4">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Add Global Master Skill</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input type="text" [(ngModel)]="newSkillName" placeholder="Display Name (e.g., Next.js)"
+                        class="bg-slate-950 border border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50" />
+                    <input type="text" [(ngModel)]="newTechName" placeholder="Technical Key (e.g., nextjs)"
+                        class="bg-slate-950 border border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50" />
+                </div>
+                <button (click)="onCreateSkill()"
+                    class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors w-full shadow-md">
+                    Create Master Reference Key
+                </button>
+            </div>
+
+            <div class="bg-slate-900/20 border border-slate-900 rounded-xl p-6">
+                <h3 class="text-sm font-semibold mb-4 text-slate-300">Registered Platform Keywords</h3>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="border-b border-slate-900 text-[10px] font-bold uppercase text-slate-500 tracking-wider">
+                                <th class="pb-3">Display Name</th>
+                                <th class="pb-3">Technical ID</th>
+                                <th class="pb-3">English Baseline Structure</th>
+                                <th class="pb-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-xs divide-y divide-slate-900/40">
+                            <tr *ngFor="let skill of skills" class="hover:bg-slate-900/10 transition-colors">
+                                <td class="py-3 font-semibold text-white">{{ skill.displayName }}</td>
+                                <td class="py-3 font-mono text-indigo-400 text-[11px]">{{ skill.technicalName }}</td>
+                                <td class="py-3 text-slate-400 max-w-xs truncate">{{ skill.sentenceEn }}</td>
+                                <td class="py-3 text-right">
+                                    <button (click)="onDeleteSkill(skill.id)"
+                                        class="text-slate-600 hover:text-rose-400 transition-colors">
+                                        <mat-icon class="scale-75">delete</mat-icon>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr *ngIf="skills.length === 0 && !loading">
+                                <td colspan="4" class="py-8 text-center text-slate-600 font-medium">No master keywords
+                                    initialized on local profile pipeline.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-slate-900/40 border border-slate-900 rounded-xl p-6 shadow-xl space-y-6">
+                <div class="flex justify-between items-center border-b border-slate-800/60 pb-4">
+                    <div>
+                        <h2 class="text-xs font-bold tracking-wider uppercase text-slate-500">Market Fit</h2>
+                        <p class="text-[10px] text-slate-500 mt-0.5">TARGET: <span
+                                class="text-indigo-400 font-medium">90%</span></p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-2xl font-black text-white font-mono">{{ overallMatchRate }}%</span>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div *ngFor="let item of marketFitData" class="space-y-1">
+                        <div class="flex justify-between text-[11px] font-medium">
+                            <span class="text-slate-300">{{ item.name }}</span>
+                            <div class="flex gap-2 font-mono text-[10px]">
+                                <span [ngClass]="item.marketTrend >= 0 ? 'text-emerald-400' : 'text-rose-400'">
+                                    {{ item.marketTrend >= 0 ? '+' : '' }}{{ item.marketTrend }}%
+                                </span>
+                                <span class="text-slate-400">{{ item.matchPercentage }}%</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-900">
+                            <div class="bg-indigo-600 h-full rounded-full transition-all duration-700"
+                                [style.width.%]="item.matchPercentage">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/40 border border-slate-900 rounded-xl p-6 shadow-xl space-y-4">
+                <h2 class="text-xs font-bold tracking-wider uppercase text-slate-500">Suggested Gaps</h2>
+                <p
+                    class="text-xs text-slate-400 leading-relaxed bg-slate-950/40 p-3 rounded-lg border border-slate-900/60">
+                    Your active application tracking stream contains <span class="text-white font-semibold">4
+                        roles</span> requiring <span class="text-indigo-400 font-semibold">GraphQL</span> which isn't
+                    registered on your profile.
+                </p>
+
+                <div class="flex flex-wrap gap-2 pt-1">
+                    <span *ngFor="let gap of suggestedGaps"
+                        class="px-2 py-1 bg-slate-950 border border-slate-800 text-slate-400 rounded text-[10px] font-mono flex items-center gap-1">
+                        <span class="w-1 h-1 rounded-full bg-rose-500"></span>
+                        {{ gap.missingSkill }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

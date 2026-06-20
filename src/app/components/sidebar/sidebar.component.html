@@ -11,15 +11,20 @@
         </div>
 
         <nav class="space-y-1">
-            <div *ngFor="let item of navItems" (click)="setActive(item)" [ngClass]="{
-          'bg-slate-900 text-indigo-400 font-medium border-l-2 border-indigo-500': item.active,
-          'hover:bg-slate-900/50 hover:text-slate-200': !item.active
-        }" class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg cursor-pointer transition-all duration-150 text-xs">
-                <mat-icon class="scale-90" [ngClass]="item.active ? 'text-indigo-400' : 'text-slate-500'">
-                    {{ item.icon }}
-                </mat-icon>
-                <span>{{ item.label }}</span>
-            </div>
+            <a routerLink="/dashboard"
+                routerLinkActive="bg-slate-900 text-indigo-400 font-medium border-l-2 border-indigo-500"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg cursor-pointer transition-all duration-150 text-xs text-slate-400 hover:bg-slate-900/50 hover:text-slate-200 decoration-none no-underline group">
+                <mat-icon class="scale-90 text-slate-500 group-[.text-indigo-400]:text-indigo-400">dashboard</mat-icon>
+                <span>Dashboard</span>
+            </a>
+
+            <a routerLink="/skills"
+                routerLinkActive="bg-slate-900 text-indigo-400 font-medium border-l-2 border-indigo-500"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg cursor-pointer transition-all duration-150 text-xs text-slate-400 hover:bg-slate-900/50 hover:text-slate-200 decoration-none no-underline group">
+                <mat-icon class="scale-90 text-slate-500 group-[.text-indigo-400]:text-indigo-400">psychology</mat-icon>
+                <span>Skills Engine</span>
+            </a>
         </nav>
     </div>
 
