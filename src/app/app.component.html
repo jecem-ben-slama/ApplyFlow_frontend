@@ -1,9 +1,9 @@
 <ng-container *ngIf="authService.isAuthenticated$ | async; else showLogin">
-  <div class="flex h-screen w-full bg-slate-950 overflow-hidden">
+  <div class="flex h-screen w-full bg-white dark:bg-slate-950 overflow-hidden">
 
     <app-sidebar class="flex-shrink-0"></app-sidebar>
 
-    <main class="flex-1 min-w-0 h-full overflow-y-auto bg-slate-950">
+    <main class="flex-1 min-w-0 h-full overflow-y-auto bg-slate-100 dark:bg-slate-950">
       <router-outlet></router-outlet>
     </main>
 

@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './services/auth.service';
+import { ThemeService } from './services/theme.service';
 // Import your actual sidebar component here
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 
@@ -15,4 +16,7 @@ import { SidebarComponent } from './components/sidebar/sidebar.component';
 export class AppComponent {
   // Pull your authentication stream straight into the template context
   protected authService = inject(AuthService);
+
+  // Instantiating ThemeService here ensures theme preference is applied before the app renders
+  private themeService = inject(ThemeService);
 }

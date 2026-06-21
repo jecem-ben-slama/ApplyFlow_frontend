@@ -1,0 +1,222 @@
+<div
+    class="p-4 sm:p-6 md:p-8 space-y-6 text-slate-800 dark:text-slate-100 max-w-full mx-auto w-full transition-colors duration-200">
+
+    <div class="border-b border-slate-200 dark:border-slate-900 pb-4">
+        <h1 class="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
+            Message Templates
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Configure automated dynamic notification templates
+            and language distribution rules.</p>
+    </div>
+
+    <div class="space-y-6">
+        <div
+            class="bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-900 rounded-xl shadow-sm overflow-hidden">
+
+            <div (click)="onToggleForm()"
+                class="flex items-center justify-between p-4 md:px-6 border-b border-slate-200 dark:border-slate-900/60 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-900/20 transition-colors">
+                <div class="flex items-center gap-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400/90">
+                        {{ editingTemplateId ? 'Modify Message Template Context' : 'Create Custom Pipeline Template' }}
+                    </h3>
+                    <span *ngIf="editingTemplateId"
+                        class="text-[9px] bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-mono uppercase tracking-wide animate-pulse">
+                        Editing Mode
+                    </span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span
+                        class="text-[10px] text-slate-400 dark:text-slate-500 font-mono uppercase hidden sm:inline">Template
+                        Config</span>
+                    <mat-icon class="text-slate-500 dark:text-slate-400 scale-90 transition-transform duration-300"
+                        [class.rotate-180]="!isFormVisible">
+                        expand_less
+                    </mat-icon>
+                </div>
+            </div>
+
+            <div *ngIf="isFormVisible" @formSlide>
+                <div class="p-4 md:p-6 space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="space-y-1.5">
+                            <label
+                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template
+                                Name</label>
+                            <input type="text" [(ngModel)]="newTemplate.name" placeholder="e.g., Follow-up Standard"
+                                class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
+                        </div>
+                        <div class="space-y-1.5">
+                            <label
+                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Language
+                                Distribution</label>
+                            <select [(ngModel)]="newTemplate.language"
+                                class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500/50 transition-colors">
+                                <option value="EN">English (EN)</option>
+                                <option value="FR">French (FR)</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label
+                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Tier
+                                Threshold</label>
+                            <input type="number" [(ngModel)]="newTemplate.tier" min="1" max="5"
+                                class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500/50 transition-colors" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label
+                            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Subject
+                            Template Line</label>
+                        <input type="text" [(ngModel)]="newTemplate.subjectTemplate" [placeholder]="subjectPlaceholder"
+                            class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label
+                            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Body
+                            Composition Layout</label>
+                        <textarea [(ngModel)]="newTemplate.bodyTemplate"
+                            placeholder="Write message body layout context here..." rows="5"
+                            class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-900 rounded-lg p-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 resize-y min-h-[120px] transition-colors"></textarea>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-end items-center gap-3 pt-2">
+                        <button *ngIf="editingTemplateId !== null" (click)="onCancelEdit()" [disabled]="loading"
+                            class="border border-slate-200 dark:border-slate-900 hover:bg-slate-100 dark:hover:bg-slate-950 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs font-semibold px-5 py-2.5 rounded-lg transition-colors w-full sm:w-auto">
+                            Cancel
+                        </button>
+                        <button (click)="onSubmitTemplate()" [disabled]="loading"
+                            class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition-colors w-full sm:w-auto shadow-md">
+                            <span>{{ editingTemplateId ? 'Update Template Layout' : 'Save Config Template' }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="bg-slate-50/50 dark:bg-slate-900/20 border border-slate-200 dark:border-slate-900 rounded-xl p-4 md:p-6 shadow-sm">
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div class="flex items-center gap-2">
+                    <button (click)="onLanguageFilterChange('ALL')"
+                        [class]="!selectedLanguage ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-900 text-slate-600 dark:text-slate-400'"
+                        class="px-3 py-1 rounded text-xs font-medium transition-colors">All</button>
+                    <button (click)="onLanguageFilterChange('EN')"
+                        [class]="selectedLanguage === 'EN' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-900 text-slate-600 dark:text-slate-400'"
+                        class="px-3 py-1 rounded text-xs font-medium transition-colors">English (EN)</button>
+                    <button (click)="onLanguageFilterChange('FR')"
+                        [class]="selectedLanguage === 'FR' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-900 text-slate-600 dark:text-slate-400'"
+                        class="px-3 py-1 rounded text-xs font-medium transition-colors">French (FR)</button>
+                </div>
+                <span class="text-xs text-slate-400 dark:text-slate-500 font-mono" *ngIf="totalElements > 0">
+                    Showing {{ templates.length }} of {{ totalElements }} entries
+                </span>
+            </div>
+
+            <div class="hidden md:block overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-900/40">
+                <table class="w-full text-left border-collapse min-w-[800px]">
+                    <thead>
+                        <tr
+                            class="border-b border-slate-200 dark:border-slate-900 text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider bg-slate-100/50 dark:bg-slate-950/20">
+                            <th class="py-3 px-3">Template Name</th>
+                            <th class="py-3 px-3 w-24">Lang</th>
+                            <th class="py-3 px-3 w-24">Tier</th>
+                            <th class="py-3 px-3 w-1/2">Subject Pattern Mapping</th>
+                            <th class="py-3 px-3 text-right w-24">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-xs divide-y divide-slate-200 dark:divide-slate-900/40">
+                        <tr *ngFor="let tmpl of templates"
+                            class="hover:bg-slate-100/40 dark:hover:bg-slate-900/10 transition-colors"
+                            [ngClass]="{ 'bg-indigo-500/5': editingTemplateId === tmpl.id }">
+                            <td class="py-3 px-3 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                                {{ tmpl.name }}
+                            </td>
+                            <td class="py-3 px-3 font-mono text-[11px]">
+                                <span class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">
+                                    {{ tmpl.language }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-3 font-mono text-[11px]">Level {{ tmpl.tier }}</td>
+                            <td class="py-3 px-3 text-slate-500 dark:text-slate-400 max-w-0 truncate"
+                                [title]="tmpl.subjectTemplate">
+                                {{ tmpl.subjectTemplate }}
+                            </td>
+                            <td class="py-3 px-3 text-right">
+                                <div class="inline-flex items-center gap-1">
+                                    <button (click)="onEditClick(tmpl)"
+                                        class="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 p-1 rounded hover:bg-indigo-500/10">
+                                        <mat-icon class="scale-75">edit</mat-icon>
+                                    </button>
+                                    <button (click)="onDeleteTemplate(tmpl.id)"
+                                        class="text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 p-1 rounded hover:bg-rose-500/10">
+                                        <mat-icon class="scale-75">delete</mat-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="block md:hidden space-y-3">
+                <div *ngFor="let tmpl of templates"
+                    class="p-4 rounded-xl border bg-white dark:bg-slate-950/40 border-slate-200 dark:border-slate-900"
+                    [ngClass]="{ 'border-indigo-500/40': editingTemplateId === tmpl.id }">
+                    <div class="flex items-start justify-between mb-2">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-900 dark:text-white">{{ tmpl.name }}</h4>
+                            <div class="flex items-center gap-2 mt-1.5">
+                                <span class="text-[9px] bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded font-mono">
+                                    {{ tmpl.language }}
+                                </span>
+                                <span class="text-[9px] text-slate-400 dark:text-slate-500 font-mono">
+                                    Tier {{ tmpl.tier }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button (click)="onEditClick(tmpl)"
+                                class="p-2 text-slate-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900">
+                                <mat-icon class="scale-90">edit</mat-icon>
+                            </button>
+                            <button (click)="onDeleteTemplate(tmpl.id)"
+                                class="p-2 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900">
+                                <mat-icon class="scale-90">delete</mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="pt-2 border-t border-slate-100 dark:border-slate-900 text-[11px]">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Subject
+                            Frame</span>
+                        <p class="text-slate-600 dark:text-slate-400 truncate" [title]="tmpl.subjectTemplate">
+                            {{ tmpl.subjectTemplate }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="templates.length === 0 && !loading"
+                class="py-12 text-center text-slate-400 dark:text-slate-600 font-medium text-xs border border-dashed border-slate-200 dark:border-slate-900 rounded-xl">
+                No messaging structures configured in this user workspace segment.
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200 dark:border-slate-900/60 mt-4 pt-4"
+                *ngIf="totalPages > 1">
+                <button (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 0"
+                    class="w-full sm:w-auto text-center px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950/40 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm">
+                    Previous
+                </button>
+                <span class="text-[11px] text-slate-400 dark:text-slate-500 font-mono order-first sm:order-none">
+                    Page {{ currentPage + 1 }} of {{ totalPages }}
+                </span>
+                <button (click)="onPageChange(currentPage + 1)" [disabled]="currentPage >= totalPages - 1"
+                    class="w-full sm:w-auto text-center px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950/40 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

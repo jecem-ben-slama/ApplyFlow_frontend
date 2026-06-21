@@ -17,6 +17,22 @@ export const routes: Routes = [
     canActivate: [authGuard], // Protected from anonymous access
   },
   {
+    path: 'templates',
+    loadComponent: () =>
+      import('./components/templates/templates.component').then(
+        (m) => m.TemplatesComponent
+      ),
+    canActivate: [authGuard], // Protected from anonymous access
+  },
+  {
+    path: 'cv-variants',
+    loadComponent: () =>
+      import('./components/cv-variants/cv-variants.component').then(
+        (m) => m.CvVariantsComponent
+      ),
+    canActivate: [authGuard], // Protected from anonymous access
+  },
+  {
     path: '',
     redirectTo: 'skills',
     pathMatch: 'full',

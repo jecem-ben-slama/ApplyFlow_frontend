@@ -4,14 +4,52 @@
 @tailwind utilities;
 
 /* 2. Core structural setup for Angular Material components */
-/* Change this line in src/styles.css */
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
+
 html,
 body
 {
     height: 100%;
     margin: 0;
     font-family: Roboto, "Helvetica Neue", sans-serif;
-    background-color: #0f172a;
-    /* Slate-900 background by default */
+    background-color: #f8fafc;
+    color: #0f172a;
+}
+
+:root
+{
+    color-scheme: light;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface-strong: #f1f5f9;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --accent: #5b60ff;
+}
+
+html.dark
+{
+    color-scheme: dark;
+    --bg: #0f172a;
+    --surface: #111827;
+    --surface-strong: #1f2937;
+    --border: #374151;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #818cf8;
+}
+
+body
+{
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+button,
+input,
+textarea,
+select
+{
+    color: inherit;
 }
