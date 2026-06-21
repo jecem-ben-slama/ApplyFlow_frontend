@@ -1,52 +1,59 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
 import { SkillsService } from '../../services/skills.service';
 import { Skill } from '../../models';
-
-// Interface matching the custom UI metrics on your design dashboard
-interface MarketFitMetric {
-  name: string;
-  matchPercentage: number;
-  marketTrend: number;
-}
-
-interface SkillGap {
-  missingSkill: string;
-  frequency: number;
-}
+import { MatIconModule } from '@angular/material/icon';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import {
+  trigger,
+  state,
+  style,
+  transition,
+  animate,
+} from '@angular/animations';
 
 @Component({
   selector: 'app-skills',
+  templateUrl: './skills.component.html',
   standalone: true,
   imports: [CommonModule, FormsModule, MatIconModule],
-  templateUrl: './skills.component.html',
+  animations: [
+    trigger('formSlide', [
+      transition(':enter', [
+        style({ opacity: 0, height: '0px', overflow: 'hidden' }),
+        animate(
+          '280ms cubic-bezier(0.4, 0, 0.2, 1)',
+          style({ opacity: 1, height: '*' })
+        ),
+      ]),
+      transition(':leave', [
+        style({ opacity: 1, height: '*', overflow: 'hidden' }),
+        animate(
+          '220ms cubic-bezier(0.4, 0, 0.2, 1)',
+          style({ opacity: 0, height: '0px' })
+        ),
+      ]),
+    ]),
+  ],
 })
 export class SkillsComponent implements OnInit {
   skills: Skill[] = [];
-  loading = true;
+  loading = false;
 
-  // Exact metrics tracked visually in your UI specs
-  overallMatchRate = 92;
-  marketFitData: MarketFitMetric[] = [
-    { name: 'TypeScript', matchPercentage: 98, marketTrend: 2 },
-    { name: 'React / Next.js', matchPercentage: 95, marketTrend: 0 },
-    { name: 'Node.js / Express', matchPercentage: 82, marketTrend: -4 },
-    { name: 'PostgreSQL', matchPercentage: 76, marketTrend: 12 },
-    { name: 'AWS / Cloud', matchPercentage: 64, marketTrend: 4 },
-  ];
+  isFormVisible = true;
+  editingSkillId: number | null = null;
 
-  suggestedGaps: SkillGap[] = [
-    { missingSkill: 'GraphQL', frequency: 4 },
-    { missingSkill: 'Docker', frequency: 3 },
-    { missingSkill: 'Kubernetes', frequency: 2 },
-    { missingSkill: 'Testing Library', frequency: 1 },
-  ];
+  currentPage = 0;
+  pageSize = 15;
+  totalPages = 0;
+  totalElements = 0;
 
-  // Form State for creating a new master skill
-  newSkillName = '';
-  newTechName = '';
+  newSkill = {
+    displayName: '',
+    technicalName: '',
+    sentenceEn: '',
+    sentenceFr: '',
+  };
 
   constructor(private skillsService: SkillsService) {}
 
@@ -56,49 +63,109 @@ export class SkillsComponent implements OnInit {
 
   loadSkills(): void {
     this.loading = true;
-    this.skillsService.getAllSkills(0, 50).subscribe({
-      next: (page) => {
-        this.skills = page.content;
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error(
-          'Failed fetching master skills. Using local mock dataset.',
-          err
-        );
-        this.loading = false;
-      },
-    });
+    this.skillsService
+      .getAllSkills(this.currentPage, this.pageSize, 'id', 'asc')
+      .subscribe({
+        next: (page) => {
+          this.skills = page.content;
+          this.totalPages = page.totalPages;
+          this.totalElements = page.totalElements;
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('Error fetching workspace skills profile:', err);
+          this.loading = false;
+        },
+      });
+  }
+
+  onToggleForm(): void {
+    this.isFormVisible = !this.isFormVisible;
+  }
+
+  onEditClick(skill: Skill): void {
+    this.editingSkillId = skill.id;
+    this.isFormVisible = true;
+    this.newSkill = {
+      displayName: skill.displayName,
+      technicalName: skill.technicalName,
+      sentenceEn: skill.sentenceEn || '',
+      sentenceFr: skill.sentenceFr || '',
+    };
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  onCancelEdit(): void {
+    this.editingSkillId = null;
+    this.newSkill = {
+      displayName: '',
+      technicalName: '',
+      sentenceEn: '',
+      sentenceFr: '',
+    };
   }
 
   onCreateSkill(): void {
-    if (!this.newSkillName.trim()) return;
+    if (!this.newSkill.displayName || !this.newSkill.technicalName) {
+      alert(
+        'Please fill out at least the display and technical reference properties.'
+      );
+      return;
+    }
 
-    const payload: Omit<Skill, 'id'> = {
-      displayName: this.newSkillName,
-      technicalName:
-        this.newTechName ||
-        this.newSkillName.toLowerCase().replace(/\s+/g, '-'),
-      sentenceEn: `Proficient engineering capabilities utilizing ${this.newSkillName}.`,
-      sentenceFr: `Compétences techniques approfondies en ${this.newSkillName}.`,
-    };
+    this.loading = true;
 
-    this.skillsService.createSkill(payload).subscribe({
-      next: (newSkill) => {
-        this.skills.unshift(newSkill); // Add to view list
-        this.newSkillName = '';
-        this.newTechName = '';
-      },
-    });
-  }
-
-  onDeleteSkill(id: number): void {
-    if (confirm('Are you sure you want to remove this skill reference?')) {
-      this.skillsService.deleteSkill(id).subscribe({
+    if (this.editingSkillId !== null) {
+      this.skillsService
+        .updateSkill(this.editingSkillId, this.newSkill)
+        .subscribe({
+          next: () => {
+            this.onCancelEdit();
+            this.loadSkills();
+          },
+          error: (err) => {
+            console.error(
+              'Failed to patch targeted workspace reference block:',
+              err
+            );
+            this.loading = false;
+          },
+        });
+    } else {
+      this.skillsService.createSkill(this.newSkill).subscribe({
         next: () => {
-          this.skills = this.skills.filter((s) => s.id !== id);
+          this.newSkill = {
+            displayName: '',
+            technicalName: '',
+            sentenceEn: '',
+            sentenceFr: '',
+          };
+          this.loadSkills();
+        },
+        error: (err) => {
+          console.error('Failed to append custom reference key:', err);
+          this.loading = false;
         },
       });
     }
+  }
+
+  onDeleteSkill(id: number): void {
+    if (!confirm('Are you sure you want to drop this skill parsing block?'))
+      return;
+    if (this.editingSkillId === id) this.onCancelEdit();
+    this.skillsService.deleteSkill(id).subscribe({
+      next: () => this.loadSkills(),
+      error: (err) =>
+        console.error(
+          'Failed to completely drop skill key configuration:',
+          err
+        ),
+    });
+  }
+
+  onPageChange(newPage: number): void {
+    this.currentPage = newPage;
+    this.loadSkills();
   }
 }

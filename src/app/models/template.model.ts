@@ -7,4 +7,5 @@ export interface TemplateDto {
   bodyTemplate: string;
   createdAt: string;
   updatedAt: string;
+  userId: number;
 }

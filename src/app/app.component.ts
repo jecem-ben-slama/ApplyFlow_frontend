@@ -1,19 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { AuthService } from './services/auth.service';
+// Import your actual sidebar component here
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent],
-  template: `
-    <div class="min-h-screen bg-slate-950 flex font-sans antialiased">
-      <app-sidebar></app-sidebar>
-
-      <main class="flex-1 h-screen overflow-y-auto">
-        <router-outlet></router-outlet>
-      </main>
-    </div>
-  `,
+  imports: [RouterOutlet, CommonModule, SidebarComponent],
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
 })
-export class AppComponent {}
+export class AppComponent {
+  // Pull your authentication stream straight into the template context
+  protected authService = inject(AuthService);
+}

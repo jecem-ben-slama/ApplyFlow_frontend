@@ -4,4 +4,5 @@ export interface CvVariantDto {
   language: string;
   fileUrl: string;
   createdAt: string;
+  userId: number;
 }

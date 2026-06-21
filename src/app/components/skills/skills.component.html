@@ -1,115 +1,165 @@
-<div class="p-8 space-y-8 text-slate-100 max-w-[1400px] mx-auto w-full">
+<div class="p-6 md:p-8 space-y-6 text-slate-100 max-w-full mx-auto w-full">
 
-    <div>
-        <h1 class="text-2xl font-bold tracking-tight">Skills Engine</h1>
-        <p class="text-slate-400 text-xs mt-1">Manage core backend parsing structures and optimize resume keyword
+    <div class="border-b border-slate-900 pb-4">
+        <h1 class="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+            Skills Engine
+        </h1>
+        <p class="text-slate-400 text-xs mt-1">Manage workspace parsing structures and optimize resume keyword
             densities.</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="space-y-6">
 
-        <div class="lg:col-span-2 space-y-6">
-            <div class="bg-slate-900/40 border border-slate-900 rounded-xl p-5 space-y-4">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Add Global Master Skill</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input type="text" [(ngModel)]="newSkillName" placeholder="Display Name (e.g., Next.js)"
-                        class="bg-slate-950 border border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50" />
-                    <input type="text" [(ngModel)]="newTechName" placeholder="Technical Key (e.g., nextjs)"
-                        class="bg-slate-950 border border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50" />
-                </div>
-                <button (click)="onCreateSkill()"
-                    class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors w-full shadow-md">
-                    Create Master Reference Key
-                </button>
-            </div>
+        <div class="bg-slate-900/30 border border-slate-900 rounded-xl shadow-sm overflow-hidden">
 
-            <div class="bg-slate-900/20 border border-slate-900 rounded-xl p-6">
-                <h3 class="text-sm font-semibold mb-4 text-slate-300">Registered Platform Keywords</h3>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr
-                                class="border-b border-slate-900 text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                                <th class="pb-3">Display Name</th>
-                                <th class="pb-3">Technical ID</th>
-                                <th class="pb-3">English Baseline Structure</th>
-                                <th class="pb-3 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-xs divide-y divide-slate-900/40">
-                            <tr *ngFor="let skill of skills" class="hover:bg-slate-900/10 transition-colors">
-                                <td class="py-3 font-semibold text-white">{{ skill.displayName }}</td>
-                                <td class="py-3 font-mono text-indigo-400 text-[11px]">{{ skill.technicalName }}</td>
-                                <td class="py-3 text-slate-400 max-w-xs truncate">{{ skill.sentenceEn }}</td>
-                                <td class="py-3 text-right">
-                                    <button (click)="onDeleteSkill(skill.id)"
-                                        class="text-slate-600 hover:text-rose-400 transition-colors">
-                                        <mat-icon class="scale-75">delete</mat-icon>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr *ngIf="skills.length === 0 && !loading">
-                                <td colspan="4" class="py-8 text-center text-slate-600 font-medium">No master keywords
-                                    initialized on local profile pipeline.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="space-y-6">
-            <div class="bg-slate-900/40 border border-slate-900 rounded-xl p-6 shadow-xl space-y-6">
-                <div class="flex justify-between items-center border-b border-slate-800/60 pb-4">
-                    <div>
-                        <h2 class="text-xs font-bold tracking-wider uppercase text-slate-500">Market Fit</h2>
-                        <p class="text-[10px] text-slate-500 mt-0.5">TARGET: <span
-                                class="text-indigo-400 font-medium">90%</span></p>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-2xl font-black text-white font-mono">{{ overallMatchRate }}%</span>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <div *ngFor="let item of marketFitData" class="space-y-1">
-                        <div class="flex justify-between text-[11px] font-medium">
-                            <span class="text-slate-300">{{ item.name }}</span>
-                            <div class="flex gap-2 font-mono text-[10px]">
-                                <span [ngClass]="item.marketTrend >= 0 ? 'text-emerald-400' : 'text-rose-400'">
-                                    {{ item.marketTrend >= 0 ? '+' : '' }}{{ item.marketTrend }}%
-                                </span>
-                                <span class="text-slate-400">{{ item.matchPercentage }}%</span>
-                            </div>
-                        </div>
-                        <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-900">
-                            <div class="bg-indigo-600 h-full rounded-full transition-all duration-700"
-                                [style.width.%]="item.matchPercentage">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-slate-900/40 border border-slate-900 rounded-xl p-6 shadow-xl space-y-4">
-                <h2 class="text-xs font-bold tracking-wider uppercase text-slate-500">Suggested Gaps</h2>
-                <p
-                    class="text-xs text-slate-400 leading-relaxed bg-slate-950/40 p-3 rounded-lg border border-slate-900/60">
-                    Your active application tracking stream contains <span class="text-white font-semibold">4
-                        roles</span> requiring <span class="text-indigo-400 font-semibold">GraphQL</span> which isn't
-                    registered on your profile.
-                </p>
-
-                <div class="flex flex-wrap gap-2 pt-1">
-                    <span *ngFor="let gap of suggestedGaps"
-                        class="px-2 py-1 bg-slate-950 border border-slate-800 text-slate-400 rounded text-[10px] font-mono flex items-center gap-1">
-                        <span class="w-1 h-1 rounded-full bg-rose-500"></span>
-                        {{ gap.missingSkill }}
+            <div (click)="onToggleForm()"
+                class="flex items-center justify-between p-4 md:px-6 border-b border-slate-900/60 cursor-pointer select-none hover:bg-slate-900/20 transition-colors">
+                <div class="flex items-center gap-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400/90">
+                        {{ editingSkillId ? 'Modify Skill Workspace Context' : 'Add Workspace Custom Skill' }}
+                    </h3>
+                    <span *ngIf="editingSkillId"
+                        class="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-mono uppercase tracking-wide animate-pulse">
+                        Editing Mode
                     </span>
                 </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-[10px] text-slate-500 font-mono uppercase hidden sm:inline">Pipeline
+                        Configuration</span>
+                    <mat-icon class="text-slate-400 scale-90 transition-transform duration-300"
+                        [class.rotate-180]="!isFormVisible">
+                        expand_less
+                    </mat-icon>
+                </div>
             </div>
+
+            <!-- ✅ Replaced max-height hack with proper Angular animation -->
+            <div *ngIf="isFormVisible" @formSlide>
+                <div class="p-4 md:p-6 space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Display
+                                Name</label>
+                            <input type="text" [(ngModel)]="newSkill.displayName" placeholder="e.g., Next.js"
+                                class="w-full bg-slate-950 border border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Technical
+                                Key</label>
+                            <input type="text" [(ngModel)]="newSkill.technicalName" placeholder="e.g., nextjs"
+                                class="w-full bg-slate-950 border border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">English
+                                Baseline Sentence</label>
+                            <textarea [(ngModel)]="newSkill.sentenceEn"
+                                placeholder="e.g., Developed high-performance web apps leveraging Next.js SSR configurations."
+                                rows="2"
+                                class="w-full bg-slate-950 border border-slate-900 rounded-lg p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 resize-y min-h-[60px] transition-colors"></textarea>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">French Baseline
+                                Sentence</label>
+                            <textarea [(ngModel)]="newSkill.sentenceFr"
+                                placeholder="e.g., Développé des applications web performantes via les configurations SSR de Next.js."
+                                rows="2"
+                                class="w-full bg-slate-950 border border-slate-900 rounded-lg p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 resize-y min-h-[60px] transition-colors"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-end items-center gap-3 pt-2">
+                        <button *ngIf="editingSkillId !== null" (click)="onCancelEdit()" [disabled]="loading"
+                            class="border border-slate-900 hover:bg-slate-950 text-slate-400 hover:text-slate-200 text-xs font-semibold px-5 py-2.5 rounded-lg transition-colors w-full sm:w-auto">
+                            Cancel
+                        </button>
+                        <button (click)="onCreateSkill()" [disabled]="loading"
+                            class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition-colors w-full sm:w-auto shadow-md">
+                            <span *ngIf="!loading">{{ editingSkillId ? 'Update Reference Key' : 'Create Custom Reference
+                                Key' }}</span>
+                            <span *ngIf="loading">{{ editingSkillId ? 'Updating context...' : 'Saving reference key...'
+                                }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
+        <div class="bg-slate-900/20 border border-slate-900 rounded-xl p-4 md:p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                <h3 class="text-sm font-semibold text-slate-300">Registered Account Keywords</h3>
+                <span class="text-xs text-slate-500 font-mono" *ngIf="totalElements > 0">
+                    Showing {{ skills.length }} of {{ totalElements }} keys
+                </span>
+            </div>
+
+            <div class="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 rounded-lg border border-slate-900/40">
+                <table class="w-full text-left border-collapse min-w-[800px]">
+                    <thead>
+                        <tr
+                            class="border-b border-slate-900 text-[10px] font-bold uppercase text-slate-500 tracking-wider bg-slate-950/20">
+                            <th class="py-3 px-3">Display Name</th>
+                            <th class="py-3 px-3 w-1/6">Technical ID</th>
+                            <th class="py-3 px-3 w-1/3">English Baseline Structure</th>
+                            <th class="py-3 px-3 w-1/3">French Baseline Structure</th>
+                            <th class="py-3 px-3 text-right w-24">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-xs divide-y divide-slate-900/40">
+                        <tr *ngFor="let skill of skills"
+                            [ngClass]="['hover:bg-slate-900/10 transition-colors', editingSkillId === skill.id ? 'bg-indigo-500/5' : '']">
+                            <td class="py-3 px-3 font-semibold text-white whitespace-nowrap">
+                                {{ skill.displayName }}
+                            </td>
+                            <td class="py-3 px-3 font-mono text-indigo-400 text-[11px] whitespace-nowrap">
+                                {{ skill.technicalName }}
+                            </td>
+                            <td class="py-3 px-3 text-slate-400 max-w-0 truncate" [title]="skill.sentenceEn">
+                                {{ skill.sentenceEn }}
+                            </td>
+                            <td class="py-3 px-3 text-slate-400 max-w-0 truncate" [title]="skill.sentenceFr">
+                                {{ skill.sentenceFr }}
+                            </td>
+                            <td class="py-3 px-3 text-right">
+                                <div class="inline-flex items-center gap-1">
+                                    <button (click)="onEditClick(skill)" title="Edit row"
+                                        class="text-slate-500 hover:text-indigo-400 transition-colors inline-flex items-center justify-center p-1 rounded-md hover:bg-indigo-500/10">
+                                        <mat-icon class="scale-75">edit</mat-icon>
+                                    </button>
+                                    <button (click)="onDeleteSkill(skill.id)" title="Delete row"
+                                        class="text-slate-600 hover:text-rose-400 transition-colors inline-flex items-center justify-center p-1 rounded-md hover:bg-rose-500/10">
+                                        <mat-icon class="scale-75">delete</mat-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr *ngIf="skills.length === 0 && !loading">
+                            <td colspan="5" class="py-12 text-center text-slate-600 font-medium">
+                                No keywords initialized on this user profile pipeline.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex items-center justify-between border-t border-slate-900/60 mt-4 pt-4"
+                *ngIf="totalPages > 1">
+                <button (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 0"
+                    class="px-3 py-1.5 rounded-lg border border-slate-900 bg-slate-950/40 text-[11px] font-medium text-slate-400 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                    Previous
+                </button>
+                <span class="text-[11px] text-slate-500 font-mono">
+                    Page {{ currentPage + 1 }} of {{ totalPages }}
+                </span>
+                <button (click)="onPageChange(currentPage + 1)" [disabled]="currentPage >= totalPages - 1"
+                    class="px-3 py-1.5 rounded-lg border border-slate-900 bg-slate-950/40 text-[11px] font-medium text-slate-400 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
     </div>
 </div>

@@ -15,7 +15,7 @@ export class SkillsService {
 
   /**
    * GET /api/skills
-   * Retrieves a paginated slice of the master skills directory wrapped inside an ApiResponse envelope.
+   * Retrieves a paginated slice of the user's specific skills directory.
    */
   getAllSkills(
     page: number = 0,
@@ -39,7 +39,7 @@ export class SkillsService {
 
   /**
    * GET /api/skills/{id}
-   * Fetches a single master skill record by its unique identifier.
+   * Fetches a single skill record belonging strictly to the authenticated user.
    */
   getSkillById(id: number): Observable<Skill> {
     return this.http
@@ -49,9 +49,9 @@ export class SkillsService {
 
   /**
    * POST /api/skills
-   * Registers a brand new master skill key payload on the system.
+   * Registers a brand new user-owned skill workspace record.
    */
-  createSkill(skill: Omit<Skill, 'id'>): Observable<Skill> {
+  createSkill(skill: Omit<Skill, 'id' | 'userId'>): Observable<Skill> {
     return this.http
       .post<ApiResponse<Skill>>(this.baseUrl, skill, API_CONFIG.httpOptions)
       .pipe(map((response) => response.data));
@@ -59,9 +59,12 @@ export class SkillsService {
 
   /**
    * PUT /api/skills/{id}
-   * Updates an existing skill profile by parsing matching resource IDs.
+   * Updates an existing skill profile owned by the logged-in user.
    */
-  updateSkill(id: number, skill: Omit<Skill, 'id'>): Observable<Skill> {
+  updateSkill(
+    id: number,
+    skill: Omit<Skill, 'id' | 'userId'>
+  ): Observable<Skill> {
     return this.http
       .put<ApiResponse<Skill>>(
         `${this.baseUrl}/${id}`,
@@ -73,7 +76,7 @@ export class SkillsService {
 
   /**
    * DELETE /api/skills/{id}
-   * Completely destroys a master skill reference matching target path mappings.
+   * Deletes a user's skill record after verifying ownership context on the server.
    */
   deleteSkill(id: number): Observable<void> {
     return this.http

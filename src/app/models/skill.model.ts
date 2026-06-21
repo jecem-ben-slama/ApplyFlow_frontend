@@ -4,4 +4,5 @@ export interface Skill {
   technicalName: string;
   sentenceEn: string;
   sentenceFr: string;
+  userId: number;
 }
