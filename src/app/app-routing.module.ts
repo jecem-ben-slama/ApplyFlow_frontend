@@ -33,6 +33,14 @@ export const routes: Routes = [
     canActivate: [authGuard], // Protected from anonymous access
   },
   {
+path: 'applications',
+    loadComponent: () =>
+      import('./components/applications/applications.component').then(
+        (m) => m.ApplicationsComponent
+      ),
+    canActivate: [authGuard], // Protected from anonymous access
+  },
+  {
     path: '',
     redirectTo: 'skills',
     pathMatch: 'full',
