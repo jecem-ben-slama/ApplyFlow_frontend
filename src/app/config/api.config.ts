@@ -1,4 +1,3 @@
-
 import { environment } from '../../environments/environment';
 
 export const API_CONFIG = {
@@ -20,6 +19,9 @@ export const API_CONFIG = {
       base: `${environment.apiUrl}/api/applications`,
       detail: (id: number) => `${environment.apiUrl}/api/applications/${id}`,
       metrics: `${environment.apiUrl}/api/applications/metrics`,
+    },
+    emails: {
+      send: `${environment.apiUrl}/api/emails/send`, // New endpoint for processing dynamic emails
     },
     skills: {
       base: `${environment.apiUrl}/api/skills`,

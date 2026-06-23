@@ -8,6 +8,7 @@ import { ApplicationsService } from '../../services/applications.service';
 import { SkillsService } from '../../services/skills.service';
 import { CvVariantsService } from '../../services/cv-variants.service';
 import { TemplateService } from '../../services/template.service';
+import { EmailService } from '../../services/email.service';
 
 // Models
 import {
@@ -40,6 +41,7 @@ export class ApplicationsComponent implements OnInit {
   selectedTemplatePreview?: TemplateDto;
 
   isLoading = false;
+  isSendingEmail = false;
   isModalOpen = false;
   selectedApplication?: ApplicationResponseDto;
   errorMessage = '';
@@ -60,7 +62,8 @@ export class ApplicationsComponent implements OnInit {
     private appService: ApplicationsService,
     private skillsService: SkillsService,
     private cvService: CvVariantsService,
-    private templateService: TemplateService
+    private templateService: TemplateService,
+    private emailService: EmailService
   ) {}
 
   ngOnInit(): void {
@@ -143,6 +146,7 @@ export class ApplicationsComponent implements OnInit {
     this.isModalOpen = false;
     this.selectedApplication = undefined;
     this.selectedTemplatePreview = undefined;
+    this.errorMessage = '';
   }
 
   viewCompiledEmail(app: ApplicationResponseDto): void {
@@ -166,9 +170,6 @@ export class ApplicationsComponent implements OnInit {
       .includes(tagFragment.toLowerCase());
   }
 
-  /**
-   * FIXED: This method handles structural token mapping visually for the user.
-   */
   getLiveTemplateBodyPreview(): string {
     if (!this.selectedTemplatePreview?.bodyTemplate) return '';
 
@@ -193,10 +194,6 @@ export class ApplicationsComponent implements OnInit {
     }
   }
 
-  /**
-   * FIXED: Intercepts and corrects mismatched database tags right before
-   * the backend reads it from the persistence context.
-   */
   onSubmit(): void {
     if (!this.formModel.templateId) {
       this.errorMessage = 'Please select a base template configuration layout.';
@@ -205,13 +202,11 @@ export class ApplicationsComponent implements OnInit {
 
     this.isLoading = true;
 
-    // Find the current reference in memory
     const activeTemplate = this.availableTemplates.find(
       (t) => t.id === Number(this.formModel.templateId)
     );
 
     if (activeTemplate) {
-      // Re-map alternative keys before compilation since Java lacks the matcher
       activeTemplate.bodyTemplate = activeTemplate.bodyTemplate.replace(
         /\{\{companyname\}\}/gi,
         '{{company}}'
@@ -246,6 +241,47 @@ export class ApplicationsComponent implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  onSendCompiledEmail(): void {
+    if (!this.selectedApplication) return;
+
+    // Direct structural safety guard: stop execution if there is no recipient address
+    if (!this.selectedApplication.recipientEmail) {
+      this.errorMessage =
+        'Cannot dispatch email: Recipient email address is missing.';
+      return;
+    }
+
+    this.isSendingEmail = true;
+    this.errorMessage = '';
+
+    this.emailService
+      .sendEmail({
+        userId: this.selectedApplication.userId,
+        recipientEmail: this.selectedApplication.recipientEmail, // TS now knows this is guaranteed to be a string!
+        subject: this.selectedApplication.generatedSubject,
+        body: this.selectedApplication.generatedBody,
+      })
+      .subscribe({
+        next: (msg) => {
+          this.showFeedback(
+            msg || 'Email dynamic delivery executed successfully!'
+          );
+
+          if (this.selectedApplication) {
+            this.onUpdateStatus(this.selectedApplication.id, 'SENT');
+          }
+          this.closeModal();
+          this.isSendingEmail = false;
+        },
+        error: (err) => {
+          this.errorMessage =
+            err.error?.message ||
+            'Outbound OAuth2 SMTP delivery authentication failure.';
+          this.isSendingEmail = false;
+        },
+      });
   }
 
   onUpdateStatus(id: number, newStatus: string): void {
