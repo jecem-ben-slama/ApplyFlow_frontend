@@ -3,10 +3,9 @@
 
     <div class="border-b border-slate-200 dark:border-slate-900 pb-4">
         <h1 class="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
-            Message Templates
+            Manage Your Email Templates
         </h1>
-        <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Configure automated dynamic notification templates
-            and language distribution rules.</p>
+        
     </div>
 
     <div class="space-y-6">
@@ -17,7 +16,7 @@
                 class="flex items-center justify-between p-4 md:px-6 border-b border-slate-200 dark:border-slate-900/60 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-900/20 transition-colors">
                 <div class="flex items-center gap-3">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400/90">
-                        {{ editingTemplateId ? 'Modify Message Template Context' : 'Create Custom Pipeline Template' }}
+                        {{ editingTemplateId ? 'Modify Template' : 'Create Templates' }}
                     </h3>
                     <span *ngIf="editingTemplateId"
                         class="text-[9px] bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-mono uppercase tracking-wide animate-pulse">
@@ -25,9 +24,7 @@
                     </span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <span
-                        class="text-[10px] text-slate-400 dark:text-slate-500 font-mono uppercase hidden sm:inline">Template
-                        Config</span>
+                    
                     <mat-icon class="text-slate-500 dark:text-slate-400 scale-90 transition-transform duration-300"
                         [class.rotate-180]="!isFormVisible">
                         expand_less
@@ -47,35 +44,29 @@
                         </div>
                         <div class="space-y-1.5">
                             <label
-                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Language
-                                Distribution</label>
+                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template Language
+                                </label>
                             <select [(ngModel)]="newTemplate.language"
                                 class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500/50 transition-colors">
                                 <option value="EN">English (EN)</option>
                                 <option value="FR">French (FR)</option>
                             </select>
                         </div>
-                        <div class="space-y-1.5">
-                            <label
-                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Tier
-                                Threshold</label>
-                            <input type="number" [(ngModel)]="newTemplate.tier" min="1" max="5"
-                                class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500/50 transition-colors" />
-                        </div>
+                        
                     </div>
 
                     <div class="space-y-1.5">
                         <label
-                            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Subject
-                            Template Line</label>
+                            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template Subject
+                             </label>
                         <input type="text" [(ngModel)]="newTemplate.subjectTemplate" [placeholder]="subjectPlaceholder"
                             class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
                     </div>
 
                     <div class="space-y-1.5">
                         <label
-                            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Body
-                            Composition Layout</label>
+                            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template Body
+                             </label>
                         <textarea [(ngModel)]="newTemplate.bodyTemplate"
                             placeholder="Write message body layout context here..." rows="5"
                             class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-900 rounded-lg p-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 resize-y min-h-[120px] transition-colors"></textarea>
@@ -88,7 +79,7 @@
                         </button>
                         <button (click)="onSubmitTemplate()" [disabled]="loading"
                             class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition-colors w-full sm:w-auto shadow-md">
-                            <span>{{ editingTemplateId ? 'Update Template Layout' : 'Save Config Template' }}</span>
+                            <span>{{ editingTemplateId ? 'Update Template' : 'Save Template' }}</span>
                         </button>
                     </div>
                 </div>
@@ -122,8 +113,7 @@
                             class="border-b border-slate-200 dark:border-slate-900 text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider bg-slate-100/50 dark:bg-slate-950/20">
                             <th class="py-3 px-3">Template Name</th>
                             <th class="py-3 px-3 w-24">Lang</th>
-                            <th class="py-3 px-3 w-24">Tier</th>
-                            <th class="py-3 px-3 w-1/2">Subject Pattern Mapping</th>
+                            <th class="py-3 px-3 w-1/2">Email Subject</th>
                             <th class="py-3 px-3 text-right w-24">Actions</th>
                         </tr>
                     </thead>
@@ -139,7 +129,6 @@
                                     {{ tmpl.language }}
                                 </span>
                             </td>
-                            <td class="py-3 px-3 font-mono text-[11px]">Level {{ tmpl.tier }}</td>
                             <td class="py-3 px-3 text-slate-500 dark:text-slate-400 max-w-0 truncate"
                                 [title]="tmpl.subjectTemplate">
                                 {{ tmpl.subjectTemplate }}
@@ -172,9 +161,7 @@
                                 <span class="text-[9px] bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded font-mono">
                                     {{ tmpl.language }}
                                 </span>
-                                <span class="text-[9px] text-slate-400 dark:text-slate-500 font-mono">
-                                    Tier {{ tmpl.tier }}
-                                </span>
+                              
                             </div>
                         </div>
                         <div class="flex items-center gap-1">

@@ -49,7 +49,6 @@ export class TemplatesComponent implements OnInit {
   newTemplate = {
     name: '',
     language: 'EN',
-    tier: 1,
     subjectTemplate: '',
     bodyTemplate: '',
   };
@@ -108,7 +107,6 @@ export class TemplatesComponent implements OnInit {
     this.newTemplate = {
       name: template.name,
       language: template.language,
-      tier: template.tier,
       subjectTemplate: template.subjectTemplate,
       bodyTemplate: template.bodyTemplate,
     };
@@ -120,7 +118,6 @@ export class TemplatesComponent implements OnInit {
     this.newTemplate = {
       name: '',
       language: 'EN',
-      tier: 1,
       subjectTemplate: '',
       bodyTemplate: '',
     };
