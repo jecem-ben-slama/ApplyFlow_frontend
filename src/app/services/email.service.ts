@@ -4,10 +4,10 @@ import { Observable } from 'rxjs';
 import { API_CONFIG } from '../config';
 
 export interface EmailSendRequest {
-  userId: number;
   recipientEmail: string;
   subject: string;
   body: string;
+  cvVariantId?: number; // Uses the variant ID identifier
 }
 
 @Injectable({
@@ -22,7 +22,7 @@ export class EmailService {
   sendEmail(payload: EmailSendRequest): Observable<string> {
     return this.http.post(API_CONFIG.endpoints.emails.send, payload, {
       ...API_CONFIG.httpOptions,
-      responseType: 'text', // Since the backend returns a raw text confirmation message
+      responseType: 'text',
     });
   }
 }

@@ -246,7 +246,6 @@ export class ApplicationsComponent implements OnInit {
   onSendCompiledEmail(): void {
     if (!this.selectedApplication) return;
 
-    // Direct structural safety guard: stop execution if there is no recipient address
     if (!this.selectedApplication.recipientEmail) {
       this.errorMessage =
         'Cannot dispatch email: Recipient email address is missing.';
@@ -256,12 +255,15 @@ export class ApplicationsComponent implements OnInit {
     this.isSendingEmail = true;
     this.errorMessage = '';
 
+    // Pull numeric variant ID direct from associated variant profile property
+    const variantId = this.selectedApplication.cvVariantId?.toString();
+
     this.emailService
       .sendEmail({
-        userId: this.selectedApplication.userId,
-        recipientEmail: this.selectedApplication.recipientEmail, // TS now knows this is guaranteed to be a string!
+        recipientEmail: this.selectedApplication.recipientEmail,
         subject: this.selectedApplication.generatedSubject,
         body: this.selectedApplication.generatedBody,
+        cvVariantId: variantId ? Number(variantId) : undefined,
       })
       .subscribe({
         next: (msg) => {
