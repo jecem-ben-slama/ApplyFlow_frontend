@@ -49,8 +49,7 @@ export class SkillsComponent implements OnInit {
   totalElements = 0;
 
   newSkill = {
-    displayName: '',
-    technicalName: '',
+  name: '',
     sentenceEn: '',
     sentenceFr: '',
   };
@@ -87,8 +86,7 @@ export class SkillsComponent implements OnInit {
     this.editingSkillId = skill.id;
     this.isFormVisible = true;
     this.newSkill = {
-      displayName: skill.displayName,
-      technicalName: skill.technicalName,
+      name: skill.name||'',
       sentenceEn: skill.sentenceEn || '',
       sentenceFr: skill.sentenceFr || '',
     };
@@ -98,15 +96,14 @@ export class SkillsComponent implements OnInit {
   onCancelEdit(): void {
     this.editingSkillId = null;
     this.newSkill = {
-      displayName: '',
-      technicalName: '',
+      name: '',
       sentenceEn: '',
       sentenceFr: '',
     };
   }
 
   onCreateSkill(): void {
-    if (!this.newSkill.displayName || !this.newSkill.technicalName) {
+    if (!this.newSkill.name.trim() || !this.newSkill.sentenceEn.trim()) {
       alert(
         'Please fill out at least the display and technical reference properties.'
       );
@@ -135,8 +132,7 @@ export class SkillsComponent implements OnInit {
       this.skillsService.createSkill(this.newSkill).subscribe({
         next: () => {
           this.newSkill = {
-            displayName: '',
-            technicalName: '',
+            name: '',
             sentenceEn: '',
             sentenceFr: '',
           };

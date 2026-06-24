@@ -1,7 +1,6 @@
 export interface Skill {
   id: number;
-  displayName: string;
-  technicalName: string;
+  name: string;
   sentenceEn: string;
   sentenceFr: string;
   userId: number;
