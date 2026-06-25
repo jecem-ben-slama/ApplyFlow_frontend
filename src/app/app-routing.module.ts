@@ -27,7 +27,7 @@ export const routes: Routes = [
   {
     path: 'cv-variants',
     loadComponent: () =>
-      import('./components/cv-variants/cv-variants.component').then(
+      import('./components/CV/cv-variants/cv-variants.component').then(
         (m) => m.CvVariantsComponent
       ),
     canActivate: [authGuard], // Protected from anonymous access
@@ -35,7 +35,7 @@ export const routes: Routes = [
   {
 path: 'applications',
     loadComponent: () =>
-      import('./components/applications/applications.component').then(
+      import('./components/Application/applications/applications.component').then(
         (m) => m.ApplicationsComponent
       ),
     canActivate: [authGuard], // Protected from anonymous access

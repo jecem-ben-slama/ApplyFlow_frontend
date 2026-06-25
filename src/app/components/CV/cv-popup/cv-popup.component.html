@@ -1,0 +1,92 @@
+<div *ngIf="isModalOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md transition-all duration-300">
+    <div
+        class="w-full max-w-2xl rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] dark:shadow-slate-950/50 relative overflow-hidden">
+
+        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-500">
+        </div>
+
+        <div class="flex items-start justify-between gap-4 mb-8">
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+                    {{ isEditing ? 'Edit CV Tracking Parameters' : 'Register New CV Track' }}
+                </h2>
+                <p class="text-slate-500 dark:text-slate-400 text-xs mt-1.5 font-medium">
+                    Configure locale-aware profile targets to correctly route your job applications.
+                </p>
+            </div>
+            <button type="button" (click)="onCancel()"
+                class="rounded-2xl p-2.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-all">
+                <mat-icon class="block">close</mat-icon>
+            </button>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" class="space-y-6">
+            <div class="space-y-4">
+                <div class="group">
+                    <label
+                        class="block text-[10px] font-extrabold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 mb-2.5 ml-1">
+                        Display Track Name
+                    </label>
+                    <input type="text" [(ngModel)]="formModel.name" name="name" required
+                        placeholder="e.g. FullStack Senior Variant"
+                        class="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:bg-white dark:focus:bg-slate-900 transition-all duration-300" />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label
+                            class="block text-[10px] font-extrabold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 mb-2.5 ml-1">
+                            Locale Language Segment
+                        </label>
+                        <div class="relative">
+                            <select [(ngModel)]="formModel.language" name="language" required
+                                class="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:bg-white dark:focus:bg-slate-900 transition-all duration-300 appearance-none">
+                                <option value="en">English (EN)</option>
+                                <option value="fr">French (FR)</option>
+                            </select>
+                            <div
+                                class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-[10px] font-extrabold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 mb-2.5 ml-1">
+                            Destination URL
+                        </label>
+                        <input type="url" [(ngModel)]="formModel.fileUrl" name="fileUrl" required
+                            placeholder="https://storage.provider.com/cv.pdf"
+                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:bg-white dark:focus:bg-slate-900 transition-all duration-300" />
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/60 mt-8">
+                <button type="button" (click)="onCancel()"
+                    class="w-full sm:w-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all shadow-sm">
+                    Cancel
+                </button>
+                <button type="submit" [disabled]="isLoading"
+                    class="w-full sm:w-auto rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400 px-6 py-3 text-sm font-semibold text-white transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98]">
+                    <span *ngIf="isLoading" class="flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        Saving...
+                    </span>
+                    <span *ngIf="!isLoading">Save CV Variant</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

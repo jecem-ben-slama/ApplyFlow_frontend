@@ -2,14 +2,21 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { CvVariantsService } from '../../services/cv-variants.service';
-import { CvVariantDto, Page } from '../../models';
-import { PaginationComponent } from '../pagination/pagination.component';
+import { CvVariantsService } from '../../../services/cv-variants.service';
+import { CvVariantDto, Page } from '../../../models';
+import { PaginationComponent } from '../../pagination/pagination.component';
+import { CvPopupComponent } from '../cv-popup/cv-popup.component';
 
 @Component({
   selector: 'app-cv-variants',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, PaginationComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatIconModule,
+    PaginationComponent,
+    CvPopupComponent,
+  ],
   templateUrl: './cv-variants.component.html',
   styleUrls: ['./cv-variants.component.css'],
 })
@@ -47,9 +54,6 @@ export class CvVariantsComponent implements OnInit {
     this.loadCvVariants();
   }
 
-  /**
-   * Fetches the reactive paginated slice of CV elements from the service layer
-   */
   loadCvVariants(): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -76,7 +80,6 @@ export class CvVariantsComponent implements OnInit {
       });
   }
 
-  // Filter Trigger Controllers
   onLanguageFilterChange(): void {
     this.currentPage = 0;
     this.loadCvVariants();
@@ -87,7 +90,6 @@ export class CvVariantsComponent implements OnInit {
     this.loadCvVariants();
   }
 
-  // Modal Handlers
   openCreateModal(): void {
     this.isEditing = false;
     this.currentFormId = undefined;
@@ -111,9 +113,6 @@ export class CvVariantsComponent implements OnInit {
     this.isModalOpen = false;
   }
 
-  /**
-   * Processes submission forms for mutating payloads
-   */
   onSubmit(): void {
     this.isLoading = true;
     const request$ =
@@ -140,9 +139,6 @@ export class CvVariantsComponent implements OnInit {
     });
   }
 
-  /**
-   * Deletes a specific targeted configuration variant block
-   */
   onDelete(id: number | undefined): void {
     if (
       !id ||

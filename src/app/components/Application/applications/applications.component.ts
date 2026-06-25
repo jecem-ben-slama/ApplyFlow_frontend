@@ -4,11 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
 // Services
-import { ApplicationsService } from '../../services/applications.service';
-import { SkillsService } from '../../services/skills.service';
-import { CvVariantsService } from '../../services/cv-variants.service';
-import { TemplateService } from '../../services/template.service';
-import { EmailService } from '../../services/email.service';
+import { ApplicationsService } from '../../../services/applications.service';
+import { SkillsService } from '../../../services/skills.service';
+import { CvVariantsService } from '../../../services/cv-variants.service';
+import { TemplateService } from '../../../services/template.service';
+import { EmailService } from '../../../services/email.service';
 
 // Models
 import {
@@ -19,13 +19,19 @@ import {
   CvVariantDto,
   TemplateDto,
   getPageMeta,
-} from '../../models';
-import { PaginationComponent } from '../pagination/pagination.component';
+} from '../../../models';
+import { PaginationComponent } from '../../pagination/pagination.component';
+import { ApplicationPopupComponent } from '../application-popup/application-popup.component';
 
 @Component({
   selector: 'app-applications',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    PaginationComponent,
+    ApplicationPopupComponent,
+  ], // <-- Add to imports
   templateUrl: './applications.component.html',
   styleUrls: ['./applications.component.css'],
 })
@@ -41,8 +47,6 @@ export class ApplicationsComponent implements OnInit {
   availableCvVariants: CvVariantDto[] = [];
   availableTemplates: TemplateDto[] = [];
 
-  selectedTemplatePreview?: TemplateDto;
-
   isLoading = false;
   isSendingEmail = false;
   isModalOpen = false;
@@ -50,23 +54,10 @@ export class ApplicationsComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  // ── Inline panel state ──
   expandedAppId: number | null = null;
   editingNotesAppId: number | null = null;
   editingNotesValue = '';
   notesSavedForId: number | null = null;
-
-  formModel: ApplicationCreateDto = {
-    companyName: '',
-    jobTitle: '',
-    recipientEmail: '',
-    language: 'en',
-    templateId: undefined,
-    cvVariantId: undefined,
-    userId: 0,
-    skillIds: [],
-    notes: '',
-  };
 
   constructor(
     private appService: ApplicationsService,
@@ -145,8 +136,6 @@ export class ApplicationsComponent implements OnInit {
     this.loadApplicationsPage();
   }
 
-  // ── Inline email panel ──
-
   toggleEmailPanel(appId: number): void {
     if (this.expandedAppId === appId) {
       this.expandedAppId = null;
@@ -156,8 +145,6 @@ export class ApplicationsComponent implements OnInit {
       this.editingNotesAppId = null;
     }
   }
-
-  // ── Notes editing ──
 
   startEditNotes(app: ApplicationResponseDto): void {
     this.editingNotesAppId = app.id;
@@ -174,12 +161,9 @@ export class ApplicationsComponent implements OnInit {
       .patchApplicationStatusOrNotes(app.id, undefined, this.editingNotesValue)
       .subscribe({
         next: () => {
-          // Update local model so the view reflects the change immediately
           app.notes = this.editingNotesValue;
           this.editingNotesAppId = null;
           this.editingNotesValue = '';
-
-          // Flash "Saved" confirmation for 2s
           this.notesSavedForId = app.id;
           setTimeout(() => (this.notesSavedForId = null), 2000);
         },
@@ -188,8 +172,6 @@ export class ApplicationsComponent implements OnInit {
         },
       });
   }
-
-  // ── Send email directly from the inline panel ──
 
   onSendEmailFromPanel(app: ApplicationResponseDto): void {
     if (!app.recipientEmail) {
@@ -222,115 +204,29 @@ export class ApplicationsComponent implements OnInit {
       });
   }
 
-  // ── Copy to clipboard ──
-
   copyToClipboard(text: string): void {
     navigator.clipboard.writeText(text).then(() => {
       this.showFeedback('Email body copied to clipboard.');
     });
   }
 
-  // ── Create modal ──
-
   openCreateModal(): void {
-    this.formModel = {
-      companyName: '',
-      jobTitle: '',
-      recipientEmail: '',
-      language: 'en',
-      templateId: undefined,
-      cvVariantId: undefined,
-      userId: 0,
-      skillIds: [],
-      notes: '',
-    };
-    this.selectedTemplatePreview = undefined;
     this.isModalOpen = true;
   }
 
   closeModal(): void {
     this.isModalOpen = false;
     this.selectedApplication = undefined;
-    this.selectedTemplatePreview = undefined;
     this.errorMessage = '';
   }
 
-  // Kept for backwards compatibility (used after onSubmit to preview the created app)
   viewCompiledEmail(app: ApplicationResponseDto): void {
     this.expandedAppId = app.id;
   }
 
-  onTemplateChange(): void {
-    if (!this.formModel.templateId) {
-      this.selectedTemplatePreview = undefined;
-      return;
-    }
-    this.selectedTemplatePreview = this.availableTemplates.find(
-      (t) => t.id === Number(this.formModel.templateId)
-    );
-  }
-
-  hasPlaceholder(tagFragment: string): boolean {
-    if (!this.selectedTemplatePreview?.bodyTemplate) return false;
-    return this.selectedTemplatePreview.bodyTemplate
-      .toLowerCase()
-      .includes(tagFragment.toLowerCase());
-  }
-
-  getLiveTemplateBodyPreview(): string {
-    if (!this.selectedTemplatePreview?.bodyTemplate) return '';
-
-    let rawBody = this.selectedTemplatePreview.bodyTemplate;
-    const companyReplacer =
-      this.formModel.companyName || '[Company Destination]';
-    const positionReplacer = this.formModel.jobTitle || '[Target Job Title]';
-
-    return rawBody
-      .replace(/\{\{companyname\}\}/gi, companyReplacer)
-      .replace(/\{\{company\}\}/gi, companyReplacer)
-      .replace(/\{\{position\}\}/gi, positionReplacer)
-      .replace(/\{\{role\}\}/gi, positionReplacer);
-  }
-
-  toggleSkillSelection(skillId: number): void {
-    const index = this.formModel.skillIds.indexOf(skillId);
-    if (index > -1) {
-      this.formModel.skillIds.splice(index, 1);
-    } else {
-      this.formModel.skillIds.push(skillId);
-    }
-  }
-
-  onSubmit(): void {
-    if (!this.formModel.templateId) {
-      this.errorMessage = 'Please select a base template configuration layout.';
-      return;
-    }
-
+  // Receives the mapped payload directly from the child modal
+  onCreateSubmit(payload: ApplicationCreateDto): void {
     this.isLoading = true;
-
-    const activeTemplate = this.availableTemplates.find(
-      (t) => t.id === Number(this.formModel.templateId)
-    );
-
-    if (activeTemplate) {
-      activeTemplate.bodyTemplate = activeTemplate.bodyTemplate.replace(
-        /\{\{companyname\}\}/gi,
-        '{{company}}'
-      );
-      activeTemplate.subjectTemplate = activeTemplate.subjectTemplate.replace(
-        /\{\{companyname\}\}/gi,
-        '{{company}}'
-      );
-    }
-
-    const payload: ApplicationCreateDto = {
-      ...this.formModel,
-      templateId: Number(this.formModel.templateId),
-      cvVariantId: this.formModel.cvVariantId
-        ? Number(this.formModel.cvVariantId)
-        : undefined,
-    };
 
     this.appService.createApplication(payload).subscribe({
       next: (createdRecord) => {
@@ -340,6 +236,7 @@ export class ApplicationsComponent implements OnInit {
         this.isModalOpen = false;
         this.loadApplicationsPage();
         this.viewCompiledEmail(createdRecord);
+        this.isLoading = false;
       },
       error: (err) => {
         this.errorMessage =
@@ -378,7 +275,6 @@ export class ApplicationsComponent implements OnInit {
     });
   }
 
-  // Kept for backwards compatibility — old modal send button
   onSendCompiledEmail(): void {
     if (!this.selectedApplication) return;
     this.onSendEmailFromPanel(this.selectedApplication);
