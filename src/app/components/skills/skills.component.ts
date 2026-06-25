@@ -1,22 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { SkillsService } from '../../services/skills.service';
-import { Skill } from '../../models';
+import { Skill, getPageMeta } from '../../models';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  trigger,
-  state,
-  style,
-  transition,
-  animate,
-} from '@angular/animations';
+import { PaginationComponent } from '../pagination/pagination.component';
+import { trigger, style, transition, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-skills',
   templateUrl: './skills.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule, PaginationComponent],
   animations: [
     trigger('formSlide', [
       transition(':enter', [
@@ -40,16 +35,16 @@ export class SkillsComponent implements OnInit {
   skills: Skill[] = [];
   loading = false;
 
-  isFormVisible = true;
+  isFormVisible = false;
   editingSkillId: number | null = null;
 
   currentPage = 0;
-  pageSize = 15;
+  pageSize = 8;
   totalPages = 0;
   totalElements = 0;
 
   newSkill = {
-  name: '',
+    name: '',
     sentenceEn: '',
     sentenceFr: '',
   };
@@ -66,9 +61,10 @@ export class SkillsComponent implements OnInit {
       .getAllSkills(this.currentPage, this.pageSize, 'id', 'asc')
       .subscribe({
         next: (page) => {
+          const meta = getPageMeta(page);
           this.skills = page.content;
-          this.totalPages = page.totalPages;
-          this.totalElements = page.totalElements;
+          this.totalPages = meta.totalPages;
+          this.totalElements = meta.totalElements;
           this.loading = false;
         },
         error: (err) => {
@@ -86,7 +82,7 @@ export class SkillsComponent implements OnInit {
     this.editingSkillId = skill.id;
     this.isFormVisible = true;
     this.newSkill = {
-      name: skill.name||'',
+      name: skill.name || '',
       sentenceEn: skill.sentenceEn || '',
       sentenceFr: skill.sentenceFr || '',
     };
@@ -136,7 +132,14 @@ export class SkillsComponent implements OnInit {
             sentenceEn: '',
             sentenceFr: '',
           };
-          this.loadSkills();
+          // Peek at page 0 to get updated totalPages, then jump to last page
+          this.skillsService
+            .getAllSkills(0, this.pageSize, 'id', 'asc')
+            .subscribe((peek) => {
+              const meta = getPageMeta(peek);
+              this.currentPage = Math.max(0, meta.totalPages - 1);
+              this.loadSkills();
+            });
         },
         error: (err) => {
           console.error('Failed to append custom reference key:', err);
@@ -151,7 +154,14 @@ export class SkillsComponent implements OnInit {
       return;
     if (this.editingSkillId === id) this.onCancelEdit();
     this.skillsService.deleteSkill(id).subscribe({
-      next: () => this.loadSkills(),
+      next: () => {
+        // Step back a page if we just deleted the last item on a non-first page
+        const remainingOnPage = this.skills.length - 1;
+        if (remainingOnPage === 0 && this.currentPage > 0) {
+          this.currentPage--;
+        }
+        this.loadSkills();
+      },
       error: (err) =>
         console.error(
           'Failed to completely drop skill key configuration:',
@@ -161,6 +171,7 @@ export class SkillsComponent implements OnInit {
   }
 
   onPageChange(newPage: number): void {
+    if (newPage < 0 || newPage >= this.totalPages) return;
     this.currentPage = newPage;
     this.loadSkills();
   }

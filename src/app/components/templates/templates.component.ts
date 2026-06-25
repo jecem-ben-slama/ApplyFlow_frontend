@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { TemplateService } from '../../services/template.service';
-import { TemplateDto, Page } from '../../models';
+import { TemplateDto, Page, getPageMeta } from '../../models';
+import { PaginationComponent } from '../pagination/pagination.component';
 
 @Component({
   selector: 'app-templates',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule, PaginationComponent],
   templateUrl: './templates.component.html',
   animations: [
     trigger('formSlide', [
@@ -34,7 +35,7 @@ export class TemplatesComponent implements OnInit {
   templates: TemplateDto[] = [];
   loading = false;
 
-  isFormVisible = true;
+  isFormVisible = false;
   editingTemplateId: number | null = null;
 
   subjectPlaceholder = 'e.g., Application Update: {{ positionName }}';
@@ -78,9 +79,11 @@ export class TemplatesComponent implements OnInit {
       )
       .subscribe({
         next: (page: Page<TemplateDto>) => {
+          const meta = getPageMeta(page);
           this.templates = page.content;
-          this.totalPages = page.totalPages;
-          this.totalElements = page.totalElements;
+          this.currentPage = meta.number;
+          this.totalPages = meta.totalPages;
+          this.totalElements = meta.totalElements;
           this.loading = false;
         },
         error: (err) => {

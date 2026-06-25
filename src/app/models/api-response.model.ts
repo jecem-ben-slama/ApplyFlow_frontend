@@ -13,21 +13,23 @@ export interface PageableSort {
 
 export interface Page<T> {
   content: T[];
-  pageable: {
-    sort: PageableSort;
-    offset: number;
-    pageNumber: number;
-    pageSize: number;
-    paged: boolean;
-    unpaged: boolean;
+  page: {
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
   };
-  totalElements: number;
-  totalPages: number;
-  last: boolean;
-  size: number;
-  number: number;
-  sort: PageableSort;
-  numberOfElements: number;
-  first: boolean;
-  empty: boolean;
+  // legacy flat fields — kept for safety if any endpoint still returns old format
+  totalElements?: number;
+  totalPages?: number;
+  number?: number;
+  size?: number;
+}
+export function getPageMeta(p: Page<unknown>) {
+  return {
+    totalElements: p.page?.totalElements ?? p.totalElements ?? 0,
+    totalPages: p.page?.totalPages ?? p.totalPages ?? 0,
+    number: p.page?.number ?? p.number ?? 0,
+    size: p.page?.size ?? p.size ?? 0,
+  };
 }

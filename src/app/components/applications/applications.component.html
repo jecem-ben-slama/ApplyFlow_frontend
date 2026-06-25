@@ -20,49 +20,161 @@
         Querying pipeline data layers...
     </div>
 
+    <!-- ── Main table ── -->
     <div *ngIf="!isLoading && appPage?.content?.length"
         class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
-        <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+        <table class="min-w-full text-left text-sm">
             <thead class="bg-gray-50 text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 <tr>
                     <th class="px-6 py-4">Company</th>
                     <th class="px-6 py-4">Job Title</th>
                     <th class="px-6 py-4">Date Applied</th>
                     <th class="px-6 py-4">Language</th>
-                    <th class="px-6 py-4">Pipeline Status</th>
+                    <th class="px-6 py-4">Status</th>
                     <th class="px-6 py-4">Actions</th>
                 </tr>
             </thead>
-        <tbody class="divide-y divide-gray-200 text-gray-900 bg-white">
-            <tr *ngFor="let app of appPage?.content" class="hover:bg-gray-50 transition">
-                <td class="px-6 py-4 font-semibold text-gray-900">{{ app.companyName }}</td>
-                <td class="px-6 py-4 text-gray-600">{{ app.jobTitle }}</td>
-                <td class="px-6 py-4 text-gray-500">{{ app.dateApplied | date:'mediumDate' }}</td>
-                <td class="px-6 py-4">
-                    <span
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 uppercase">
-                        {{ app.language }}
-                    </span>
-                </td>
-                <td class="px-6 py-4">
-                    <select [ngModel]="app.status" (ngModelChange)="onUpdateStatus(app.id, $event)"
-                        class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-1 px-2 bg-gray-50 border">
-                        <option value="COMPILED">Compiled</option>
-                        <option value="SENT">Sent</option>
-                        <option value="INTERVIEWING">Interviewing</option>
-                        <option value="REJECTED">Rejected</option>
-                    </select>
-                </td>
-                <td class="px-6 py-4 space-x-2">
-                    <button
-                        class="text-blue-600 hover:text-blue-900 font-medium text-xs bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-md transition"
-                        (click)="viewCompiledEmail(app)">View Email</button>
-                    <button
-                        class="text-red-600 hover:text-red-900 font-medium text-xs bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-md transition"
-                        (click)="onDelete(app.id)">Delete</button>
-                </td>
-            </tr>
-        </tbody>
+            <tbody class="text-gray-900 bg-white">
+
+                <ng-container *ngFor="let app of appPage!.content">
+
+                    <!-- ── Data row ── -->
+                    <tr class="hover:bg-gray-50 transition border-t border-gray-100">
+                        <td class="px-6 py-4 font-semibold text-gray-900">{{ app.companyName }}</td>
+                        <td class="px-6 py-4 text-gray-600">{{ app.jobTitle }}</td>
+                        <td class="px-6 py-4 text-gray-500">{{ app.dateApplied | date:'mediumDate' }}</td>
+                        <td class="px-6 py-4">
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 uppercase">
+                                {{ app.language }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <select [ngModel]="app.status" (ngModelChange)="onUpdateStatus(app.id, $event)"
+                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-1 px-2 bg-gray-50 border">
+                                <option value="COMPILED">Compiled</option>
+                                <option value="SENT">Sent</option>
+                                <option value="INTERVIEWING">Interviewing</option>
+                                <option value="REJECTED">Rejected</option>
+                            </select>
+                        </td>
+                        <td class="px-6 py-4 space-x-2">
+                            <button (click)="toggleEmailPanel(app.id)"
+                                [class]="expandedAppId === app.id
+                  ? 'text-blue-700 bg-blue-100 hover:bg-blue-200 font-medium text-xs px-2.5 py-1.5 rounded-md transition'
+                  : 'text-blue-600 hover:text-blue-900 font-medium text-xs bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-md transition'">
+                                {{ expandedAppId === app.id ? '▲ Hide Email' : '▼ View Email' }}
+                            </button>
+                            <button
+                                class="text-red-600 hover:text-red-900 font-medium text-xs bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-md transition"
+                                (click)="onDelete(app.id)">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- ── Slide-down email + notes panel ── -->
+                    <tr *ngIf="expandedAppId === app.id" class="bg-gray-50">
+                        <td colspan="6" class="px-4 pb-4 pt-0">
+                            <div
+                                class="mt-3 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden grid grid-cols-[1fr_280px]">
+
+                                <!-- Left: Gmail-style email -->
+                                <div class="flex flex-col">
+
+                                    <!-- Email header -->
+                                    <div class="bg-gray-50 border-b border-gray-200 px-5 py-4 space-y-2">
+                                        <p class="text-base font-semibold text-gray-900">{{ app.generatedSubject }}</p>
+                                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                                            <span
+                                                class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-semibold shrink-0">
+                                                {{ app.companyName.slice(0, 2).toUpperCase() }}
+                                            </span>
+                                            <span>
+                                                <span class="font-medium text-gray-800">{{ app.companyName }}</span>
+                                                &lt;{{ app.recipientEmail || 'N/A' }}&gt;
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Email body -->
+                                    <div
+                                        class="px-5 py-4 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed flex-1">
+                                        {{ app.generatedBody }}
+                                    </div>
+
+                                    <!-- Email actions -->
+                                    <div class="border-t border-gray-100 px-5 py-3 flex gap-2">
+                                        <button
+                                            class="text-blue-600 hover:text-blue-900 font-medium text-xs bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md transition flex items-center gap-1 disabled:opacity-50"
+                                            [disabled]="isSendingEmail || !app.recipientEmail"
+                                            (click)="onSendEmailFromPanel(app)">
+                                            <span *ngIf="isSendingEmail"
+                                                class="inline-block animate-spin rounded-full h-3 w-3 border-2 border-blue-600 border-t-transparent"></span>
+                                            {{ isSendingEmail ? 'Dispatching...' : '🚀 Send Now' }}
+                                        </button>
+                                        <button
+                                            class="text-gray-600 hover:text-gray-900 font-medium text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-md transition"
+                                            (click)="copyToClipboard(app.generatedBody)">
+                                            Copy
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Notes panel -->
+                                <div class="border-l border-gray-200 flex flex-col px-4 py-4 gap-3">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Notes</p>
+                                        <button *ngIf="editingNotesAppId !== app.id"
+                                            class="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded hover:bg-blue-50 transition"
+                                            (click)="startEditNotes(app)">
+                                            Edit
+                                        </button>
+                                    </div>
+
+                                    <!-- View mode -->
+                                    <ng-container *ngIf="editingNotesAppId !== app.id">
+                                        <p *ngIf="app.notes; else noNotes"
+                                            class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-lg p-3 flex-1">
+                                            {{ app.notes }}
+                                        </p>
+                                        <ng-template #noNotes>
+                                            <p class="text-sm text-gray-400 italic bg-gray-50 rounded-lg p-3 flex-1">No
+                                                notes yet.</p>
+                                        </ng-template>
+                                        <p *ngIf="notesSavedForId === app.id"
+                                            class="text-xs text-emerald-600 font-medium flex items-center gap-1 animate-pulse">
+                                            ✓ Saved
+                                        </p>
+                                    </ng-container>
+
+                                    <!-- Edit mode -->
+                                    <ng-container *ngIf="editingNotesAppId === app.id">
+                                        <textarea [(ngModel)]="editingNotesValue" name="editNotes_{{ app.id }}" rows="6"
+                                            class="w-full rounded-lg border border-blue-400 px-3 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none leading-relaxed"
+                                            placeholder="Add your notes here...">
+                    </textarea>
+                                        <div class="flex gap-2 justify-end">
+                                            <button
+                                                class="text-xs text-gray-600 hover:text-gray-800 font-medium px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 transition"
+                                                (click)="cancelEditNotes()">
+                                                Cancel
+                                            </button>
+                                            <button
+                                                class="text-xs text-white font-medium px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 transition"
+                                                (click)="saveNotes(app)">
+                                                Save
+                                            </button>
+                                        </div>
+                                    </ng-container>
+                                </div>
+
+                            </div>
+                        </td>
+                    </tr>
+
+                </ng-container>
+            </tbody>
         </table>
     </div>
 
@@ -72,16 +184,12 @@
         <p class="text-sm text-gray-400 mt-1">Click create to trigger the configuration wizard.</p>
     </div>
 
-    <div *ngIf="appPage && appPage.totalPages > 1" class="flex justify-between items-center pt-4 text-sm text-gray-700">
-        <button [disabled]="currentPage === 0" (click)="onPageChange(currentPage - 1)"
-            class="px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50 font-medium disabled:opacity-50 disabled:cursor-not-allowed">‹
-            Prev</button>
-        <span class="font-medium text-gray-600">Page {{ currentPage + 1 }} of {{ appPage.totalPages }}</span>
-        <button [disabled]="currentPage >= appPage.totalPages - 1" (click)="onPageChange(currentPage + 1)"
-            class="px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50 font-medium disabled:opacity-50 disabled:cursor-not-allowed">Next
-            ›</button>
-    </div>
+    <!-- ── Pagination ── -->
+    <app-pagination [currentPage]="currentPage" [totalPages]="appTotalPages" [loading]="isLoading"
+        (pageChange)="onPageChange($event)">
+    </app-pagination>
 
+    <!-- ── Create modal ── -->
     <div *ngIf="isModalOpen"
         class="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex justify-center items-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
@@ -124,8 +232,8 @@
                     <select [(ngModel)]="formModel.templateId" name="templateId" (change)="onTemplateChange()"
                         class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
                         <option [value]="undefined">-- Select Layout Base --</option>
-                        <option *ngFor="let t of availableTemplates" [value]="t.id">{{ t.name }} ({{t.language |
-                            uppercase}})</option>
+                        <option *ngFor="let t of availableTemplates" [value]="t.id">{{ t.name }} ({{ t.language |
+                            uppercase }})</option>
                     </select>
 
                     <div *ngIf="selectedTemplatePreview"
@@ -155,8 +263,8 @@
                     <select [(ngModel)]="formModel.cvVariantId" name="cvVariantId"
                         class="rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
                         <option [value]="undefined">-- Select CV Path Profile --</option>
-                        <option *ngFor="let cv of availableCvVariants" [value]="cv.id">{{ cv.name }} ({{cv.language |
-                            uppercase}})</option>
+                        <option *ngFor="let cv of availableCvVariants" [value]="cv.id">{{ cv.name }} ({{ cv.language |
+                            uppercase }})</option>
                     </select>
                 </div>
 
@@ -167,7 +275,7 @@
                         <div *ngFor="let skill of availableSkills" (click)="toggleSkillSelection(skill.id)"
                             [class]="formModel.skillIds.includes(skill.id) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'"
                             class="cursor-pointer text-xs font-medium px-3 py-1 rounded-full border shadow-sm transition">
-                            {{ skill.displayName }}
+                            {{ skill.name }}
                         </div>
                     </div>
                 </div>
@@ -191,31 +299,4 @@
         </div>
     </div>
 
-    <div *ngIf="selectedApplication"
-        class="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 space-y-4">
-            <h3 class="text-xl font-bold text-gray-900">Compiled Email Overview Output</h3>
-            <div class="bg-gray-50 p-4 rounded-lg border text-sm text-gray-700 space-y-1">
-                <p><strong>To:</strong> {{ selectedApplication.recipientEmail || 'N/A' }}</p>
-                <p><strong>Subject Line:</strong> {{ selectedApplication.generatedSubject }}</p>
-            </div>
-            <div class="bg-gray-900 rounded-xl p-4 overflow-x-auto max-h-64 border border-gray-800">
-                <pre
-                    class="text-emerald-400 font-mono text-xs whitespace-pre-wrap leading-relaxed">{{ selectedApplication.generatedBody }}</pre>
-            </div>
-            <div class="flex justify-between items-center pt-2 border-t border-gray-100">
-                <button type="button"
-                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg text-sm transition"
-                    [disabled]="isSendingEmail" (click)="closeModal()">Close Preview</button>
-
-                <button type="button"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg text-sm shadow-sm transition flex items-center gap-2 disabled:opacity-50"
-                    [disabled]="isSendingEmail || !selectedApplication.recipientEmail" (click)="onSendCompiledEmail()">
-                    <span *ngIf="isSendingEmail"
-                        class="inline-block animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></span>
-                    {{ isSendingEmail ? 'Dispatching via Google SMTP...' : '🚀 Send Email Now' }}
-                </button>
-            </div>
-        </div>
-    </div>
 </div>

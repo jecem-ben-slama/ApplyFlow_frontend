@@ -18,12 +18,14 @@ import {
   Skill,
   CvVariantDto,
   TemplateDto,
+  getPageMeta,
 } from '../../models';
+import { PaginationComponent } from '../pagination/pagination.component';
 
 @Component({
   selector: 'app-applications',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginationComponent],
   templateUrl: './applications.component.html',
   styleUrls: ['./applications.component.css'],
 })
@@ -33,6 +35,7 @@ export class ApplicationsComponent implements OnInit {
   pageSize = 10;
   sortBy = 'dateApplied';
   direction: 'asc' | 'desc' = 'desc';
+  appTotalPages = 0;
 
   availableSkills: Skill[] = [];
   availableCvVariants: CvVariantDto[] = [];
@@ -47,6 +50,12 @@ export class ApplicationsComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  // ── Inline panel state ──
+  expandedAppId: number | null = null;
+  editingNotesAppId: number | null = null;
+  editingNotesValue = '';
+  notesSavedForId: number | null = null;
+
   formModel: ApplicationCreateDto = {
     companyName: '',
     jobTitle: '',
@@ -56,6 +65,7 @@ export class ApplicationsComponent implements OnInit {
     cvVariantId: undefined,
     userId: 0,
     skillIds: [],
+    notes: '',
   };
 
   constructor(
@@ -87,6 +97,9 @@ export class ApplicationsComponent implements OnInit {
     }).subscribe({
       next: (result) => {
         this.appPage = result.applications;
+        const meta = getPageMeta(result.applications);
+        this.currentPage = meta.number;
+        this.appTotalPages = meta.totalPages;
         this.availableSkills = result.skills.content;
         this.availableCvVariants = result.cvVariants.content;
         this.availableTemplates = result.templates.content;
@@ -113,6 +126,9 @@ export class ApplicationsComponent implements OnInit {
       .subscribe({
         next: (page) => {
           this.appPage = page;
+          const meta = getPageMeta(page);
+          this.currentPage = meta.number;
+          this.appTotalPages = meta.totalPages;
           this.isLoading = false;
         },
         error: (err) => {
@@ -124,8 +140,97 @@ export class ApplicationsComponent implements OnInit {
 
   onPageChange(newPage: number): void {
     this.currentPage = newPage;
+    this.expandedAppId = null;
+    this.editingNotesAppId = null;
     this.loadApplicationsPage();
   }
+
+  // ── Inline email panel ──
+
+  toggleEmailPanel(appId: number): void {
+    if (this.expandedAppId === appId) {
+      this.expandedAppId = null;
+      this.editingNotesAppId = null;
+    } else {
+      this.expandedAppId = appId;
+      this.editingNotesAppId = null;
+    }
+  }
+
+  // ── Notes editing ──
+
+  startEditNotes(app: ApplicationResponseDto): void {
+    this.editingNotesAppId = app.id;
+    this.editingNotesValue = app.notes ?? '';
+  }
+
+  cancelEditNotes(): void {
+    this.editingNotesAppId = null;
+    this.editingNotesValue = '';
+  }
+
+  saveNotes(app: ApplicationResponseDto): void {
+    this.appService
+      .patchApplicationStatusOrNotes(app.id, undefined, this.editingNotesValue)
+      .subscribe({
+        next: () => {
+          // Update local model so the view reflects the change immediately
+          app.notes = this.editingNotesValue;
+          this.editingNotesAppId = null;
+          this.editingNotesValue = '';
+
+          // Flash "Saved" confirmation for 2s
+          this.notesSavedForId = app.id;
+          setTimeout(() => (this.notesSavedForId = null), 2000);
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Could not save notes.';
+        },
+      });
+  }
+
+  // ── Send email directly from the inline panel ──
+
+  onSendEmailFromPanel(app: ApplicationResponseDto): void {
+    if (!app.recipientEmail) {
+      this.errorMessage =
+        'Cannot dispatch email: Recipient email address is missing.';
+      return;
+    }
+
+    this.isSendingEmail = true;
+    this.errorMessage = '';
+
+    this.emailService
+      .sendEmail({
+        recipientEmail: app.recipientEmail,
+        subject: app.generatedSubject,
+        body: app.generatedBody,
+        cvVariantId: app.cvVariantId ? Number(app.cvVariantId) : undefined,
+      })
+      .subscribe({
+        next: (msg) => {
+          this.showFeedback(msg || 'Email dispatched successfully!');
+          this.onUpdateStatus(app.id, 'SENT');
+          this.isSendingEmail = false;
+        },
+        error: (err) => {
+          this.errorMessage =
+            err.error?.message || 'Outbound SMTP delivery failure.';
+          this.isSendingEmail = false;
+        },
+      });
+  }
+
+  // ── Copy to clipboard ──
+
+  copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      this.showFeedback('Email body copied to clipboard.');
+    });
+  }
+
+  // ── Create modal ──
 
   openCreateModal(): void {
     this.formModel = {
@@ -137,6 +242,7 @@ export class ApplicationsComponent implements OnInit {
       cvVariantId: undefined,
       userId: 0,
       skillIds: [],
+      notes: '',
     };
     this.selectedTemplatePreview = undefined;
     this.isModalOpen = true;
@@ -149,8 +255,9 @@ export class ApplicationsComponent implements OnInit {
     this.errorMessage = '';
   }
 
+  // Kept for backwards compatibility (used after onSubmit to preview the created app)
   viewCompiledEmail(app: ApplicationResponseDto): void {
-    this.selectedApplication = app;
+    this.expandedAppId = app.id;
   }
 
   onTemplateChange(): void {
@@ -243,49 +350,6 @@ export class ApplicationsComponent implements OnInit {
     });
   }
 
-  onSendCompiledEmail(): void {
-    if (!this.selectedApplication) return;
-
-    if (!this.selectedApplication.recipientEmail) {
-      this.errorMessage =
-        'Cannot dispatch email: Recipient email address is missing.';
-      return;
-    }
-
-    this.isSendingEmail = true;
-    this.errorMessage = '';
-
-    // Pull numeric variant ID direct from associated variant profile property
-    const variantId = this.selectedApplication.cvVariantId?.toString();
-
-    this.emailService
-      .sendEmail({
-        recipientEmail: this.selectedApplication.recipientEmail,
-        subject: this.selectedApplication.generatedSubject,
-        body: this.selectedApplication.generatedBody,
-        cvVariantId: variantId ? Number(variantId) : undefined,
-      })
-      .subscribe({
-        next: (msg) => {
-          this.showFeedback(
-            msg || 'Email dynamic delivery executed successfully!'
-          );
-
-          if (this.selectedApplication) {
-            this.onUpdateStatus(this.selectedApplication.id, 'SENT');
-          }
-          this.closeModal();
-          this.isSendingEmail = false;
-        },
-        error: (err) => {
-          this.errorMessage =
-            err.error?.message ||
-            'Outbound OAuth2 SMTP delivery authentication failure.';
-          this.isSendingEmail = false;
-        },
-      });
-  }
-
   onUpdateStatus(id: number, newStatus: string): void {
     this.appService
       .patchApplicationStatusOrNotes(id, newStatus, undefined)
@@ -306,11 +370,18 @@ export class ApplicationsComponent implements OnInit {
     this.appService.deleteApplication(id).subscribe({
       next: () => {
         this.showFeedback('Application profile discarded.');
+        if (this.expandedAppId === id) this.expandedAppId = null;
         this.loadApplicationsPage();
       },
       error: (err) =>
         (this.errorMessage = err.error?.message || 'Could not drop entry.'),
     });
+  }
+
+  // Kept for backwards compatibility — old modal send button
+  onSendCompiledEmail(): void {
+    if (!this.selectedApplication) return;
+    this.onSendEmailFromPanel(this.selectedApplication);
   }
 
   private showFeedback(msg: string): void {

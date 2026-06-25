@@ -5,6 +5,7 @@ export interface ApplicationCreateDto {
   language: string;
   templateId?: number;
   cvVariantId?: number;
+//  status: string;
   userId: number;
   skillIds: number[]; // Set<Long> maps clean to number arrays
   notes?: string;
