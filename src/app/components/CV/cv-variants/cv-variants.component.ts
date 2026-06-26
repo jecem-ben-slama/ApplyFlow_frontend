@@ -7,6 +7,8 @@ import { CvVariantDto, Page } from '../../../models';
 import { CvPopupComponent } from '../cv-popup/cv-popup.component';
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
 import { PaginationComponent } from '../../common/pagination/pagination.component';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-cv-variants',
@@ -28,6 +30,7 @@ export class CvVariantsComponent implements OnInit {
 
   // Query Filters & Pagination State
   selectedLanguage: string = '';
+  searchQuery: string = '';
   currentPage: number = 0;
   pageSize: number = 10;
   sortBy: string = 'id';
@@ -56,9 +59,17 @@ export class CvVariantsComponent implements OnInit {
   deleteMessage =
     'Are you sure you want to delete this track profile record permanently?';
 
+  private searchSubject = new Subject<string>();
+
   constructor(private cvService: CvVariantsService) {}
 
   ngOnInit(): void {
+    this.searchSubject
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => {
+        this.currentPage = 0;
+        this.loadCvVariants();
+      });
     this.loadCvVariants();
   }
 
@@ -72,7 +83,8 @@ export class CvVariantsComponent implements OnInit {
         this.pageSize,
         this.sortBy,
         this.direction,
-        this.selectedLanguage || undefined
+        this.selectedLanguage || undefined,
+        this.searchQuery.trim() || undefined
       )
       .subscribe({
         next: (page) => {
@@ -88,6 +100,10 @@ export class CvVariantsComponent implements OnInit {
       });
   }
 
+  onSearchChange(): void {
+    this.searchSubject.next(this.searchQuery);
+  }
+
   onLanguageFilterChange(): void {
     this.currentPage = 0;
     this.loadCvVariants();
@@ -95,6 +111,12 @@ export class CvVariantsComponent implements OnInit {
 
   onPageChange(newPage: number): void {
     this.currentPage = newPage;
+    this.loadCvVariants();
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.currentPage = 0;
     this.loadCvVariants();
   }
 
@@ -175,6 +197,7 @@ export class CvVariantsComponent implements OnInit {
     this.showDeleteModal = false;
     this.deleteTargetId = undefined;
   }
+
   private showFeedback(msg: string): void {
     this.successMessage = msg;
     setTimeout(() => (this.successMessage = ''), 4000);

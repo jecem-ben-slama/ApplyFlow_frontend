@@ -23,7 +23,8 @@ export class CvVariantsService {
     size: number = 10,
     sortBy: string = 'id',
     direction: 'asc' | 'desc' = 'asc',
-    language?: string
+    language?: string,
+    search?: string
   ): Observable<Page<CvVariantDto>> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -35,6 +36,10 @@ export class CvVariantsService {
       params = params.set('language', language);
     }
 
+    if (search) {
+      params = params.set('search', search);
+    }
+
     return this.http
       .get<ApiResponse<Page<CvVariantDto>>>(this.baseUrl, {
         params,
@@ -42,7 +47,6 @@ export class CvVariantsService {
       })
       .pipe(map((response) => response.data));
   }
-
   /**
    * GET /api/cv-variants/{id}
    * Fetches a single CV variant configuration block belonging strictly to the user.
