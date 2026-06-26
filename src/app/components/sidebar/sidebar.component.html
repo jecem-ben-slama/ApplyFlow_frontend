@@ -1,88 +1,133 @@
 <aside
-    class="w-64 h-screen border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col justify-between p-4 sticky top-0 text-slate-700 dark:text-slate-200 transition-colors duration-200">
+    [class]="'transition-all duration-200 ease-in-out h-screen border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col justify-between sticky top-0 text-slate-700 dark:text-slate-200 overflow-hidden ' + (isCollapsed ? 'w-14' : 'w-64')">
 
-    <div class="space-y-8">
-        <div class="flex items-center gap-2.5 px-2">
-            <div
-                class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center font-black text-white text-base shadow-md shadow-indigo-600/20">
-                A
+    <div class="space-y-6">
+
+        <!-- Logo + collapse toggle -->
+        <div class="flex items-center justify-between px-3 pt-4">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div
+                    class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center font-black text-white text-base shadow-md shadow-indigo-600/20 shrink-0">
+                    A
+                </div>
+                <span
+                    [class]="'text-sm font-bold text-slate-900 dark:text-white tracking-wide whitespace-nowrap transition-opacity duration-150 ' + (isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100')">
+                    ApplyFlow
+                </span>
             </div>
-            <span class="text-base font-bold text-slate-900 dark:text-white tracking-wide">ApplyFlow</span>
+            <button *ngIf="!isCollapsed" (click)="toggleCollapse()"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg p-1 transition-colors shrink-0"
+                aria-label="Collapse sidebar">
+                <mat-icon class="scale-90">chevron_left</mat-icon>
+            </button>
         </div>
 
-        <nav class="space-y-1">
+        <!-- Expand button (collapsed state) -->
+        <div *ngIf="isCollapsed" class="flex justify-center px-3">
+            <button (click)="toggleCollapse()"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg p-1 transition-colors"
+                aria-label="Expand sidebar">
+                <mat-icon class="scale-90">chevron_right</mat-icon>
+            </button>
+        </div>
+
+        <!-- Nav -->
+        <nav class="space-y-0.5 px-2">
             <a routerLink="/templates"
                 routerLinkActive="bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-medium border-l-2 border-indigo-500"
                 [routerLinkActiveOptions]="{ exact: true }"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg cursor-pointer transition-all duration-150 text-xs hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-slate-200 decoration-none no-underline group">
+                [class]="'flex items-center gap-3 px-2.5 py-2.5 rounded-r-lg cursor-pointer transition-all duration-150 text-xs hover:bg-slate-100 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-slate-200 no-underline group ' + (isCollapsed ? 'justify-center' : '')">
                 <mat-icon
-                    class="scale-90 text-slate-400 dark:text-slate-500 group-[.text-indigo-600]:text-indigo-600 group-[.text-indigo-400]:text-indigo-400">dashboard</mat-icon>
-                <span>Templates</span>
+                    class="scale-90 shrink-0 text-slate-400 dark:text-slate-500 group-[.text-indigo-600]:text-indigo-600 group-[.text-indigo-400]:text-indigo-400">
+                    auto_awesome_mosaic
+                </mat-icon>
+                <span *ngIf="!isCollapsed">Templates</span>
             </a>
-<a routerLink="/cv-variants"
-    routerLinkActive="bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-medium border-l-2 border-indigo-500"
-    [routerLinkActiveOptions]="{ exact: true }"
-    class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg cursor-pointer transition-all duration-150 text-xs hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-slate-200 decoration-none no-underline group">
-    <mat-icon
-        class="scale-90 text-slate-400 dark:text-slate-500 group-[.text-indigo-600]:text-indigo-600 group-[.text-indigo-400]:text-indigo-400">dashboard</mat-icon>
-    <span>CV Variants</span>
-</a>
+
+            <a routerLink="/cv-variants"
+                routerLinkActive="bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-medium border-l-2 border-indigo-500"
+                [routerLinkActiveOptions]="{ exact: true }"
+                [class]="'flex items-center gap-3 px-2.5 py-2.5 rounded-r-lg cursor-pointer transition-all duration-150 text-xs hover:bg-slate-100 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-slate-200 no-underline group ' + (isCollapsed ? 'justify-center' : '')">
+                <mat-icon
+                    class="scale-90 shrink-0 text-slate-400 dark:text-slate-500 group-[.text-indigo-600]:text-indigo-600 group-[.text-indigo-400]:text-indigo-400">
+                    description
+                </mat-icon>
+                <span *ngIf="!isCollapsed">CV Variants</span>
+            </a>
+
             <a routerLink="/skills"
                 routerLinkActive="bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-medium border-l-2 border-indigo-500"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg cursor-pointer transition-all duration-150 text-xs hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-slate-200 decoration-none no-underline group">
+                [class]="'flex items-center gap-3 px-2.5 py-2.5 rounded-r-lg cursor-pointer transition-all duration-150 text-xs hover:bg-slate-100 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-slate-200 no-underline group ' + (isCollapsed ? 'justify-center' : '')">
                 <mat-icon
-                    class="scale-90 text-slate-400 dark:text-slate-500 group-[.text-indigo-600]:text-indigo-600 group-[.text-indigo-400]:text-indigo-400">psychology</mat-icon>
-                <span>Skills Engine</span>
+                    class="scale-90 shrink-0 text-slate-400 dark:text-slate-500 group-[.text-indigo-600]:text-indigo-600 group-[.text-indigo-400]:text-indigo-400">
+                    psychology
+                </mat-icon>
+                <span *ngIf="!isCollapsed">Skills Engine</span>
             </a>
+
             <a routerLink="/applications"
                 routerLinkActive="bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-medium border-l-2 border-indigo-500"
                 [routerLinkActiveOptions]="{ exact: true }"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg cursor-pointer transition-all duration-150 text-xs hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-slate-200 decoration-none no-underline group">
+                [class]="'flex items-center gap-3 px-2.5 py-2.5 rounded-r-lg cursor-pointer transition-all duration-150 text-xs hover:bg-slate-100 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-slate-200 no-underline group ' + (isCollapsed ? 'justify-center' : '')">
                 <mat-icon
-                    class="scale-90 text-slate-400 dark:text-slate-500 group-[.text-indigo-600]:text-indigo-600 group-[.text-indigo-400]:text-indigo-400">dashboard</mat-icon>
-                <span>Applications</span>
+                    class="scale-90 shrink-0 text-slate-400 dark:text-slate-500 group-[.text-indigo-600]:text-indigo-600 group-[.text-indigo-400]:text-indigo-400">
+                    send
+                </mat-icon>
+                <span *ngIf="!isCollapsed">Applications</span>
             </a>
         </nav>
     </div>
 
-    <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-900/60">
+    <!-- Bottom: user row + logout + gear -->
+    <div class="pt-3 border-t border-slate-200 dark:border-slate-800 mx-2 mb-3">
+        <div [class]="'flex items-center gap-2 p-1.5 ' + (isCollapsed ? 'justify-center flex-col' : '')">
 
-        <button type="button" (click)="toggleTheme()"
-            class="flex items-center justify-between w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group select-none text-left">
-            <div class="flex items-center gap-3">
-                <mat-icon
-                    class="text-slate-500 dark:text-slate-400 group-hover:text-indigo-500 scale-90 transition-colors">
-                    {{ (isDarkMode$ | async) ? 'light_mode' : 'dark_mode' }}
-                </mat-icon>
-                <div>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {{ (isDarkMode$ | async) ? 'Light mode active' : 'Dark mode active' }}
-                    </p>
-                    <p class="text-[10px] text-slate-500 dark:text-slate-400">
-                        Click to switch theme.
-                    </p>
+            <!-- Avatar -->
+            <img *ngIf="userProfilePic" [src]="userProfilePic" alt="Profile picture"
+                class="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0" />
+            <div *ngIf="!userProfilePic"
+                class="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-white text-[10px] shrink-0">
+                {{ userName.substring(0, 2) | uppercase }}
+            </div>
+
+            <span *ngIf="!isCollapsed"
+                class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate flex-1 leading-none">
+                {{ userName }}
+            </span>
+
+            <!-- Gear icon → dark mode toggle only -->
+            <div class="relative">
+                <button (click)="toggleGearMenu($event)"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg p-1 transition-colors"
+                    aria-label="Theme settings">
+                    <mat-icon class="scale-90">settings</mat-icon>
+                </button>
+
+                <div *ngIf="isGearOpen"
+                    [class]="'absolute bottom-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg py-1.5 z-50 min-w-[200px] ' + (isCollapsed ? 'left-8' : 'right-0')">
+                    <button type="button" (click)="toggleTheme(); $event.stopPropagation()"
+                        class="flex items-center gap-3 w-full px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left">
+                        <mat-icon class="scale-90 text-slate-400 dark:text-slate-500">
+                            {{ (isDarkMode$ | async) ? 'light_mode' : 'dark_mode' }}
+                        </mat-icon>
+                        <span class="flex-1">{{ (isDarkMode$ | async) ? 'Light mode' : 'Dark mode' }}</span>
+                        <span class="relative inline-flex items-center w-9 h-5 rounded-full transition-colors"
+                            [class.bg-indigo-500]="isDarkMode$ | async" [class.bg-slate-300]="!(isDarkMode$ | async)">
+                            <span
+                                class="absolute left-0.5 top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform"
+                                [class.translate-x-4]="isDarkMode$ | async"></span>
+                        </span>
+                    </button>
                 </div>
             </div>
-            <span class="relative inline-flex items-center w-12 h-6 rounded-full transition-colors"
-                [class.bg-indigo-500]="isDarkMode$ | async" [class.bg-slate-300]="!(isDarkMode$ | async)">
-                <span class="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform"
-                    [class.translate-x-6]="isDarkMode$ | async"></span>
-            </span>
-        </button>
 
-        <div
-            class="flex items-center gap-3 p-2 bg-white dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800 rounded-xl">
-            <div
-                class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-white text-xs">
-                MY
-            </div>
-            <div class="flex-1 min-w-0">
-                <h4 class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate leading-none mb-0.5">{{
-                    userName }}</h4>
-                <p
-                    class="text-[10px] text-slate-400 dark:text-slate-500 font-medium tracking-wide truncate leading-none">
-                    {{ userTier }}</p>
-            </div>
+            <!-- Logout icon button -->
+            <button (click)="logout()"
+                class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg p-1 transition-colors"
+                aria-label="Sign out">
+                <mat-icon class="scale-90">logout</mat-icon>
+            </button>
+
         </div>
     </div>
 
