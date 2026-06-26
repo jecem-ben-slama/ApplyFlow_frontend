@@ -1,9 +1,7 @@
 <aside
-    [class]="'transition-all duration-200 ease-in-out h-screen border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col justify-between sticky top-0 text-slate-700 dark:text-slate-200 overflow-hidden ' + (isCollapsed ? 'w-14' : 'w-64')">
+    [class]="'hidden md:flex transition-all duration-200 ease-in-out h-screen border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex-col justify-between sticky top-0 text-slate-700 dark:text-slate-200 overflow-hidden ' + (isCollapsed ? 'w-14' : 'w-64')">
 
     <div class="space-y-6">
-
-        <!-- Logo + collapse toggle -->
         <div class="flex items-center justify-between px-3 pt-4">
             <div class="flex items-center gap-2.5 min-w-0">
                 <div
@@ -22,7 +20,6 @@
             </button>
         </div>
 
-        <!-- Expand button (collapsed state) -->
         <div *ngIf="isCollapsed" class="flex justify-center px-3">
             <button (click)="toggleCollapse()"
                 class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg p-1 transition-colors"
@@ -31,7 +28,6 @@
             </button>
         </div>
 
-        <!-- Nav -->
         <nav class="space-y-0.5 px-2">
             <a routerLink="/templates"
                 routerLinkActive="bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 font-medium border-l-2 border-indigo-500"
@@ -70,11 +66,8 @@
         </nav>
     </div>
 
-    <!-- Bottom: user row + logout + gear -->
     <div class="pt-3 border-t border-slate-200 dark:border-slate-800 mx-2 mb-3">
         <div [class]="'flex items-center gap-2 p-1.5 ' + (isCollapsed ? 'justify-center flex-col' : '')">
-
-            <!-- Avatar -->
             <img *ngIf="userProfilePic" [src]="userProfilePic" alt="Profile picture"
                 class="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0" />
             <div *ngIf="!userProfilePic"
@@ -87,7 +80,6 @@
                 {{ userName }}
             </span>
 
-            <!-- Gear icon → dark mode toggle only -->
             <div class="relative">
                 <button (click)="toggleGearMenu($event)"
                     class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg p-1 transition-colors"
@@ -96,7 +88,7 @@
                 </button>
 
                 <div *ngIf="isGearOpen"
-                    [class]="'absolute bottom-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg py-1.5 z-50 min-w-[200px] ' + (isCollapsed ? 'left-8' : 'right-0')">
+                    class="absolute bottom-9 right-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg py-1.5 z-50 min-w-[200px]">
                     <button type="button" (click)="toggleTheme(); $event.stopPropagation()"
                         class="flex items-center gap-3 w-full px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left">
                         <mat-icon class="scale-90 text-slate-400 dark:text-slate-500">
@@ -113,26 +105,76 @@
                 </div>
             </div>
 
-            <!-- Logout icon button -->
             <button (click)="requestLogout()"
                 class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg p-1 transition-colors"
                 aria-label="Sign out">
                 <mat-icon class="scale-90">logout</mat-icon>
             </button>
-
         </div>
     </div>
-
 </aside>
 
-<!-- Sign-out confirmation dialog -->
-<div *ngIf="isConfirmLogoutOpen"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" (click)="cancelLogout()">
+<nav
+    class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex justify-around items-center h-14 px-2 shadow-lg">
 
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 w-full max-w-sm mx-4 p-6"
+    <a routerLink="/templates" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-medium"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex flex-col items-center justify-center w-full h-full text-[10px] gap-0.5 text-slate-500 dark:text-slate-400 no-underline">
+        <mat-icon class="scale-75">auto_awesome_mosaic</mat-icon>
+        <span>Templates</span>
+    </a>
+
+    <a routerLink="/cv-variants" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-medium"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex flex-col items-center justify-center w-full h-full text-[10px] gap-0.5 text-slate-500 dark:text-slate-400 no-underline">
+        <mat-icon class="scale-75">description</mat-icon>
+        <span>CV Variants</span>
+    </a>
+
+    <a routerLink="/skills" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-medium"
+        class="flex flex-col items-center justify-center w-full h-full text-[10px] gap-0.5 text-slate-500 dark:text-slate-400 no-underline">
+        <mat-icon class="scale-75">psychology</mat-icon>
+        <span>Skills</span>
+    </a>
+
+    <a routerLink="/applications" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-medium"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex flex-col items-center justify-center w-full h-full text-[10px] gap-0.5 text-slate-500 dark:text-slate-400 no-underline">
+        <mat-icon class="scale-75">send</mat-icon>
+        <span>Apps</span>
+    </a>
+
+    <button (click)="toggleGearMenu($event)"
+        class="flex flex-col items-center justify-center w-full h-full text-[10px] gap-0.5 text-slate-500 dark:text-slate-400 relative">
+        <mat-icon class="scale-75">settings</mat-icon>
+        <span>Settings</span>
+
+        <div *ngIf="isGearOpen"
+            class="absolute bottom-16 right-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1.5 z-50 min-w-[160px]">
+            <button type="button" (click)="toggleTheme(); $event.stopPropagation()"
+                class="flex items-center gap-2.5 w-full px-3 py-2 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left">
+                <mat-icon class="scale-75 text-slate-400 dark:text-slate-500">
+                    {{ (isDarkMode$ | async) ? 'light_mode' : 'dark_mode' }}
+                </mat-icon>
+                <span class="flex-1">{{ (isDarkMode$ | async) ? 'Light mode' : 'Dark mode' }}</span>
+            </button>
+            <div class="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
+            <button type="button" (click)="requestLogout(); $event.stopPropagation()"
+                class="flex items-center gap-2.5 w-full px-3 py-2 text-[11px] text-red-600 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left">
+                <mat-icon class="scale-75">logout</mat-icon>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </button>
+</nav>
+
+<div *ngIf="isConfirmLogoutOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+    (click)="cancelLogout()">
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 w-full max-w-sm p-6"
         (click)="$event.stopPropagation()">
 
-        <!-- Icon -->
         <div class="flex items-center justify-center w-11 h-11 rounded-full bg-red-50 dark:bg-red-950/40 mb-4">
             <mat-icon class="text-red-500 dark:text-red-400">logout</mat-icon>
         </div>
@@ -153,5 +195,5 @@
             </button>
         </div>
     </div>
-
 </div>
+<div class="block md:hidden h-14 w-full" aria-hidden="true"></div>
