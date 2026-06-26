@@ -36,6 +36,7 @@ export class ApplicationPopupComponent implements OnInit {
   };
 
   selectedTemplatePreview?: TemplateDto;
+  errorMessage = '';
 
   ngOnInit(): void {}
 
@@ -85,8 +86,17 @@ export class ApplicationPopupComponent implements OnInit {
   }
 
   onSubmit(): void {
+    this.errorMessage = '';
     if (!this.formModel.templateId) {
-      alert('Please select a base template configuration layout.');
+      this.errorMessage = 'Please select an email template to build from.';
+      return;
+    }
+
+    if (
+      this.formModel.recipientEmail &&
+      !/^\S+@\S+\.\S+$/.test(this.formModel.recipientEmail)
+    ) {
+      this.errorMessage = 'Please enter a valid recipient email address.';
       return;
     }
 

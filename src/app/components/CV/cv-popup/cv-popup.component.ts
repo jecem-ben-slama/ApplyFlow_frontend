@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,6 +27,7 @@ export class CvPopupComponent implements OnInit {
 
   @Output() close = new EventEmitter<void>();
   @Output() save = new EventEmitter<void>();
+  errorMessage = '';
 
   ngOnInit(): void {}
 
@@ -33,7 +35,13 @@ export class CvPopupComponent implements OnInit {
     this.close.emit();
   }
 
-  onSubmit(): void {
+  onSubmit(form?: NgForm): void {
+    this.errorMessage = '';
+    if (form && !form.form.valid) {
+      this.errorMessage =
+        'Please correct the highlighted fields before saving.';
+      return;
+    }
     this.save.emit();
   }
 }

@@ -1,6 +1,10 @@
 <div class="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex justify-center items-center p-4 z-50">
     <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
         <h3 class="text-xl font-bold text-gray-900 border-b pb-2">Compile New Targeting Parameters</h3>
+        <div *ngIf="errorMessage"
+            class="rounded-2xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3 text-sm dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100">
+            {{ errorMessage }}
+        </div>
         <form (ngSubmit)="onSubmit()" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1">

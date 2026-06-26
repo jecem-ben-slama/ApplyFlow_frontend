@@ -41,6 +41,7 @@ import { DeletePopupComponent } from '../common/delete-popup/delete-popup.compon
 export class TemplatesComponent implements OnInit {
   templates: TemplateDto[] = [];
   loading = false;
+  errorMessage = '';
 
   isFormVisible = false;
   editingTemplateId: number | null = null;
@@ -139,18 +140,23 @@ export class TemplatesComponent implements OnInit {
   }
 
   onSubmitTemplate(): void {
-    if (
-      !this.newTemplate.name ||
-      !this.newTemplate.subjectTemplate ||
-      !this.newTemplate.bodyTemplate
-    ) {
-      alert(
-        'Please populate the template name, subject line, and body content configurations.'
-      );
+    this.loading = true;
+    this.errorMessage = '';
+    if (!this.newTemplate.name?.trim()) {
+      this.errorMessage = 'Template name is required.';
+      this.loading = false;
       return;
     }
-
-    this.loading = true;
+    if (!this.newTemplate.subjectTemplate?.trim()) {
+      this.errorMessage = 'Template subject is required.';
+      this.loading = false;
+      return;
+    }
+    if (!this.newTemplate.bodyTemplate?.trim()) {
+      this.errorMessage = 'Template body content is required.';
+      this.loading = false;
+      return;
+    }
 
     if (this.editingTemplateId !== null) {
       this.templateService

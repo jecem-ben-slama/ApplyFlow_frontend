@@ -41,6 +41,7 @@ import { trigger, style, transition, animate } from '@angular/animations';
 export class SkillsComponent implements OnInit {
   skills: Skill[] = [];
   loading = false;
+  errorMessage = '';
 
   isFormVisible = false;
   editingSkillId: number | null = null;
@@ -111,10 +112,13 @@ export class SkillsComponent implements OnInit {
   }
 
   onCreateSkill(): void {
-    if (!this.newSkill.name.trim() || !this.newSkill.sentenceEn.trim()) {
-      alert(
-        'Please fill out at least the display and technical reference properties.'
-      );
+    this.errorMessage = '';
+    if (!this.newSkill.name?.trim()) {
+      this.errorMessage = 'Skill display name is required.';
+      return;
+    }
+    if (!this.newSkill.sentenceEn?.trim()) {
+      this.errorMessage = 'English sentence example is required.';
       return;
     }
 
