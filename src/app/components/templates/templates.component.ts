@@ -6,11 +6,18 @@ import { trigger, style, transition, animate } from '@angular/animations';
 import { TemplateService } from '../../services/template.service';
 import { TemplateDto, Page, getPageMeta } from '../../models';
 import { PaginationComponent } from '../pagination/pagination.component';
+import { DeletePopupComponent } from '../common/delete-popup/delete-popup.component';
 
 @Component({
   selector: 'app-templates',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, PaginationComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatIconModule,
+    PaginationComponent,
+    DeletePopupComponent,
+  ],
   templateUrl: './templates.component.html',
   animations: [
     trigger('formSlide', [
@@ -53,6 +60,11 @@ export class TemplatesComponent implements OnInit {
     subjectTemplate: '',
     bodyTemplate: '',
   };
+
+  // delete modal state
+  showDeleteModal = false;
+  deleteTargetId?: number;
+  deleteMessage = 'Are you sure you want to drop this layout parsing template?';
 
   constructor(private templateService: TemplateService) {}
 
@@ -175,8 +187,14 @@ export class TemplatesComponent implements OnInit {
 
   onDeleteTemplate(id: number | undefined): void {
     if (!id) return;
-    if (!confirm('Are you sure you want to drop this layout parsing template?'))
-      return;
+    this.deleteTargetId = id;
+    this.showDeleteModal = true;
+  }
+
+  onConfirmDelete(): void {
+    const id = this.deleteTargetId;
+    if (!id) return;
+    this.showDeleteModal = false;
     if (this.editingTemplateId === id) this.onCancelEdit();
 
     this.templateService.deleteTemplate(id).subscribe({
@@ -187,6 +205,11 @@ export class TemplatesComponent implements OnInit {
           err
         ),
     });
+  }
+
+  onCancelDelete(): void {
+    this.showDeleteModal = false;
+    this.deleteTargetId = undefined;
   }
 
   onPageChange(newPage: number): void {

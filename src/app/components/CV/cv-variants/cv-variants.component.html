@@ -97,6 +97,9 @@
         </app-pagination>
     </div>
 
+    <app-delete-popup [isModalOpen]="showDeleteModal" [title]="'Confirm Deletion'" [message]="deleteMessage"
+        [isLoading]="isLoading" (confirm)="onConfirmDelete()" (close)="onCancelDelete()"></app-delete-popup>
+
     <app-cv-popup [isModalOpen]="isModalOpen" [isEditing]="isEditing" [formModel]="formModel" [isLoading]="isLoading"
         (close)="closeModal()" (save)="onSubmit()">
     </app-cv-popup>

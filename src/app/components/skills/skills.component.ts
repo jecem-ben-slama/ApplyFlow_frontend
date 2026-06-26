@@ -5,13 +5,20 @@ import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../pagination/pagination.component';
+import { DeletePopupComponent } from '../common/delete-popup/delete-popup.component';
 import { trigger, style, transition, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-skills',
   templateUrl: './skills.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, PaginationComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatIconModule,
+    PaginationComponent,
+    DeletePopupComponent,
+  ],
   animations: [
     trigger('formSlide', [
       transition(':enter', [
@@ -48,6 +55,11 @@ export class SkillsComponent implements OnInit {
     sentenceEn: '',
     sentenceFr: '',
   };
+
+  // delete modal state
+  showDeleteModal = false;
+  deleteTargetId?: number;
+  deleteMessage = 'Are you sure you want to drop this skill parsing block?';
 
   constructor(private skillsService: SkillsService) {}
 
@@ -150,12 +162,17 @@ export class SkillsComponent implements OnInit {
   }
 
   onDeleteSkill(id: number): void {
-    if (!confirm('Are you sure you want to drop this skill parsing block?'))
-      return;
+    this.deleteTargetId = id;
+    this.showDeleteModal = true;
+  }
+
+  onConfirmDelete(): void {
+    const id = this.deleteTargetId;
+    if (!id) return;
+    this.showDeleteModal = false;
     if (this.editingSkillId === id) this.onCancelEdit();
     this.skillsService.deleteSkill(id).subscribe({
       next: () => {
-        // Step back a page if we just deleted the last item on a non-first page
         const remainingOnPage = this.skills.length - 1;
         if (remainingOnPage === 0 && this.currentPage > 0) {
           this.currentPage--;
@@ -170,6 +187,10 @@ export class SkillsComponent implements OnInit {
     });
   }
 
+  onCancelDelete(): void {
+    this.showDeleteModal = false;
+    this.deleteTargetId = undefined;
+  }
   onPageChange(newPage: number): void {
     if (newPage < 0 || newPage >= this.totalPages) return;
     this.currentPage = newPage;

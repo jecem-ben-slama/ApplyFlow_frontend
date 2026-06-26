@@ -6,6 +6,7 @@ import { CvVariantsService } from '../../../services/cv-variants.service';
 import { CvVariantDto, Page } from '../../../models';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { CvPopupComponent } from '../cv-popup/cv-popup.component';
+import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
 
 @Component({
   selector: 'app-cv-variants',
@@ -16,6 +17,7 @@ import { CvPopupComponent } from '../cv-popup/cv-popup.component';
     MatIconModule,
     PaginationComponent,
     CvPopupComponent,
+    DeletePopupComponent,
   ],
   templateUrl: './cv-variants.component.html',
   styleUrls: ['./cv-variants.component.css'],
@@ -47,6 +49,12 @@ export class CvVariantsComponent implements OnInit {
     language: 'en',
     fileUrl: '',
   };
+
+  // Delete modal state
+  showDeleteModal = false;
+  deleteTargetId?: number;
+  deleteMessage =
+    'Are you sure you want to delete this track profile record permanently?';
 
   constructor(private cvService: CvVariantsService) {}
 
@@ -140,14 +148,15 @@ export class CvVariantsComponent implements OnInit {
   }
 
   onDelete(id: number | undefined): void {
-    if (
-      !id ||
-      !confirm(
-        'Are you sure you want to delete this track profile record permanently?'
-      )
-    )
-      return;
+    if (!id) return;
+    this.deleteTargetId = id;
+    this.showDeleteModal = true;
+  }
 
+  onConfirmDelete(): void {
+    const id = this.deleteTargetId;
+    if (!id) return;
+    this.showDeleteModal = false;
     this.isLoading = true;
     this.cvService.deleteCvVariant(id).subscribe({
       next: () => {
@@ -162,6 +171,10 @@ export class CvVariantsComponent implements OnInit {
     });
   }
 
+  onCancelDelete(): void {
+    this.showDeleteModal = false;
+    this.deleteTargetId = undefined;
+  }
   private showFeedback(msg: string): void {
     this.successMessage = msg;
     setTimeout(() => (this.successMessage = ''), 4000);

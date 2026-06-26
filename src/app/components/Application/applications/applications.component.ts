@@ -22,6 +22,7 @@ import {
 } from '../../../models';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { ApplicationPopupComponent } from '../application-popup/application-popup.component';
+import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
 
 @Component({
   selector: 'app-applications',
@@ -31,6 +32,7 @@ import { ApplicationPopupComponent } from '../application-popup/application-popu
     FormsModule,
     PaginationComponent,
     ApplicationPopupComponent,
+    DeletePopupComponent,
   ], // <-- Add to imports
   templateUrl: './applications.component.html',
   styleUrls: ['./applications.component.css'],
@@ -53,6 +55,11 @@ export class ApplicationsComponent implements OnInit {
   selectedApplication?: ApplicationResponseDto;
   errorMessage = '';
   successMessage = '';
+
+  // delete modal state
+  showDeleteModal = false;
+  deleteTargetId?: number;
+  deleteMessage = 'Permanently purge this compiled tracking profile record?';
 
   expandedAppId: number | null = null;
   editingNotesAppId: number | null = null;
@@ -262,8 +269,14 @@ export class ApplicationsComponent implements OnInit {
   }
 
   onDelete(id: number): void {
-    if (!confirm('Permanently purge this compiled tracking profile record?'))
-      return;
+    this.deleteTargetId = id;
+    this.showDeleteModal = true;
+  }
+
+  onConfirmDelete(): void {
+    const id = this.deleteTargetId;
+    if (!id) return;
+    this.showDeleteModal = false;
     this.appService.deleteApplication(id).subscribe({
       next: () => {
         this.showFeedback('Application profile discarded.');
@@ -273,6 +286,11 @@ export class ApplicationsComponent implements OnInit {
       error: (err) =>
         (this.errorMessage = err.error?.message || 'Could not drop entry.'),
     });
+  }
+
+  onCancelDelete(): void {
+    this.showDeleteModal = false;
+    this.deleteTargetId = undefined;
   }
 
   onSendCompiledEmail(): void {

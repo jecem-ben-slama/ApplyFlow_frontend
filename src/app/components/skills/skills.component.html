@@ -156,6 +156,9 @@
                 (pageChange)="onPageChange($event)">
             </app-pagination>
 
+            <app-delete-popup [isModalOpen]="showDeleteModal" [title]="'Confirm Deletion'" [message]="deleteMessage"
+                (confirm)="onConfirmDelete()" (close)="onCancelDelete()" [isLoading]="loading"></app-delete-popup>
+
         </div>
     </div>
 </div>

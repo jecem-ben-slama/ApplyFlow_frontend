@@ -178,6 +178,9 @@
         (pageChange)="onPageChange($event)">
     </app-pagination>
 
+    <app-delete-popup [isModalOpen]="showDeleteModal" [title]="'Confirm Deletion'" [message]="deleteMessage"
+        (confirm)="onConfirmDelete()" (close)="onCancelDelete()" [isLoading]="isLoading"></app-delete-popup>
+
     <app-application-popup *ngIf="isModalOpen" [availableSkills]="availableSkills"
         [availableCvVariants]="availableCvVariants" [availableTemplates]="availableTemplates" [isLoading]="isLoading"
         (close)="closeModal()" (submit)="onCreateSubmit($event)">
