@@ -56,8 +56,9 @@ export class SkillsComponent implements OnInit {
   totalPages = 0;
   totalElements = 0;
 
-  // Active category filter (null = show all)
   selectedFilterCategoryId: number | null = null;
+  searchTerm = '';
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   newSkill: {
     name: string;
@@ -73,7 +74,8 @@ export class SkillsComponent implements OnInit {
 
   showDeleteModal = false;
   deleteTargetId?: number;
-  deleteMessage = 'Are you sure you want to drop this skill parsing block?';
+  deleteTargetType: 'skill' | 'category' = 'skill';
+  deleteMessage = '';
 
   showCategoryModal = false;
   editingCategory: Category | null = null;
@@ -106,7 +108,8 @@ export class SkillsComponent implements OnInit {
         this.pageSize,
         'id',
         'asc',
-        this.selectedFilterCategoryId
+        this.selectedFilterCategoryId,
+        this.searchTerm || undefined
       )
       .subscribe({
         next: (page) => {
@@ -121,6 +124,14 @@ export class SkillsComponent implements OnInit {
           this.loading = false;
         },
       });
+  }
+
+  onSearchChange(): void {
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
+    this.searchDebounce = setTimeout(() => {
+      this.currentPage = 0;
+      this.loadSkills();
+    }, 350);
   }
 
   onFilterByCategory(categoryId: number | null): void {
@@ -196,7 +207,8 @@ export class SkillsComponent implements OnInit {
               this.pageSize,
               'id',
               'asc',
-              this.selectedFilterCategoryId
+              this.selectedFilterCategoryId,
+              this.searchTerm || undefined
             )
             .subscribe((peek) => {
               const meta = getPageMeta(peek);
@@ -214,6 +226,17 @@ export class SkillsComponent implements OnInit {
 
   onDeleteSkill(id: number): void {
     this.deleteTargetId = id;
+    this.deleteTargetType = 'skill';
+    this.deleteMessage =
+      'Are you sure you want to drop this skill parsing block?';
+    this.showDeleteModal = true;
+  }
+
+  onDeleteCategory(category: Category, event: MouseEvent): void {
+    event.stopPropagation();
+    this.deleteTargetId = category.id;
+    this.deleteTargetType = 'category';
+    this.deleteMessage = `Are you sure you want to delete the category "${category.name}"? This will untag skills associated with it.`;
     this.showDeleteModal = true;
   }
 
@@ -273,16 +296,40 @@ export class SkillsComponent implements OnInit {
   onConfirmDelete(): void {
     const id = this.deleteTargetId;
     if (!id) return;
+
     this.showDeleteModal = false;
-    if (this.editingSkillId === id) this.onCancelEdit();
-    this.skillsService.deleteSkill(id).subscribe({
-      next: () => {
-        const remainingOnPage = this.skills.length - 1;
-        if (remainingOnPage === 0 && this.currentPage > 0) this.currentPage--;
-        this.loadSkills();
-      },
-      error: (err) => console.error('Failed to delete skill:', err),
-    });
+    this.loading = true;
+
+    if (this.deleteTargetType === 'skill') {
+      if (this.editingSkillId === id) this.onCancelEdit();
+      this.skillsService.deleteSkill(id).subscribe({
+        next: () => {
+          const remainingOnPage = this.skills.length - 1;
+          if (remainingOnPage === 0 && this.currentPage > 0) this.currentPage--;
+          this.loadSkills();
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('Failed to delete skill:', err);
+          this.loading = false;
+        },
+      });
+    } else if (this.deleteTargetType === 'category') {
+      if (this.selectedFilterCategoryId === id) {
+        this.onFilterByCategory(null);
+      }
+      this.categoryService.deleteCategory(id).subscribe({
+        next: () => {
+          this.loadCategories();
+          this.loadSkills(); // Refresh skills to reflect removed/untagged categories
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('Failed to delete category:', err);
+          this.loading = false;
+        },
+      });
+    }
   }
 
   onCancelDelete(): void {

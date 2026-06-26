@@ -13,16 +13,13 @@ export class SkillsService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * GET /api/skills
-   * Optionally filter by categoryId.
-   */
   getAllSkills(
     page: number = 0,
     size: number = 10,
     sortBy: string = 'id',
     direction: 'asc' | 'desc' = 'asc',
-    categoryId?: number | null
+    categoryId?: number | null,
+    search?: string
   ): Observable<Page<Skill>> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -30,9 +27,9 @@ export class SkillsService {
       .set('sortBy', sortBy)
       .set('direction', direction);
 
-    if (categoryId != null) {
+    if (categoryId != null)
       params = params.set('categoryId', categoryId.toString());
-    }
+    if (search?.trim()) params = params.set('search', search.trim());
 
     return this.http
       .get<ApiResponse<Page<Skill>>>(this.baseUrl, {
@@ -42,18 +39,12 @@ export class SkillsService {
       .pipe(map((response) => response.data));
   }
 
-  /**
-   * GET /api/skills/{id}
-   */
   getSkillById(id: number): Observable<Skill> {
     return this.http
       .get<ApiResponse<Skill>>(`${this.baseUrl}/${id}`, API_CONFIG.httpOptions)
       .pipe(map((response) => response.data));
   }
 
-  /**
-   * POST /api/skills
-   */
   createSkill(
     skill: Omit<Skill, 'id' | 'userId' | 'categoryName'>
   ): Observable<Skill> {
@@ -62,9 +53,6 @@ export class SkillsService {
       .pipe(map((response) => response.data));
   }
 
-  /**
-   * PUT /api/skills/{id}
-   */
   updateSkill(
     id: number,
     skill: Omit<Skill, 'id' | 'userId' | 'categoryName'>
@@ -78,9 +66,6 @@ export class SkillsService {
       .pipe(map((response) => response.data));
   }
 
-  /**
-   * DELETE /api/skills/{id}
-   */
   deleteSkill(id: number): Observable<void> {
     return this.http
       .delete<ApiResponse<void>>(
