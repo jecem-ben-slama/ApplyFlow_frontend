@@ -1,0 +1,93 @@
+<div
+    class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden transition-all duration-200">
+    <div (click)="onToggleForm()"
+        class="flex items-center justify-between p-5 md:px-6 cursor-pointer select-none hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors border-b border-transparent hover:border-slate-100 dark:hover:border-slate-800/60">
+        <div class="flex items-center gap-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                {{ editingSkillId ? 'Modify Skill' : 'Add New Skill' }}
+            </span>
+            <span *ngIf="editingSkillId"
+                class="text-[10px] bg-amber-50/80 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 px-2.5 py-0.5 rounded-full font-medium tracking-wide animate-pulse">
+                Editing Mode
+            </span>
+        </div>
+        <div class="flex items-center gap-2 text-slate-400">
+            <span class="text-xs font-medium text-slate-400 hidden sm:inline">{{ isFormVisible ? 'Hide' : 'Expand'
+                }}</span>
+            <mat-icon class="scale-90 transition-transform duration-300 text-slate-400"
+                [class.rotate-180]="!isFormVisible">expand_less</mat-icon>
+        </div>
+    </div>
+
+    <div *ngIf="isFormVisible" @formSlide class="border-t border-slate-100 dark:border-slate-800/60">
+        <div class="p-5 md:p-6 space-y-6 bg-slate-50/60 dark:bg-slate-950/40">
+
+            <div *ngIf="errorMessage"
+                class="flex items-start gap-3 rounded-xl border border-rose-200/80 bg-rose-50/50 dark:border-rose-500/20 dark:bg-rose-500/10 px-4 py-3.5 text-sm text-rose-800 dark:text-rose-200 shadow-sm">
+                <mat-icon class="text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5">error_outline</mat-icon>
+                <p class="text-xs leading-relaxed pt-0.5">{{ errorMessage }}</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                    <label
+                        class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Display
+                        Name</label>
+                    <input type="text" [(ngModel)]="formData.name" placeholder="e.g., Next.js"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm" />
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                        Category <span
+                            class="text-slate-400 normal-case font-normal font-sans text-[10px] lowercase ml-1">(optional)</span>
+                    </label>
+                    <div class="relative">
+                        <select [(ngModel)]="formData.categoryId"
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm appearance-none">
+                            <option [ngValue]="null">— No category —</option>
+                            <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
+                        </select>
+                        <mat-icon
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-base">expand_more</mat-icon>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                    <label
+                        class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">English
+                        Sentence</label>
+                    <textarea [(ngModel)]="formData.sentenceEn"
+                        placeholder="e.g., Developed high-performance web apps leveraging Next.js SSR configurations."
+                        rows="3"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y min-h-[80px] transition-all shadow-sm"></textarea>
+                </div>
+                <div class="space-y-2">
+                    <label
+                        class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">French
+                        Sentence</label>
+                    <textarea [(ngModel)]="formData.sentenceFr"
+                        placeholder="e.g., Développé des applications web performantes via les configurations SSR de Next.js."
+                        rows="3"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y min-h-[80px] transition-all shadow-sm"></textarea>
+                </div>
+            </div>
+
+            <div
+                class="flex flex-col-reverse sm:flex-row justify-end items-center gap-3 pt-4 border-t border-slate-200/60 dark:border-slate-800/60">
+                <button *ngIf="editingSkillId !== null" (click)="onCancel()" [disabled]="loading"
+                    class="w-full sm:w-auto border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                    Cancel
+                </button>
+                <button (click)="onSave()" [disabled]="loading"
+                    class="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-6 py-3 rounded-xl transition-colors shadow-md shadow-indigo-500/10">
+                    <mat-icon *ngIf="loading" class="animate-spin text-base !w-4 !h-4">refresh</mat-icon>
+                    <span *ngIf="!loading">{{ editingSkillId ? 'Update Skill' : 'Create Skill' }}</span>
+                    <span *ngIf="loading">{{ editingSkillId ? 'Updating...' : 'Saving...' }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

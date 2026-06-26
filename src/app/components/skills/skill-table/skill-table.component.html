@@ -1,0 +1,88 @@
+<div
+    class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 md:p-6 shadow-sm space-y-6">
+    <div class="flex justify-end pt-2">
+        <div class="relative w-full md:w-64">
+            <mat-icon
+                class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 scale-90 pointer-events-none">search</mat-icon>
+            <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchInput()" placeholder="Search skills..."
+                class="w-full pl-10 pr-4 py-2.5 text-xs rounded-xl bg-slate-50/80 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm" />
+        </div>
+    </div>
+
+    <div
+        class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-950 shadow-sm">
+        <table class="w-full text-left border-collapse min-w-[860px]">
+            <thead>
+                <tr
+                    class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold uppercase text-slate-600 dark:text-slate-400 tracking-wider bg-slate-50/80 dark:bg-slate-900/40">
+                    <th class="py-4 px-5">Display Name</th>
+                    <th class="py-4 px-5">Category</th>
+                    <th class="py-4 px-5 w-1/3">English Sentence</th>
+                    <th class="py-4 px-5 w-1/3">French Sentence</th>
+                    <th class="py-4 px-5 text-right w-28">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="text-xs divide-y divide-slate-100 dark:divide-slate-800/60">
+
+                <tr *ngIf="loading">
+                    <td colspan="5" class="py-16 text-center text-slate-500 dark:text-slate-400 font-medium">
+                        <div class="flex flex-col items-center gap-2">
+                            <mat-icon class="animate-spin text-indigo-500">refresh</mat-icon>
+                            <span>Loading skills...</span>
+                        </div>
+                    </td>
+                </tr>
+
+                <ng-container *ngIf="!loading">
+                    <tr *ngFor="let skill of skills"
+                        class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                        <td class="py-4 px-5 font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                            {{ skill.name }}
+                        </td>
+                        <td class="py-4 px-5 whitespace-nowrap">
+                            <span *ngIf="skill.categoryName"
+                                class="inline-block text-[10px] font-semibold px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-400 dark:border-indigo-500/20">
+                                {{ skill.categoryName }}
+                            </span>
+                            <span *ngIf="!skill.categoryName" class="text-slate-400 select-none">—</span>
+                        </td>
+                        <td class="py-4 px-5 text-slate-600 dark:text-slate-400 max-w-0 truncate"
+                            [title]="skill.sentenceEn">
+                            {{ skill.sentenceEn }}
+                        </td>
+                        <td class="py-4 px-5 text-slate-600 dark:text-slate-400 max-w-0 truncate"
+                            [title]="skill.sentenceFr">
+                            {{ skill.sentenceFr }}
+                        </td>
+                        <td class="py-4 px-5 text-right whitespace-nowrap">
+                            <div class="inline-flex items-center gap-1.5">
+                                <button (click)="editSkill.emit(skill)" title="Edit"
+                                    class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all inline-flex items-center justify-center p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                                    <mat-icon class="text-sm !w-4 !h-4">edit</mat-icon>
+                                </button>
+                                <button (click)="deleteSkill.emit(skill.id)" title="Delete"
+                                    class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all inline-flex items-center justify-center p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                                    <mat-icon class="text-sm !w-4 !h-4">delete</mat-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr *ngIf="skills.length === 0">
+                        <td colspan="5" class="py-16 text-center text-slate-500 dark:text-slate-400 font-medium">
+                            <div class="flex flex-col items-center gap-2">
+                                <mat-icon class="text-slate-300 dark:text-slate-600 text-2xl">search_off</mat-icon>
+                                <span>No skills found{{ selectedFilterCategoryId ? ' in this category' : '' }}.</span>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-container>
+
+            </tbody>
+        </table>
+    </div>
+
+    <app-pagination [currentPage]="currentPage" [totalPages]="totalPages" [loading]="loading"
+        (pageChange)="pageChange.emit($event)">
+    </app-pagination>
+</div>

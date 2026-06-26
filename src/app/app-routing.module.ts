@@ -7,11 +7,11 @@ export const routes: Routes = [
     path: 'login',
     component: LoginComponent,
   },
- 
+
   {
     path: 'skills',
     loadComponent: () =>
-      import('./components/skills/skills.component').then(
+      import('./components/skills/skills-vue/skills.component').then(
         (m) => m.SkillsComponent
       ),
     canActivate: [authGuard], // Protected from anonymous access
@@ -33,11 +33,11 @@ export const routes: Routes = [
     canActivate: [authGuard], // Protected from anonymous access
   },
   {
-path: 'applications',
+    path: 'applications',
     loadComponent: () =>
-      import('./components/Application/applications/applications.component').then(
-        (m) => m.ApplicationsComponent
-      ),
+      import(
+        './components/Application/applications/applications.component'
+      ).then((m) => m.ApplicationsComponent),
     canActivate: [authGuard], // Protected from anonymous access
   },
   {
