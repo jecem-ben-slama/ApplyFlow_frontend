@@ -5,8 +5,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { TemplateService } from '../../services/template.service';
 import { TemplateDto, Page, getPageMeta } from '../../models';
-import { PaginationComponent } from '../pagination/pagination.component';
 import { DeletePopupComponent } from '../common/delete-popup/delete-popup.component';
+import { PaginationComponent } from '../common/pagination/pagination.component';
 
 @Component({
   selector: 'app-templates',

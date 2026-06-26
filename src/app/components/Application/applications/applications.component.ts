@@ -20,7 +20,7 @@ import {
   TemplateDto,
   getPageMeta,
 } from '../../../models';
-import { PaginationComponent } from '../../pagination/pagination.component';
+import { PaginationComponent } from '../../common/pagination/pagination.component';
 import { ApplicationPopupComponent } from '../application-popup/application-popup.component';
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
 

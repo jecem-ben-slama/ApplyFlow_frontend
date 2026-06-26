@@ -4,9 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { CvVariantsService } from '../../../services/cv-variants.service';
 import { CvVariantDto, Page } from '../../../models';
-import { PaginationComponent } from '../../pagination/pagination.component';
 import { CvPopupComponent } from '../cv-popup/cv-popup.component';
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
+import { PaginationComponent } from '../../common/pagination/pagination.component';
 
 @Component({
   selector: 'app-cv-variants',

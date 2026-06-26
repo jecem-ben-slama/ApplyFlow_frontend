@@ -4,9 +4,9 @@ import { Skill, getPageMeta } from '../../models';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PaginationComponent } from '../pagination/pagination.component';
 import { DeletePopupComponent } from '../common/delete-popup/delete-popup.component';
 import { trigger, style, transition, animate } from '@angular/animations';
+import { PaginationComponent } from '../common/pagination/pagination.component';
 
 @Component({
   selector: 'app-skills',
