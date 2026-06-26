@@ -17,17 +17,10 @@ export class AuthService {
   private readonly isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public readonly isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
-  /**
-   * Triggers a raw browser redirect to the Spring Boot Google OAuth2 login pipeline.
-   */
   loginWithGoogle(): void {
     window.location.href = API_CONFIG.endpoints.auth.login;
   }
 
-  /**
-   * Verifies the browser's active JSESSIONID cookie against the backend context.
-   * Updates state subjects reactively based on validation status.
-   */
   checkSession(): Observable<boolean> {
     return this.http
       .get<ApiResponse<User>>(
@@ -52,28 +45,33 @@ export class AuthService {
   }
 
   /**
-   * Ends the authenticated session via Spring Security's state clearout endpoint.
+   * Ends the session with the backend and redirects this tab to /login.
+   * Called by the confirming tab only — other tabs use handleCrossTabLogout().
    */
   logout(): void {
     this.http
       .post(API_CONFIG.endpoints.auth.logout, {}, API_CONFIG.httpOptions)
       .subscribe({
         next: () => this.handleLogoutRedirect(),
-        error: () => this.handleLogoutRedirect(), // Fallback clean if session already dropped
+        error: () => this.handleLogoutRedirect(),
       });
   }
 
   /**
-   * Internal helper to flush application streams completely.
+   * Called on tabs that received the BroadcastChannel logout event.
+   * Skips the backend call (the initiating tab already invalidated the session)
+   * and goes straight to clearing state and redirecting.
    */
+  handleCrossTabLogout(): void {
+    this.clearLocalState();
+    window.location.href = '/login';
+  }
+
   private clearLocalState(): void {
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
   }
 
-  /**
-   * Flushes local session data tracking state and drops user back to the application threshold.
-   */
   private handleLogoutRedirect(): void {
     this.clearLocalState();
     window.location.href = '/login';
