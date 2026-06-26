@@ -9,8 +9,7 @@ import { ApiResponse, Page, TemplateDto } from '../models';
   providedIn: 'root',
 })
 export class TemplateService {
-  private readonly baseUrl =
-    API_CONFIG.endpoints.templates.base ;
+  private readonly baseUrl = API_CONFIG.endpoints.templates.base;
 
   constructor(private http: HttpClient) {}
 
@@ -24,7 +23,8 @@ export class TemplateService {
     size: number = 10,
     sortBy: string = 'id',
     direction: 'asc' | 'desc' = 'asc',
-    language?: string
+    language?: string,
+    search?: string // ← new
   ): Observable<Page<TemplateDto>> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -32,9 +32,8 @@ export class TemplateService {
       .set('sortBy', sortBy)
       .set('direction', direction);
 
-    if (language) {
-      params = params.set('language', language);
-    }
+    if (language) params = params.set('language', language);
+    if (search?.trim()) params = params.set('search', search.trim()); // ← new
 
     return this.http
       .get<ApiResponse<Page<TemplateDto>>>(this.baseUrl, {

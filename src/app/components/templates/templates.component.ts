@@ -54,6 +54,8 @@ export class TemplatesComponent implements OnInit {
   totalPages = 0;
   totalElements = 0;
   selectedLanguage: string | undefined = undefined;
+  searchTerm = '';
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   newTemplate = {
     name: '',
@@ -88,7 +90,8 @@ export class TemplatesComponent implements OnInit {
         this.pageSize,
         'id',
         'asc',
-        this.selectedLanguage
+        this.selectedLanguage,
+        this.searchTerm || undefined
       )
       .subscribe({
         next: (page: Page<TemplateDto>) => {
@@ -108,6 +111,14 @@ export class TemplatesComponent implements OnInit {
 
   onToggleForm(): void {
     this.isFormVisible = !this.isFormVisible;
+  }
+
+  onSearchChange(): void {
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
+    this.searchDebounce = setTimeout(() => {
+      this.currentPage = 0;
+      this.loadTemplates();
+    }, 350);
   }
 
   onLanguageFilterChange(lang: string): void {
