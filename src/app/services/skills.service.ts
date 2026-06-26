@@ -15,19 +15,24 @@ export class SkillsService {
 
   /**
    * GET /api/skills
-   * Retrieves a paginated slice of the user's specific skills directory.
+   * Optionally filter by categoryId.
    */
   getAllSkills(
     page: number = 0,
     size: number = 10,
     sortBy: string = 'id',
-    direction: 'asc' | 'desc' = 'asc'
+    direction: 'asc' | 'desc' = 'asc',
+    categoryId?: number | null
   ): Observable<Page<Skill>> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sortBy', sortBy)
       .set('direction', direction);
+
+    if (categoryId != null) {
+      params = params.set('categoryId', categoryId.toString());
+    }
 
     return this.http
       .get<ApiResponse<Page<Skill>>>(this.baseUrl, {
@@ -39,7 +44,6 @@ export class SkillsService {
 
   /**
    * GET /api/skills/{id}
-   * Fetches a single skill record belonging strictly to the authenticated user.
    */
   getSkillById(id: number): Observable<Skill> {
     return this.http
@@ -49,9 +53,10 @@ export class SkillsService {
 
   /**
    * POST /api/skills
-   * Registers a brand new user-owned skill workspace record.
    */
-  createSkill(skill: Omit<Skill, 'id' | 'userId'>): Observable<Skill> {
+  createSkill(
+    skill: Omit<Skill, 'id' | 'userId' | 'categoryName'>
+  ): Observable<Skill> {
     return this.http
       .post<ApiResponse<Skill>>(this.baseUrl, skill, API_CONFIG.httpOptions)
       .pipe(map((response) => response.data));
@@ -59,11 +64,10 @@ export class SkillsService {
 
   /**
    * PUT /api/skills/{id}
-   * Updates an existing skill profile owned by the logged-in user.
    */
   updateSkill(
     id: number,
-    skill: Omit<Skill, 'id' | 'userId'>
+    skill: Omit<Skill, 'id' | 'userId' | 'categoryName'>
   ): Observable<Skill> {
     return this.http
       .put<ApiResponse<Skill>>(
@@ -76,7 +80,6 @@ export class SkillsService {
 
   /**
    * DELETE /api/skills/{id}
-   * Deletes a user's skill record after verifying ownership context on the server.
    */
   deleteSkill(id: number): Observable<void> {
     return this.http

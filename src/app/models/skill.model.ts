@@ -4,4 +4,6 @@ export interface Skill {
   sentenceEn: string;
   sentenceFr: string;
   userId: number;
+  categoryId?: number | null;
+  categoryName?: string | null;
 }

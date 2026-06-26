@@ -27,6 +27,9 @@ export const API_CONFIG = {
       base: `${environment.apiUrl}/api/skills`,
       profile: `${environment.apiUrl}/api/skills/profile`,
     },
+    categories: {
+  base: `${environment.apiUrl}/api/categories`,
+},
     templates: {
       base: `${environment.apiUrl}/api/templates`,
       detail: (id: number) => `${environment.apiUrl}/api/templates/${id}`,

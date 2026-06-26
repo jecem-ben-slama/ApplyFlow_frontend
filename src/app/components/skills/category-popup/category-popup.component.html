@@ -1,0 +1,70 @@
+<div *ngIf="isModalOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm">
+    <div
+        class="w-full max-w-xl rounded-[1.75rem] border border-slate-200/70 dark:border-slate-800/80 bg-white dark:bg-slate-950 p-6 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] overflow-hidden relative">
+
+        <!-- accent bar -->
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-500">
+        </div>
+
+        <!-- Header -->
+        <div class="flex items-start justify-between gap-4 mb-6 mt-1">
+            <div>
+                <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    {{ isEditing ? 'Edit Category' : 'New Category' }}
+                </h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                    Group related skills together for smarter filtering and display.
+                </p>
+            </div>
+            <button type="button" (click)="onCancel()"
+                class="rounded-xl p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-all flex-shrink-0">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+
+        <!-- Form -->
+        <form #categoryForm="ngForm" (ngSubmit)="onSubmit(categoryForm)" class="space-y-5">
+
+            <div class="space-y-2">
+                <label
+                    class="block text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                    Category Name
+                </label>
+                <input type="text" name="categoryName" [(ngModel)]="internalName" required minlength="2"
+                    placeholder="e.g., Frontend, Backend, DevOps"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all" />
+
+                <ng-container *ngIf="categoryForm.controls['categoryName'] as ctrl">
+                    <p *ngIf="(categoryForm.submitted || ctrl.touched) && ctrl.errors"
+                        class="text-rose-500 dark:text-rose-400 text-xs mt-1">
+                        <span *ngIf="ctrl.errors['required']">Category name is required.</span>
+                        <span *ngIf="ctrl.errors['minlength']">Must be at least 2 characters.</span>
+                    </p>
+                </ng-container>
+            </div>
+
+            <!-- Error message -->
+            <div *ngIf="internalError"
+                class="rounded-xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 px-4 py-3 text-sm flex items-start gap-2">
+                <mat-icon class="text-base flex-shrink-0 mt-0.5">error_outline</mat-icon>
+                <span>{{ internalError }}</span>
+            </div>
+
+            <!-- Actions -->
+            <div
+                class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/60">
+                <button type="button" (click)="onCancel()" [disabled]="isLoading"
+                    class="w-full sm:w-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-all">
+                    Cancel
+                </button>
+                <button type="submit" [disabled]="isLoading"
+                    class="w-full sm:w-auto rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed px-5 py-2.5 text-sm font-semibold text-white transition-all shadow-lg shadow-indigo-500/20 inline-flex items-center justify-center gap-2">
+                    <span *ngIf="isLoading"
+                        class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    <span>{{ isLoading ? 'Saving…' : (isEditing ? 'Save Changes' : 'Create Category') }}</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

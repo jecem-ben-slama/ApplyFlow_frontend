@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { SkillsService } from '../../services/skills.service';
-import { Skill, getPageMeta } from '../../models';
+import { CategoryService } from '../../services/category.service';
+import { Category, Skill, getPageMeta } from '../../models';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DeletePopupComponent } from '../common/delete-popup/delete-popup.component';
+import { CategoryPopupComponent } from './category-popup/category-popup.component';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { PaginationComponent } from '../common/pagination/pagination.component';
 
@@ -18,6 +20,7 @@ import { PaginationComponent } from '../common/pagination/pagination.component';
     MatIconModule,
     PaginationComponent,
     DeletePopupComponent,
+    CategoryPopupComponent,
   ],
   animations: [
     trigger('formSlide', [
@@ -40,6 +43,8 @@ import { PaginationComponent } from '../common/pagination/pagination.component';
 })
 export class SkillsComponent implements OnInit {
   skills: Skill[] = [];
+  categories: Category[] = [];
+
   loading = false;
   errorMessage = '';
 
@@ -51,27 +56,58 @@ export class SkillsComponent implements OnInit {
   totalPages = 0;
   totalElements = 0;
 
-  newSkill = {
+  // Active category filter (null = show all)
+  selectedFilterCategoryId: number | null = null;
+
+  newSkill: {
+    name: string;
+    sentenceEn: string;
+    sentenceFr: string;
+    categoryId: number | null;
+  } = {
     name: '',
     sentenceEn: '',
     sentenceFr: '',
+    categoryId: null,
   };
 
-  // delete modal state
   showDeleteModal = false;
   deleteTargetId?: number;
   deleteMessage = 'Are you sure you want to drop this skill parsing block?';
 
-  constructor(private skillsService: SkillsService) {}
+  showCategoryModal = false;
+  editingCategory: Category | null = null;
+  categoryPopupName = '';
+  categoryPopupError = '';
+  categoryPopupLoading = false;
+
+  constructor(
+    private skillsService: SkillsService,
+    private categoryService: CategoryService
+  ) {}
 
   ngOnInit(): void {
+    this.loadCategories();
     this.loadSkills();
+  }
+
+  loadCategories(): void {
+    this.categoryService.getAllCategories().subscribe({
+      next: (cats) => (this.categories = cats),
+      error: (err) => console.error('Failed to load categories:', err),
+    });
   }
 
   loadSkills(): void {
     this.loading = true;
     this.skillsService
-      .getAllSkills(this.currentPage, this.pageSize, 'id', 'asc')
+      .getAllSkills(
+        this.currentPage,
+        this.pageSize,
+        'id',
+        'asc',
+        this.selectedFilterCategoryId
+      )
       .subscribe({
         next: (page) => {
           const meta = getPageMeta(page);
@@ -81,10 +117,16 @@ export class SkillsComponent implements OnInit {
           this.loading = false;
         },
         error: (err) => {
-          console.error('Error fetching workspace skills profile:', err);
+          console.error('Error fetching skills:', err);
           this.loading = false;
         },
       });
+  }
+
+  onFilterByCategory(categoryId: number | null): void {
+    this.selectedFilterCategoryId = categoryId;
+    this.currentPage = 0;
+    this.loadSkills();
   }
 
   onToggleForm(): void {
@@ -98,6 +140,7 @@ export class SkillsComponent implements OnInit {
       name: skill.name || '',
       sentenceEn: skill.sentenceEn || '',
       sentenceFr: skill.sentenceFr || '',
+      categoryId: skill.categoryId ?? null,
     };
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -108,6 +151,7 @@ export class SkillsComponent implements OnInit {
       name: '',
       sentenceEn: '',
       sentenceFr: '',
+      categoryId: null,
     };
   }
 
@@ -133,10 +177,7 @@ export class SkillsComponent implements OnInit {
             this.loadSkills();
           },
           error: (err) => {
-            console.error(
-              'Failed to patch targeted workspace reference block:',
-              err
-            );
+            console.error('Failed to update skill:', err);
             this.loading = false;
           },
         });
@@ -147,10 +188,16 @@ export class SkillsComponent implements OnInit {
             name: '',
             sentenceEn: '',
             sentenceFr: '',
+            categoryId: null,
           };
-          // Peek at page 0 to get updated totalPages, then jump to last page
           this.skillsService
-            .getAllSkills(0, this.pageSize, 'id', 'asc')
+            .getAllSkills(
+              0,
+              this.pageSize,
+              'id',
+              'asc',
+              this.selectedFilterCategoryId
+            )
             .subscribe((peek) => {
               const meta = getPageMeta(peek);
               this.currentPage = Math.max(0, meta.totalPages - 1);
@@ -158,7 +205,7 @@ export class SkillsComponent implements OnInit {
             });
         },
         error: (err) => {
-          console.error('Failed to append custom reference key:', err);
+          console.error('Failed to create skill:', err);
           this.loading = false;
         },
       });
@@ -170,6 +217,59 @@ export class SkillsComponent implements OnInit {
     this.showDeleteModal = true;
   }
 
+  openCategoryModal(): void {
+    this.editingCategory = null;
+    this.categoryPopupName = '';
+    this.categoryPopupError = '';
+    this.categoryPopupLoading = false;
+    this.showCategoryModal = true;
+  }
+
+  onEditCategory(category: Category): void {
+    this.editingCategory = category;
+    this.categoryPopupName = category.name;
+    this.categoryPopupError = '';
+    this.categoryPopupLoading = false;
+    this.showCategoryModal = true;
+  }
+
+  closeCategoryModal(): void {
+    this.showCategoryModal = false;
+    this.editingCategory = null;
+    this.categoryPopupName = '';
+    this.categoryPopupError = '';
+    this.categoryPopupLoading = false;
+  }
+
+  onSaveCategory(name: string): void {
+    this.categoryPopupError = '';
+    if (!name.trim()) {
+      this.categoryPopupError = 'Category name is required.';
+      return;
+    }
+    this.categoryPopupLoading = true;
+
+    const request = this.editingCategory
+      ? this.categoryService.updateCategory(
+          this.editingCategory.id,
+          name.trim()
+        )
+      : this.categoryService.createCategory(name.trim());
+
+    request.subscribe({
+      next: () => {
+        this.loadCategories();
+        this.closeCategoryModal();
+      },
+      error: (err) => {
+        console.error('Failed to save category:', err);
+        this.categoryPopupError =
+          err.error?.message || 'Could not save category. Please try again.';
+        this.categoryPopupLoading = false;
+      },
+    });
+  }
+
   onConfirmDelete(): void {
     const id = this.deleteTargetId;
     if (!id) return;
@@ -178,16 +278,10 @@ export class SkillsComponent implements OnInit {
     this.skillsService.deleteSkill(id).subscribe({
       next: () => {
         const remainingOnPage = this.skills.length - 1;
-        if (remainingOnPage === 0 && this.currentPage > 0) {
-          this.currentPage--;
-        }
+        if (remainingOnPage === 0 && this.currentPage > 0) this.currentPage--;
         this.loadSkills();
       },
-      error: (err) =>
-        console.error(
-          'Failed to completely drop skill key configuration:',
-          err
-        ),
+      error: (err) => console.error('Failed to delete skill:', err),
     });
   }
 
@@ -195,9 +289,15 @@ export class SkillsComponent implements OnInit {
     this.showDeleteModal = false;
     this.deleteTargetId = undefined;
   }
+
   onPageChange(newPage: number): void {
     if (newPage < 0 || newPage >= this.totalPages) return;
     this.currentPage = newPage;
     this.loadSkills();
+  }
+
+  getCategoryName(categoryId: number | null | undefined): string {
+    if (!categoryId) return '—';
+    return this.categories.find((c) => c.id === categoryId)?.name ?? '—';
   }
 }
