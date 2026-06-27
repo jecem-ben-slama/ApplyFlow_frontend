@@ -1,76 +1,78 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
 import { CvVariantsService } from '../../../services/cv-variants.service';
 import { CvVariantDto, Page } from '../../../models';
 import { CvPopupComponent } from '../cv-popup/cv-popup.component';
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
 import { PaginationComponent } from '../../common/pagination/pagination.component';
+import { CvFiltersBarComponent } from '../cv-filters-bar/cv-filters-bar.component';
+import { CvTableComponent } from '../cv-table/cv-table.component';
+import { CvFeedbackComponent } from '../cv-feedback/cv-feedback.component';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-cv-variants',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
-    MatIconModule,
     PaginationComponent,
     CvPopupComponent,
     DeletePopupComponent,
+    CvFiltersBarComponent,
+    CvTableComponent,
+    CvFeedbackComponent,
   ],
   templateUrl: './cv-variants.component.html',
-  styleUrls: ['./cv-variants.component.css'],
 })
-export class CvVariantsComponent implements OnInit {
-  // Main Data Store
+export class CvVariantsComponent implements OnInit, OnDestroy {
   cvPage?: Page<CvVariantDto>;
 
-  // Query Filters & Pagination State
-  selectedLanguage: string = '';
-  searchQuery: string = '';
-  currentPage: number = 0;
-  pageSize: number = 10;
-  sortBy: string = 'id';
+  selectedLanguage = '';
+  searchQuery = '';
+  currentPage = 0;
+  pageSize = 10;
+  sortBy = 'id';
   direction: 'asc' | 'desc' = 'asc';
 
-  // UX & Async State trackers
   isLoading = false;
   errorMessage = '';
   successMessage = '';
 
-  // Form State Management
   isModalOpen = false;
   isEditing = false;
   currentFormId?: number;
 
-  // Form Model
   formModel: Omit<CvVariantDto, 'id' | 'userId' | 'createdAt'> = {
     name: '',
     language: 'en',
     fileUrl: '',
   };
 
-  // Delete modal state
   showDeleteModal = false;
   deleteTargetId?: number;
   deleteMessage =
     'Are you sure you want to delete this track profile record permanently?';
 
   private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   constructor(private cvService: CvVariantsService) {}
 
   ngOnInit(): void {
     this.searchSubject
-      .pipe(debounceTime(300), distinctUntilChanged())
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
         this.currentPage = 0;
         this.loadCvVariants();
       });
+
     this.loadCvVariants();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadCvVariants(): void {
@@ -93,24 +95,26 @@ export class CvVariantsComponent implements OnInit {
         },
         error: (err) => {
           this.errorMessage =
-            err.error?.message ||
+            err.error?.message ??
             'Failed to populate CV directory pipeline profiles.';
           this.isLoading = false;
         },
       });
   }
 
-  onSearchChange(): void {
-    this.searchSubject.next(this.searchQuery);
+  onSearchChange(query: string): void {
+    this.searchQuery = query;
+    this.searchSubject.next(query);
   }
 
-  onLanguageFilterChange(): void {
+  onLanguageFilterChange(lang: string): void {
+    this.selectedLanguage = lang;
     this.currentPage = 0;
     this.loadCvVariants();
   }
 
-  onPageChange(newPage: number): void {
-    this.currentPage = newPage;
+  onPageChange(page: number): void {
+    this.currentPage = page;
     this.loadCvVariants();
   }
 
@@ -162,7 +166,7 @@ export class CvVariantsComponent implements OnInit {
       },
       error: (err) => {
         this.errorMessage =
-          err.error?.message ||
+          err.error?.message ??
           'Transaction error on model mutation processing.';
         this.isLoading = false;
       },
@@ -180,6 +184,7 @@ export class CvVariantsComponent implements OnInit {
     if (!id) return;
     this.showDeleteModal = false;
     this.isLoading = true;
+
     this.cvService.deleteCvVariant(id).subscribe({
       next: () => {
         this.showFeedback('CV track sequence removed.');
@@ -187,7 +192,7 @@ export class CvVariantsComponent implements OnInit {
       },
       error: (err) => {
         this.errorMessage =
-          err.error?.message || 'Failed to discard record parameters.';
+          err.error?.message ?? 'Failed to discard record parameters.';
         this.isLoading = false;
       },
     });

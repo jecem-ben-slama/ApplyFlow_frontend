@@ -1,0 +1,10 @@
+<div class="space-y-3">
+    <div *ngIf="error"
+        class="rounded-2xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3 text-sm dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100">
+        {{ error }}
+    </div>
+    <div *ngIf="success"
+        class="rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 text-sm dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-100">
+        {{ success }}
+    </div>
+</div>

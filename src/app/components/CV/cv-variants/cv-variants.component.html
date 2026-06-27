@@ -2,116 +2,29 @@
 
     <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
         <h1 class="text-xl md:text-2xl font-bold tracking-tight">CV Tracker Profiles</h1>
-        <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Manage CV variant pipelines, language targets, and
-            remote document destinations.</p>
+        <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">
+            Manage CV variant pipelines, language targets, and remote document destinations.
+        </p>
     </div>
 
     <div class="space-y-6">
 
-        <!-- ── Filters & Actions bar ── -->
-        <div
-            class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm p-5 md:p-6 flex flex-col gap-4">
+        <app-cv-filters-bar [selectedLanguage]="selectedLanguage" [searchQuery]="searchQuery"
+            (languageChange)="onLanguageFilterChange($event)" (searchChange)="onSearchChange($event)"
+            (clearSearch)="clearSearch()" (addClick)="openCreateModal()">
+        </app-cv-filters-bar>
 
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <app-cv-feedback [error]="errorMessage" [success]="successMessage" />
 
-                <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
-                    <!-- Language filter -->
-                    <label
-                        class="text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400 whitespace-nowrap">Language</label>
-                    <select [(ngModel)]="selectedLanguage" (change)="onLanguageFilterChange()"
-                        class="w-full md:w-44 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors">
-                        <option value="">All Languages</option>
-                        <option value="en">English (EN)</option>
-                        <option value="fr">French (FR)</option>
-                    </select>
-                </div>
-
-                <button (click)="openCreateModal()"
-                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 transition-colors shadow-sm shadow-indigo-500/10 whitespace-nowrap">
-                    <span class="text-base">+</span>
-                    Add CV Variant
-                </button>
-            </div>
-
-            <!-- Search -->
-            <div class="relative">
-                <mat-icon
-                    class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base pointer-events-none">search</mat-icon>
-                <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
-                    placeholder="Search by name, language, or file URL…"
-                    class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-9 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors" />
-                <button *ngIf="searchQuery" (click)="clearSearch()"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                    <mat-icon class="text-base">close</mat-icon>
-                </button>
-            </div>
-
-        </div>
-
-        <!-- ── Feedback messages ── -->
-        <div *ngIf="errorMessage || successMessage" class="space-y-3">
-            <div *ngIf="errorMessage"
-                class="rounded-2xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3 text-sm dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100">
-                {{ errorMessage }}
-            </div>
-            <div *ngIf="successMessage"
-                class="rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 text-sm dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-100">
-                {{ successMessage }}
-            </div>
-        </div>
-
-        <!-- ── Loading ── -->
         <div *ngIf="isLoading"
             class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-6 text-center text-slate-600 dark:text-slate-400">
             Processing data pipelines...
         </div>
 
-        <!-- ── Table ── -->
-        <div *ngIf="!isLoading && cvPage?.content?.length"
-            class="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[720px]">
-                    <thead>
-                        <tr
-                            class="bg-slate-100 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider">
-                            <th class="py-3 px-4">Variant Name</th>
-                            <th class="py-3 px-4 w-28">Language</th>
-                            <th class="py-3 px-4">File Destination</th>
-                            <th class="py-3 px-4 text-right w-36">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm divide-y divide-slate-200 dark:divide-slate-800">
-                        <tr *ngFor="let cv of cvPage!.content"
-                            class="hover:bg-slate-50 dark:hover:bg-slate-900/70 transition-colors">
-                            <td class="py-4 px-4 text-slate-900 dark:text-slate-100 font-semibold">{{ cv.name }}</td>
-                            <td class="py-4 px-4">
-                                <span
-                                    class="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-700 dark:text-slate-300">
-                                    {{ cv.language | uppercase }}
-                                </span>
-                            </td>
-                            <td class="py-4 px-4 text-slate-600 dark:text-slate-400 truncate max-w-xs">
-                                <a [href]="cv.fileUrl" target="_blank"
-                                    class="text-indigo-600 dark:text-indigo-300 hover:underline break-all">{{ cv.fileUrl
-                                    }}</a>
-                            </td>
-                            <td class="py-4 px-4 text-right">
-                                <button (click)="openEditModal(cv)"
-                                    class="inline-flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mr-2">
-                                    Edit
-                                </button>
-                                <button (click)="onDelete(cv.id)"
-                                    class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-700 px-3 py-2 text-xs font-semibold hover:bg-rose-100 transition-colors dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100 dark:hover:bg-rose-500/20">
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <app-cv-table *ngIf="!isLoading && cvPage?.content?.length" [rows]="cvPage!.content"
+            (edit)="openEditModal($event)" (delete)="onDelete($event)">
+        </app-cv-table>
 
-        <!-- ── Empty state ── -->
         <div *ngIf="!isLoading && !cvPage?.content?.length"
             class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-8 text-center text-slate-500 dark:text-slate-400">
             <ng-container *ngIf="searchQuery; else noData">
@@ -126,12 +39,15 @@
         <app-pagination *ngIf="(cvPage?.totalPages ?? 0) > 1" [currentPage]="currentPage"
             [totalPages]="cvPage?.totalPages ?? 0" [loading]="isLoading" (pageChange)="onPageChange($event)">
         </app-pagination>
+
     </div>
 
     <app-delete-popup [isModalOpen]="showDeleteModal" [title]="'Confirm Deletion'" [message]="deleteMessage"
-        [isLoading]="isLoading" (confirm)="onConfirmDelete()" (close)="onCancelDelete()"></app-delete-popup>
+        [isLoading]="isLoading" (confirm)="onConfirmDelete()" (close)="onCancelDelete()">
+    </app-delete-popup>
 
     <app-cv-popup [isModalOpen]="isModalOpen" [isEditing]="isEditing" [formModel]="formModel" [isLoading]="isLoading"
         (close)="closeModal()" (save)="onSubmit()">
     </app-cv-popup>
+
 </div>
