@@ -1,23 +1,26 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
 import { trigger, style, transition, animate } from '@angular/animations';
-import { TemplateService } from '../../services/template.service';
-import { TemplateDto, Page, getPageMeta } from '../../models';
-import { DeletePopupComponent } from '../common/delete-popup/delete-popup.component';
-import { PaginationComponent } from '../common/pagination/pagination.component';
+import { getPageMeta, Page, TemplateDto } from 'src/app/models';
+import { TemplateService } from 'src/app/services/template.service';
+import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
+import { TemplateListComponent } from '../template-list/template-list.component';
+import { TemplateFormComponent } from "../template-form/template-form.component";
+
+
+export interface TemplateComponent extends TemplateDto {
+  isExpanded?: boolean;
+}
 
 @Component({
   selector: 'app-templates',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
-    MatIconModule,
-    PaginationComponent,
     DeletePopupComponent,
-  ],
+    TemplateListComponent,
+    TemplateFormComponent
+],
   templateUrl: './templates.component.html',
   animations: [
     trigger('formSlide', [
@@ -39,7 +42,7 @@ import { PaginationComponent } from '../common/pagination/pagination.component';
   ],
 })
 export class TemplatesComponent implements OnInit {
-  templates: TemplateDto[] = [];
+  templates: TemplateComponent[] = [];
   loading = false;
   errorMessage = '';
 
@@ -48,7 +51,6 @@ export class TemplatesComponent implements OnInit {
 
   subjectPlaceholder = 'e.g., Application Update: {{ positionName }}';
 
-  // Pagination & Filtering state
   currentPage = 0;
   pageSize = 10;
   totalPages = 0;
@@ -64,7 +66,6 @@ export class TemplatesComponent implements OnInit {
     bodyTemplate: '',
   };
 
-  // delete modal state
   showDeleteModal = false;
   deleteTargetId?: number;
   deleteMessage = 'Are you sure you want to drop this layout parsing template?';
@@ -96,7 +97,10 @@ export class TemplatesComponent implements OnInit {
       .subscribe({
         next: (page: Page<TemplateDto>) => {
           const meta = getPageMeta(page);
-          this.templates = page.content;
+          this.templates = page.content.map((t) => ({
+            ...t,
+            isExpanded: false,
+          }));
           this.currentPage = meta.number;
           this.totalPages = meta.totalPages;
           this.totalElements = meta.totalElements;
@@ -111,6 +115,11 @@ export class TemplatesComponent implements OnInit {
 
   onToggleForm(): void {
     this.isFormVisible = !this.isFormVisible;
+  }
+
+  updateSearchTerm(term: string): void {
+    this.searchTerm = term;
+    this.onSearchChange();
   }
 
   onSearchChange(): void {
@@ -193,7 +202,7 @@ export class TemplatesComponent implements OnInit {
         },
         error: (err) => {
           console.error(
-            'Failed to append custom profile template record:',
+            'Failed to append custom profile template record template entry:',
             err
           );
           this.loading = false;

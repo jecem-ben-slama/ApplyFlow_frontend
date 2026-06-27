@@ -1,0 +1,28 @@
+<div
+    class="p-4 sm:p-6 md:p-8 space-y-6 text-slate-800 dark:text-slate-100 max-w-full mx-auto w-full transition-colors duration-200">
+
+    <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+        <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            Manage Your Email Templates
+        </h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Create, edit, and organize dynamic placeholders for
+            layout parsing.</p>
+    </div>
+
+    <div class="space-y-6">
+        <app-template-form [isFormVisible]="isFormVisible" [isEditing]="editingTemplateId !== null" [loading]="loading"
+            [errorMessage]="errorMessage" [templateData]="newTemplate" [subjectPlaceholder]="subjectPlaceholder"
+            (onToggle)="onToggleForm()" (submit)="onSubmitTemplate()" (cancel)="onCancelEdit()">
+        </app-template-form>
+
+        <app-template-list [templates]="templates" [totalElements]="totalElements" [currentPage]="currentPage"
+            [totalPages]="totalPages" [loading]="loading" [selectedLanguage]="selectedLanguage"
+            [searchTerm]="searchTerm" [editingId]="editingTemplateId" (filterChange)="onLanguageFilterChange($event)"
+            (searchChange)="updateSearchTerm($event)" (pageChange)="onPageChange($event)" (edit)="onEditClick($event)"
+            (delete)="onDeleteTemplate($event)">
+        </app-template-list>
+
+        <app-delete-popup [isModalOpen]="showDeleteModal" [title]="'Confirm Deletion'" [message]="deleteMessage"
+            (confirm)="onConfirmDelete()" (close)="onCancelDelete()" [isLoading]="loading"></app-delete-popup>
+    </div>
+</div>

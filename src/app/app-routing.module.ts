@@ -18,8 +18,9 @@ export const routes: Routes = [
   },
   {
     path: 'templates',
+ 
     loadComponent: () =>
-      import('./components/templates/templates.component').then(
+      import('./components/templates/templates-view/templates.component').then(
         (m) => m.TemplatesComponent
       ),
     canActivate: [authGuard], // Protected from anonymous access

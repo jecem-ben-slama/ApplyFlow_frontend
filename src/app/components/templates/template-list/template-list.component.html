@@ -1,0 +1,136 @@
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-6 shadow-sm">
+
+    <app-template-filter [selectedLanguage]="selectedLanguage" [totalElements]="totalElements"
+        [currentCount]="templates.length" [searchTerm]="searchTerm" (filterChange)="filterChange.emit($event)"
+        (searchChange)="searchChange.emit($event)">
+    </app-template-filter>
+
+    <!-- TABLE VIEW -->
+    <div
+        class="hidden md:block overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
+        <table class="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+                <tr
+                    class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold uppercase text-slate-600 dark:text-slate-400 tracking-wider bg-slate-50/80 dark:bg-slate-900/40">
+                    <th class="py-4 px-5">Template Name</th>
+                    <th class="py-4 px-5 w-24">Lang</th>
+                    <th class="py-4 px-5 w-1/2">Email Subject</th>
+                    <th class="py-4 px-5 text-right w-28">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody class="text-xs divide-y divide-slate-100 dark:divide-slate-800/60">
+                <tr *ngFor="let tmpl of templates"
+                    class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+                    [ngClass]="{ 'bg-indigo-500/5 dark:bg-indigo-950/10': editingId === tmpl.id }">
+
+                    <td class="py-4 px-5 font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                        {{ tmpl.name }}
+                    </td>
+
+                    <td class="py-4 px-5 whitespace-nowrap">
+                        <span
+                            class="inline-block text-[10px] font-semibold px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-800/50 dark:text-slate-300 dark:border-slate-700">
+                            {{ tmpl.language }}
+                        </span>
+                    </td>
+
+                    <td class="py-4 px-5 text-slate-600 dark:text-slate-400 max-w-0 truncate"
+                        [title]="tmpl.subjectTemplate">
+                        {{ tmpl.subjectTemplate }}
+                    </td>
+
+                    <td class="py-4 px-5 text-right whitespace-nowrap">
+                        <div class="inline-flex items-center gap-1.5">
+                            <button (click)="edit.emit(tmpl)" title="Edit"
+                                class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                                <mat-icon class="text-sm !w-4 !h-4">edit</mat-icon>
+                            </button>
+
+                            <button (click)="delete.emit(tmpl.id)" title="Delete"
+                                class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                                <mat-icon class="text-sm !w-4 !h-4">delete</mat-icon>
+                            </button>
+                        </div>
+                    </td>
+
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- MOBILE VIEW -->
+    <div class="block md:hidden space-y-3">
+
+    <div *ngFor="let tmpl of templates"
+        class="bg-slate-50/30 dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800/80 rounded-xl overflow-hidden shadow-sm transition-all duration-200"
+        [ngClass]="{ 'border-indigo-500/50': editingId === tmpl.id }">
+
+            <!-- HEADER -->
+            <div
+                class="flex items-center justify-between p-4 gap-3 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/50">
+
+                <div class="min-w-0 flex-1 flex flex-col gap-1">
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100 break-words">
+                        {{ tmpl.name }}
+                    </h4>
+
+                    <span
+                        class="text-[9px] font-bold px-2.5 py-0.5 rounded-md bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 uppercase tracking-wider w-fit">
+                        {{ tmpl.language }}
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+
+                    <button (click)="edit.emit(tmpl)"
+                        class="text-slate-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
+                        <mat-icon class="!w-4 !h-4">edit</mat-icon>
+                    </button>
+
+                    <button (click)="delete.emit(tmpl.id)"
+                        class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
+                        <mat-icon class="!w-4 !h-4">delete</mat-icon>
+                    </button>
+
+                    <button (click)="tmpl.isExpanded = !tmpl.isExpanded"
+                        class="text-slate-400 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-transform duration-200"
+                        [class.rotate-180]="tmpl.isExpanded">
+                        <mat-icon class="!w-4 !h-4">expand_more</mat-icon>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- EXPANDED -->
+            <div *ngIf="tmpl.isExpanded"
+                class="p-4 bg-slate-50/40 dark:bg-slate-900/30 space-y-3 border-t border-slate-100 dark:border-slate-800/30">
+
+                <div>
+                    <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        Subject Frame
+                    </span>
+
+                    <p class="text-xs text-slate-600 dark:text-slate-400 break-words leading-relaxed bg-white dark:bg-slate-950 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/40"
+                        [title]="tmpl.subjectTemplate">
+                        {{ tmpl.subjectTemplate }}
+                    </p>
+                </div>
+
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div *ngIf="templates.length === 0 && !loading"
+        class="py-12 text-center text-slate-400 dark:text-slate-600 font-medium text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl mt-4">
+        No messaging structures configured in this user workspace segment.
+    </div>
+
+    <!-- PAGINATION -->
+    <app-pagination [currentPage]="currentPage" [totalPages]="totalPages" [loading]="loading"
+        (pageChange)="pageChange.emit($event)">
+    </app-pagination>
+
+</div>

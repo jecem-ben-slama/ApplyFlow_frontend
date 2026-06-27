@@ -1,0 +1,76 @@
+<div
+    class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+    <div (click)="onToggle.emit()"
+        class="flex items-center justify-between p-4 md:px-6 border-b border-slate-100 dark:border-slate-800 cursor-pointer select-none hover:bg-slate-50/80 dark:hover:bg-slate-800/20 transition-colors">
+        <div class="flex items-center gap-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                {{ isEditing ? 'Modify Template' : 'Create Templates' }}
+            </h3>
+            <span *ngIf="isEditing"
+                class="text-[9px] bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-mono uppercase tracking-wide animate-pulse">
+                Editing Mode
+            </span>
+        </div>
+        <mat-icon class="text-slate-400 dark:text-slate-500 scale-90 transition-transform duration-300"
+            [class.rotate-180]="!isFormVisible">
+            expand_less
+        </mat-icon>
+    </div>
+
+    <div *ngIf="isFormVisible">
+        <div class="p-4 md:p-6 space-y-5 bg-slate-50/40 dark:bg-slate-950/20">
+            <div *ngIf="errorMessage"
+                class="rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3 text-xs dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100">
+                {{ errorMessage }}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="space-y-1.5">
+                    <label
+                        class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template
+                        Name</label>
+                    <input type="text" [(ngModel)]="templateData.name" placeholder="e.g., Follow-up Standard"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm" />
+                </div>
+                <div class="space-y-1.5">
+                    <label
+                        class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template
+                        Language</label>
+                    <select [(ngModel)]="templateData.language"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm">
+                        <option value="EN">English (EN)</option>
+                        <option value="FR">French (FR)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <label
+                    class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template
+                    Subject</label>
+                <input type="text" [(ngModel)]="templateData.subjectTemplate" [placeholder]="subjectPlaceholder"
+                    class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm" />
+            </div>
+
+            <div class="space-y-1.5">
+                <label
+                    class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template
+                    Body</label>
+                <textarea [(ngModel)]="templateData.bodyTemplate"
+                    placeholder="Write message body layout context here..." rows="5"
+                    class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y min-h-[120px] transition-all shadow-sm"></textarea>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-end items-center gap-3 pt-2">
+                <button *ngIf="isEditing" (click)="cancel.emit()" [disabled]="loading"
+                    class="border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold px-5 py-2.5 rounded-xl transition-colors w-full sm:w-auto">
+                    Cancel
+                </button>
+                <button (click)="submit.emit()" [disabled]="loading"
+                    class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition-colors w-full sm:w-auto shadow-sm">
+                    <span>{{ isEditing ? 'Update Template' : 'Save Template' }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
