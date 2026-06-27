@@ -3,14 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
-// Services
 import { ApplicationsService } from '../../../services/applications.service';
 import { SkillsService } from '../../../services/skills.service';
 import { CvVariantsService } from '../../../services/cv-variants.service';
 import { TemplateService } from '../../../services/template.service';
 import { EmailService } from '../../../services/email.service';
 
-// Models
 import {
   ApplicationResponseDto,
   ApplicationCreateDto,
@@ -33,7 +31,7 @@ import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.com
     PaginationComponent,
     ApplicationPopupComponent,
     DeletePopupComponent,
-  ], // <-- Add to imports
+  ],
   templateUrl: './applications.component.html',
   styleUrls: ['./applications.component.css'],
 })
@@ -44,6 +42,10 @@ export class ApplicationsComponent implements OnInit {
   sortBy = 'dateApplied';
   direction: 'asc' | 'desc' = 'desc';
   appTotalPages = 0;
+
+  // Search & filter state
+  filterStatus = '';
+  filterKeyword = '';
 
   availableSkills: Skill[] = [];
   availableCvVariants: CvVariantDto[] = [];
@@ -56,7 +58,6 @@ export class ApplicationsComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  // delete modal state
   showDeleteModal = false;
   deleteTargetId?: number;
   deleteMessage = 'Permanently purge this compiled tracking profile record?';
@@ -87,7 +88,9 @@ export class ApplicationsComponent implements OnInit {
         this.currentPage,
         this.pageSize,
         this.sortBy,
-        this.direction
+        this.direction,
+        this.filterStatus || undefined,
+        this.filterKeyword || undefined
       ),
       skills: this.skillsService.getAllSkills(0, 100),
       cvVariants: this.cvService.getAllCvVariants(0, 100),
@@ -119,7 +122,9 @@ export class ApplicationsComponent implements OnInit {
         this.currentPage,
         this.pageSize,
         this.sortBy,
-        this.direction
+        this.direction,
+        this.filterStatus || undefined,
+        this.filterKeyword || undefined
       )
       .subscribe({
         next: (page) => {
@@ -134,6 +139,22 @@ export class ApplicationsComponent implements OnInit {
           this.isLoading = false;
         },
       });
+  }
+
+  onSearch(): void {
+    this.currentPage = 0;
+    this.expandedAppId = null;
+    this.editingNotesAppId = null;
+    this.loadApplicationsPage();
+  }
+
+  onClearFilters(): void {
+    this.filterStatus = '';
+    this.filterKeyword = '';
+    this.currentPage = 0;
+    this.expandedAppId = null;
+    this.editingNotesAppId = null;
+    this.loadApplicationsPage();
   }
 
   onPageChange(newPage: number): void {
@@ -231,7 +252,6 @@ export class ApplicationsComponent implements OnInit {
     this.expandedAppId = app.id;
   }
 
-  // Receives the mapped payload directly from the child modal
   onCreateSubmit(payload: ApplicationCreateDto): void {
     this.isLoading = true;
 

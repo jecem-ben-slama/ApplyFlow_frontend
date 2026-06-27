@@ -18,21 +18,22 @@ export class ApplicationsService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * GET /api/applications
-   * Retrieves a paginated slice of application history matching the user context.
-   */
   getAllApplications(
     page: number = 0,
     size: number = 10,
     sortBy: string = 'dateApplied',
-    direction: 'asc' | 'desc' = 'desc'
+    direction: 'asc' | 'desc' = 'desc',
+    status?: string,
+    keyword?: string
   ): Observable<Page<ApplicationResponseDto>> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sortBy', sortBy)
       .set('direction', direction);
+
+    if (status) params = params.set('status', status);
+    if (keyword) params = params.set('keyword', keyword);
 
     return this.http
       .get<ApiResponse<Page<ApplicationResponseDto>>>(this.baseUrl, {
@@ -42,10 +43,6 @@ export class ApplicationsService {
       .pipe(map((response) => response.data));
   }
 
-  /**
-   * GET /api/applications/{id}
-   * Fetches the complete, compiled details of an individual application tracking record.
-   */
   getApplicationById(id: number): Observable<ApplicationResponseDto> {
     return this.http
       .get<ApiResponse<ApplicationResponseDto>>(`${this.baseUrl}/${id}`, {
@@ -54,10 +51,6 @@ export class ApplicationsService {
       .pipe(map((response) => response.data));
   }
 
-  /**
-   * POST /api/applications
-   * Commits a brand new job tracking entry and forces the template/email engine to compile.
-   */
   createApplication(
     application: ApplicationCreateDto
   ): Observable<ApplicationResponseDto> {
@@ -68,10 +61,6 @@ export class ApplicationsService {
       .pipe(map((response) => response.data));
   }
 
-  /**
-   * PATCH /api/applications/{id}
-   * Modifies a tracking record's inline lifecycle status parameters or text notes.
-   */
   patchApplicationStatusOrNotes(
     id: number,
     status?: string,
@@ -81,7 +70,6 @@ export class ApplicationsService {
     if (status) params = params.set('status', status);
     if (notes) params = params.set('notes', notes);
 
-    // Using an empty body ({}) since modifications pass strictly via query parameters
     return this.http
       .patch<ApiResponse<ApplicationResponseDto>>(
         `${this.baseUrl}/${id}`,
@@ -94,10 +82,6 @@ export class ApplicationsService {
       .pipe(map((response) => response.data));
   }
 
-  /**
-   * DELETE /api/applications/{id}
-   * Discards an unneeded tracking sequence history point entirely.
-   */
   deleteApplication(id: number): Observable<void> {
     return this.http
       .delete<ApiResponse<void>>(`${this.baseUrl}/${id}`, {
