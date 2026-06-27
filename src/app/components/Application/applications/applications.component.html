@@ -1,25 +1,27 @@
-<div class="p-6 max-w-7xl mx-auto space-y-6">
-    <div class="flex justify-between items-center border-b border-gray-200 pb-4">
-        <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Applications Pipeline Engine</h2>
+<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+
+    <div
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-200 pb-4">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Applications Pipeline Engine</h2>
         <button
-            class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition duration-150 ease-in-out"
+            class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition duration-150 ease-in-out text-xs sm:text-sm"
             (click)="openCreateModal()">
             + Compile New Application
         </button>
     </div>
 
-    <!-- Search & Filter Bar -->
-    <div class="flex flex-wrap gap-3 items-end bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-        <div class="flex flex-col gap-1 flex-1 min-w-[180px]">
-            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Keyword</label>
+    <div
+        class="flex flex-col sm:flex-row sm:flex-wrap gap-3 items-end bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+        <div class="flex flex-col gap-1 w-full sm:flex-1 min-w-0 sm:min-w-[180px]">
+            <label class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Keyword</label>
             <input type="text" [(ngModel)]="filterKeyword" placeholder="Search company or job title..."
                 (keyup.enter)="onSearch()"
-                class="rounded-md border border-gray-300 shadow-sm px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                class="rounded-md border border-gray-300 shadow-sm px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-full" />
         </div>
-        <div class="flex flex-col gap-1 min-w-[150px]">
-            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</label>
+        <div class="flex flex-col gap-1 w-full sm:w-40 md:w-48">
+            <label class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Status</label>
             <select [(ngModel)]="filterStatus"
-                class="rounded-md border border-gray-300 shadow-sm px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                class="rounded-md border border-gray-300 shadow-sm px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-full">
                 <option value="">All Statuses</option>
                 <option value="COMPILED">Compiled</option>
                 <option value="SENT">Sent</option>
@@ -27,57 +29,53 @@
                 <option value="REJECTED">Rejected</option>
             </select>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 w-full sm:w-auto mt-1 justify-end">
             <button (click)="onSearch()"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-1.5 rounded-md shadow-sm transition">
+                class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs sm:text-sm px-4 py-2 rounded-md shadow-sm transition">
                 Search
             </button>
             <button (click)="onClearFilters()"
-                class="bg-white hover:bg-gray-100 text-gray-600 font-medium text-sm px-4 py-1.5 rounded-md border border-gray-300 transition">
+                class="flex-1 sm:flex-none bg-white hover:bg-gray-100 text-gray-600 font-medium text-xs sm:text-sm px-4 py-2 rounded-md border border-gray-300 transition">
                 Clear
             </button>
         </div>
     </div>
 
-    <!-- Feedback banners -->
-    <div *ngIf="errorMessage" class="bg-red-50 border-l-4 border-red-500 p-4 text-red-800 rounded shadow-sm">
+    <div *ngIf="errorMessage" class="bg-red-50 border-l-4 border-red-500 p-4 text-xs text-red-800 rounded shadow-sm">
         {{ errorMessage }}
     </div>
     <div *ngIf="successMessage"
-        class="bg-emerald-50 border-l-4 border-emerald-500 p-4 text-emerald-800 rounded shadow-sm">
+        class="bg-emerald-50 border-l-4 border-emerald-500 p-4 text-xs text-emerald-800 rounded shadow-sm">
         {{ successMessage }}
     </div>
 
-    <div *ngIf="isLoading" class="text-center py-8 text-gray-500 animate-pulse font-medium">
+    <div *ngIf="isLoading" class="text-center py-8 text-gray-500 animate-pulse font-medium text-xs">
         Querying pipeline data layers...
     </div>
 
-    <!-- Table -->
     <div *ngIf="!isLoading && appPage?.content?.length"
-        class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
-        <table class="min-w-full text-left text-sm">
-            <thead class="bg-gray-50 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+        class="hidden md:block overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
+        <table class="min-w-full text-left text-xs">
+            <thead class="bg-gray-50 text-[10px] font-semibold text-gray-700 uppercase tracking-wider">
                 <tr>
                     <th class="px-6 py-4">Company</th>
                     <th class="px-6 py-4">Job Title</th>
                     <th class="px-6 py-4">Date Applied</th>
                     <th class="px-6 py-4">Language</th>
                     <th class="px-6 py-4">Status</th>
-                    <th class="px-6 py-4">Actions</th>
+                    <th class="px-6 py-4 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody class="text-gray-900 bg-white">
+            <tbody class="text-gray-900 bg-white divide-y divide-gray-100">
                 <ng-container *ngFor="let app of appPage!.content">
 
-                    <!-- Data row -->
-                    <tr app-application-row class="hover:bg-gray-50 transition border-t border-gray-100" [app]="app"
+                    <tr app-application-row class="hover:bg-gray-50 transition" [app]="app"
                         [isExpanded]="expandedAppId === app.id" [isSendingEmail]="isSendingEmail"
                         (togglePanel)="onTogglePanel($event)" (statusChange)="onUpdateStatus($event.id, $event.status)"
                         (deleteApp)="onDelete($event)" (sendEmail)="onSendEmail($event)" (copyBody)="onCopyBody($event)"
                         (notesSaved)="onSaveNotes($event.appId, $event.notes)">
                     </tr>
 
-                    <!-- Expanded email/notes panel row -->
                     <tr *ngIf="expandedAppId === app.id" class="bg-gray-50">
                         <td colspan="6" class="px-4 pb-4 pt-0">
                             <app-email-panel [app]="app" [isSending]="isSendingEmail" (sendEmail)="onSendEmail($event)"
@@ -91,7 +89,70 @@
         </table>
     </div>
 
-    <!-- Empty state -->
+<div *ngIf="!isLoading && appPage?.content?.length" class="block md:hidden space-y-4">
+    <ng-container *ngFor="let app of appPage!.content">
+        <div class="bg-white rounded-xl shadow border border-gray-200 p-4 space-y-4 relative"
+            [ngClass]="{'border-blue-500/50': expandedAppId === app.id}">
+
+            <div class="flex justify-between items-start gap-3">
+                <div class="min-w-0 flex-1">
+                    <h3 class="font-bold text-sm text-gray-900 truncate">{{ app.companyName }}</h3>
+                    <p class="text-xs text-gray-500 mt-0.5 truncate">{{ app.jobTitle || 'No Title Provided' }}</p>
+                </div>
+                <span
+                    class="inline-flex px-2.5 py-1 text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-wider shrink-0">
+                    {{ app.status }}
+                </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-[11px] bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <div>
+                    <span class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Applied
+                        Date</span>
+                    <span class="text-gray-700 font-medium">{{ (app.dateApplied | date) || 'N/A' }}</span>
+                </div>
+                <div>
+                    <span
+                        class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Language</span>
+                    <span
+                        class="font-mono text-[10px] bg-gray-200 text-gray-800 px-2 py-0.5 rounded font-semibold inline-block uppercase tracking-wider">
+                        {{ app.language || 'EN' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
+                <button (click)="onTogglePanel(app.id)"
+                    class="flex-1 text-center text-xs font-semibold py-2 rounded-lg border transition-colors" [ngClass]="expandedAppId === app.id 
+                            ? 'text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100' 
+                            : 'text-gray-700 bg-white border-gray-200 hover:bg-gray-50'">
+                    {{ expandedAppId === app.id ? '▲ Hide Email' : '▼ View Email' }}
+                </button>
+
+                <button (click)="onDelete(app.id)"
+                    class="px-3 py-2 text-red-600 bg-red-50 border border-red-100 hover:bg-red-100 rounded-lg transition-colors flex items-center justify-center">
+                    <mat-icon class="scale-75 m-0 leading-none">delete</mat-icon>
+                </button>
+            </div>
+
+            <div *ngIf="expandedAppId === app.id" class="pt-2 border-t border-gray-100 mt-2">
+                <app-email-panel [app]="app" [isSending]="isSendingEmail" (sendEmail)="onSendEmail($event)"
+                    (copyBody)="onCopyBody($event)" (notesSaved)="onSaveNotes($event.appId, $event.notes)">
+                </app-email-panel>
+            </div>
+        </div>
+    </ng-container>
+</div>
+
+    <ng-template #rowActions let-app="app">
+        <tr app-application-row class="contents" [app]="app" [isExpanded]="expandedAppId === app.id"
+            [isSendingEmail]="isSendingEmail" (togglePanel)="onTogglePanel($event)"
+            (statusChange)="onUpdateStatus($event.id, $event.status)" (deleteApp)="onDelete($event)"
+            (sendEmail)="onSendEmail($event)" (copyBody)="onCopyBody($event)"
+            (notesSaved)="onSaveNotes($event.appId, $event.notes)">
+        </tr>
+    </ng-template>
+
     <div *ngIf="!isLoading && !appPage?.content?.length"
         class="text-center py-16 bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-500">
         <p class="font-medium text-base">No tracking records populated.</p>

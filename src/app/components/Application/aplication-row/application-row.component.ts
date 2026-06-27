@@ -7,7 +7,7 @@ import { EmailPanelComponent } from '../email-panel/email-panel.component';
 @Component({
   selector: '[app-application-row]',
   standalone: true,
-  imports: [CommonModule, FormsModule, EmailPanelComponent],
+  imports: [CommonModule, FormsModule, ],
   templateUrl: './application-row.component.html',
 })
 export class ApplicationRowComponent {

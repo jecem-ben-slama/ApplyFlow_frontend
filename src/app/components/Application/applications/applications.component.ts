@@ -24,6 +24,7 @@ import { ApplicationPopupComponent } from '../application-popup/application-popu
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
 import { ApplicationRowComponent } from '../aplication-row/application-row.component';
 import { EmailPanelComponent } from "../email-panel/email-panel.component";
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-applications',
@@ -31,6 +32,7 @@ import { EmailPanelComponent } from "../email-panel/email-panel.component";
   imports: [
     CommonModule,
     FormsModule,
+    MatIconModule,
     PaginationComponent,
     ApplicationPopupComponent,
     DeletePopupComponent,
