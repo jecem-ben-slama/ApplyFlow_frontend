@@ -18,9 +18,12 @@ import {
   TemplateDto,
   getPageMeta,
 } from '../../../models';
+
 import { PaginationComponent } from '../../common/pagination/pagination.component';
 import { ApplicationPopupComponent } from '../application-popup/application-popup.component';
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
+import { ApplicationRowComponent } from '../aplication-row/application-row.component';
+import { EmailPanelComponent } from "../email-panel/email-panel.component";
 
 @Component({
   selector: 'app-applications',
@@ -31,7 +34,9 @@ import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.com
     PaginationComponent,
     ApplicationPopupComponent,
     DeletePopupComponent,
-  ],
+    ApplicationRowComponent,
+    EmailPanelComponent
+],
   templateUrl: './applications.component.html',
   styleUrls: ['./applications.component.css'],
 })
@@ -43,7 +48,6 @@ export class ApplicationsComponent implements OnInit {
   direction: 'asc' | 'desc' = 'desc';
   appTotalPages = 0;
 
-  // Search & filter state
   filterStatus = '';
   filterKeyword = '';
 
@@ -54,7 +58,6 @@ export class ApplicationsComponent implements OnInit {
   isLoading = false;
   isSendingEmail = false;
   isModalOpen = false;
-  selectedApplication?: ApplicationResponseDto;
   errorMessage = '';
   successMessage = '';
 
@@ -63,9 +66,6 @@ export class ApplicationsComponent implements OnInit {
   deleteMessage = 'Permanently purge this compiled tracking profile record?';
 
   expandedAppId: number | null = null;
-  editingNotesAppId: number | null = null;
-  editingNotesValue = '';
-  notesSavedForId: number | null = null;
 
   constructor(
     private appService: ApplicationsService,
@@ -85,12 +85,8 @@ export class ApplicationsComponent implements OnInit {
 
     forkJoin({
       applications: this.appService.getAllApplications(
-        this.currentPage,
-        this.pageSize,
-        this.sortBy,
-        this.direction,
-        this.filterStatus || undefined,
-        this.filterKeyword || undefined
+        this.currentPage, this.pageSize, this.sortBy, this.direction,
+        this.filterStatus || undefined, this.filterKeyword || undefined
       ),
       skills: this.skillsService.getAllSkills(0, 100),
       cvVariants: this.cvService.getAllCvVariants(0, 100),
@@ -107,9 +103,7 @@ export class ApplicationsComponent implements OnInit {
         this.isLoading = false;
       },
       error: (err) => {
-        this.errorMessage =
-          err.error?.message ||
-          'Error populating structural workspace lookups.';
+        this.errorMessage = err.error?.message || 'Error loading workspace data.';
         this.isLoading = false;
       },
     });
@@ -117,34 +111,29 @@ export class ApplicationsComponent implements OnInit {
 
   loadApplicationsPage(): void {
     this.isLoading = true;
-    this.appService
-      .getAllApplications(
-        this.currentPage,
-        this.pageSize,
-        this.sortBy,
-        this.direction,
-        this.filterStatus || undefined,
-        this.filterKeyword || undefined
-      )
-      .subscribe({
-        next: (page) => {
-          this.appPage = page;
-          const meta = getPageMeta(page);
-          this.currentPage = meta.number;
-          this.appTotalPages = meta.totalPages;
-          this.isLoading = false;
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Could not fetch history.';
-          this.isLoading = false;
-        },
-      });
+    this.appService.getAllApplications(
+      this.currentPage, this.pageSize, this.sortBy, this.direction,
+      this.filterStatus || undefined, this.filterKeyword || undefined
+    ).subscribe({
+      next: (page) => {
+        this.appPage = page;
+        const meta = getPageMeta(page);
+        this.currentPage = meta.number;
+        this.appTotalPages = meta.totalPages;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Could not fetch applications.';
+        this.isLoading = false;
+      },
+    });
   }
+
+  // ── Search & pagination ────────────────────────────────────────────────────
 
   onSearch(): void {
     this.currentPage = 0;
     this.expandedAppId = null;
-    this.editingNotesAppId = null;
     this.loadApplicationsPage();
   }
 
@@ -153,140 +142,72 @@ export class ApplicationsComponent implements OnInit {
     this.filterKeyword = '';
     this.currentPage = 0;
     this.expandedAppId = null;
-    this.editingNotesAppId = null;
     this.loadApplicationsPage();
   }
 
   onPageChange(newPage: number): void {
     this.currentPage = newPage;
     this.expandedAppId = null;
-    this.editingNotesAppId = null;
     this.loadApplicationsPage();
   }
 
-  toggleEmailPanel(appId: number): void {
-    if (this.expandedAppId === appId) {
-      this.expandedAppId = null;
-      this.editingNotesAppId = null;
-    } else {
-      this.expandedAppId = appId;
-      this.editingNotesAppId = null;
-    }
+  // ── Row events ─────────────────────────────────────────────────────────────
+
+  onTogglePanel(appId: number): void {
+    this.expandedAppId = this.expandedAppId === appId ? null : appId;
   }
 
-  startEditNotes(app: ApplicationResponseDto): void {
-    this.editingNotesAppId = app.id;
-    this.editingNotesValue = app.notes ?? '';
+  onUpdateStatus(id: number, status: string): void {
+    this.appService.patchApplicationStatusOrNotes(id, status, undefined).subscribe({
+      next: () => {
+        this.showFeedback(`Status updated to ${status}.`);
+        this.loadApplicationsPage();
+      },
+      error: (err) => (this.errorMessage = err.error?.message || 'Could not update status.'),
+    });
   }
 
-  cancelEditNotes(): void {
-    this.editingNotesAppId = null;
-    this.editingNotesValue = '';
+  onSaveNotes(appId: number, notes: string): void {
+    this.appService.patchApplicationStatusOrNotes(appId, undefined, notes).subscribe({
+      next: () => {
+        const app = this.appPage?.content.find((a) => a.id === appId);
+        if (app) app.notes = notes;
+      },
+      error: (err) => (this.errorMessage = err.error?.message || 'Could not save notes.'),
+    });
   }
 
-  saveNotes(app: ApplicationResponseDto): void {
-    this.appService
-      .patchApplicationStatusOrNotes(app.id, undefined, this.editingNotesValue)
-      .subscribe({
-        next: () => {
-          app.notes = this.editingNotesValue;
-          this.editingNotesAppId = null;
-          this.editingNotesValue = '';
-          this.notesSavedForId = app.id;
-          setTimeout(() => (this.notesSavedForId = null), 2000);
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Could not save notes.';
-        },
-      });
-  }
-
-  onSendEmailFromPanel(app: ApplicationResponseDto): void {
+  onSendEmail(app: ApplicationResponseDto): void {
     if (!app.recipientEmail) {
-      this.errorMessage =
-        'Cannot dispatch email: Recipient email address is missing.';
+      this.errorMessage = 'Cannot send: recipient email is missing.';
       return;
     }
-
     this.isSendingEmail = true;
     this.errorMessage = '';
 
-    this.emailService
-      .sendEmail({
-        recipientEmail: app.recipientEmail,
-        subject: app.generatedSubject,
-        body: app.generatedBody,
-        cvVariantId: app.cvVariantId ? Number(app.cvVariantId) : undefined,
-      })
-      .subscribe({
-        next: (msg) => {
-          this.showFeedback(msg || 'Email dispatched successfully!');
-          this.onUpdateStatus(app.id, 'SENT');
-          this.isSendingEmail = false;
-        },
-        error: (err) => {
-          this.errorMessage =
-            err.error?.message || 'Outbound SMTP delivery failure.';
-          this.isSendingEmail = false;
-        },
-      });
-  }
-
-  copyToClipboard(text: string): void {
-    navigator.clipboard.writeText(text).then(() => {
-      this.showFeedback('Email body copied to clipboard.');
-    });
-  }
-
-  openCreateModal(): void {
-    this.isModalOpen = true;
-  }
-
-  closeModal(): void {
-    this.isModalOpen = false;
-    this.selectedApplication = undefined;
-    this.errorMessage = '';
-  }
-
-  viewCompiledEmail(app: ApplicationResponseDto): void {
-    this.expandedAppId = app.id;
-  }
-
-  onCreateSubmit(payload: ApplicationCreateDto): void {
-    this.isLoading = true;
-
-    this.appService.createApplication(payload).subscribe({
-      next: (createdRecord) => {
-        this.showFeedback(
-          'Application tracking sequence created and engine compiled successfully!'
-        );
-        this.isModalOpen = false;
-        this.loadApplicationsPage();
-        this.viewCompiledEmail(createdRecord);
-        this.isLoading = false;
+    this.emailService.sendEmail({
+      recipientEmail: app.recipientEmail,
+      subject: app.generatedSubject,
+      body: app.generatedBody,
+      cvVariantId: app.cvVariantId ? Number(app.cvVariantId) : undefined,
+    }).subscribe({
+      next: (msg) => {
+        this.showFeedback(msg || 'Email sent!');
+        this.onUpdateStatus(app.id, 'SENT');
+        this.isSendingEmail = false;
       },
       error: (err) => {
-        this.errorMessage =
-          err.error?.message ||
-          'Failed to trigger application compilation pipeline.';
-        this.isLoading = false;
+        this.errorMessage = err.error?.message || 'Email delivery failed.';
+        this.isSendingEmail = false;
       },
     });
   }
 
-  onUpdateStatus(id: number, newStatus: string): void {
-    this.appService
-      .patchApplicationStatusOrNotes(id, newStatus, undefined)
-      .subscribe({
-        next: () => {
-          this.showFeedback(`Application status marked as ${newStatus}.`);
-          this.loadApplicationsPage();
-        },
-        error: (err) =>
-          (this.errorMessage =
-            err.error?.message || 'Could not patch status change.'),
-      });
+  onCopyBody(text: string): void {
+    navigator.clipboard.writeText(text).then(() => this.showFeedback('Copied to clipboard.'));
   }
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
 
   onDelete(id: number): void {
     this.deleteTargetId = id;
@@ -299,12 +220,11 @@ export class ApplicationsComponent implements OnInit {
     this.showDeleteModal = false;
     this.appService.deleteApplication(id).subscribe({
       next: () => {
-        this.showFeedback('Application profile discarded.');
+        this.showFeedback('Application deleted.');
         if (this.expandedAppId === id) this.expandedAppId = null;
         this.loadApplicationsPage();
       },
-      error: (err) =>
-        (this.errorMessage = err.error?.message || 'Could not drop entry.'),
+      error: (err) => (this.errorMessage = err.error?.message || 'Could not delete.'),
     });
   }
 
@@ -313,10 +233,35 @@ export class ApplicationsComponent implements OnInit {
     this.deleteTargetId = undefined;
   }
 
-  onSendCompiledEmail(): void {
-    if (!this.selectedApplication) return;
-    this.onSendEmailFromPanel(this.selectedApplication);
+  // ── Modal ──────────────────────────────────────────────────────────────────
+
+  openCreateModal(): void {
+    this.isModalOpen = true;
   }
+
+  closeModal(): void {
+    this.isModalOpen = false;
+    this.errorMessage = '';
+  }
+
+  onCreateSubmit(payload: ApplicationCreateDto): void {
+    this.isLoading = true;
+    this.appService.createApplication(payload).subscribe({
+      next: (created) => {
+        this.showFeedback('Application created successfully!');
+        this.isModalOpen = false;
+        this.expandedAppId = created.id;
+        this.loadApplicationsPage();
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Failed to create application.';
+        this.isLoading = false;
+      },
+    });
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   private showFeedback(msg: string): void {
     this.successMessage = msg;

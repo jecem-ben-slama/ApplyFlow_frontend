@@ -39,6 +39,7 @@
         </div>
     </div>
 
+    <!-- Feedback banners -->
     <div *ngIf="errorMessage" class="bg-red-50 border-l-4 border-red-500 p-4 text-red-800 rounded shadow-sm">
         {{ errorMessage }}
     </div>
@@ -51,6 +52,7 @@
         Querying pipeline data layers...
     </div>
 
+    <!-- Table -->
     <div *ngIf="!isLoading && appPage?.content?.length"
         class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
         <table class="min-w-full text-left text-sm">
@@ -65,131 +67,22 @@
                 </tr>
             </thead>
             <tbody class="text-gray-900 bg-white">
-
                 <ng-container *ngFor="let app of appPage!.content">
 
-                    <tr class="hover:bg-gray-50 transition border-t border-gray-100">
-                        <td class="px-6 py-4 font-semibold text-gray-900">{{ app.companyName }}</td>
-                        <td class="px-6 py-4 text-gray-600">{{ app.jobTitle }}</td>
-                        <td class="px-6 py-4 text-gray-500">{{ app.dateApplied | date:'mediumDate' }}</td>
-                        <td class="px-6 py-4">
-                            <span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 uppercase">
-                                {{ app.language }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4">
-                            <select [ngModel]="app.status" (ngModelChange)="onUpdateStatus(app.id, $event)"
-                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-1 px-2 bg-gray-50 border">
-                                <option value="COMPILED">Compiled</option>
-                                <option value="SENT">Sent</option>
-                                <option value="INTERVIEWING">Interviewing</option>
-                                <option value="REJECTED">Rejected</option>
-                            </select>
-                        </td>
-                        <td class="px-6 py-4 space-x-2">
-                            <button (click)="toggleEmailPanel(app.id)"
-                                [class]="expandedAppId === app.id
-                  ? 'text-blue-700 bg-blue-100 hover:bg-blue-200 font-medium text-xs px-2.5 py-1.5 rounded-md transition'
-                  : 'text-blue-600 hover:text-blue-900 font-medium text-xs bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-md transition'">
-                                {{ expandedAppId === app.id ? '▲ Hide Email' : '▼ View Email' }}
-                            </button>
-                            <button
-                                class="text-red-600 hover:text-red-900 font-medium text-xs bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-md transition"
-                                (click)="onDelete(app.id)">
-                                Delete
-                            </button>
-                        </td>
+                    <!-- Data row -->
+                    <tr app-application-row class="hover:bg-gray-50 transition border-t border-gray-100" [app]="app"
+                        [isExpanded]="expandedAppId === app.id" [isSendingEmail]="isSendingEmail"
+                        (togglePanel)="onTogglePanel($event)" (statusChange)="onUpdateStatus($event.id, $event.status)"
+                        (deleteApp)="onDelete($event)" (sendEmail)="onSendEmail($event)" (copyBody)="onCopyBody($event)"
+                        (notesSaved)="onSaveNotes($event.appId, $event.notes)">
                     </tr>
 
+                    <!-- Expanded email/notes panel row -->
                     <tr *ngIf="expandedAppId === app.id" class="bg-gray-50">
                         <td colspan="6" class="px-4 pb-4 pt-0">
-                            <div
-                                class="mt-3 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden grid grid-cols-[1fr_280px]">
-
-                                <div class="flex flex-col">
-                                    <div class="bg-gray-50 border-b border-gray-200 px-5 py-4 space-y-2">
-                                        <p class="text-base font-semibold text-gray-900">{{ app.generatedSubject }}</p>
-                                        <div class="flex items-center gap-2 text-sm text-gray-500">
-                                            <span
-                                                class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-semibold shrink-0">
-                                                {{ app.companyName.slice(0, 2).toUpperCase() }}
-                                            </span>
-                                            <span>
-                                                <span class="font-medium text-gray-800">{{ app.companyName }}</span>
-                                                &lt;{{ app.recipientEmail || 'N/A' }}&gt;
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        class="px-5 py-4 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed flex-1">
-                                        {{ app.generatedBody }}
-                                    </div>
-
-                                    <div class="border-t border-gray-100 px-5 py-3 flex gap-2">
-                                        <button
-                                            class="text-blue-600 hover:text-blue-900 font-medium text-xs bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md transition flex items-center gap-1 disabled:opacity-50"
-                                            [disabled]="isSendingEmail || !app.recipientEmail"
-                                            (click)="onSendEmailFromPanel(app)">
-                                            <span *ngIf="isSendingEmail"
-                                                class="inline-block animate-spin rounded-full h-3 w-3 border-2 border-blue-600 border-t-transparent"></span>
-                                            {{ isSendingEmail ? 'Dispatching...' : '🚀 Send Now' }}
-                                        </button>
-                                        <button
-                                            class="text-gray-600 hover:text-gray-900 font-medium text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-md transition"
-                                            (click)="copyToClipboard(app.generatedBody)">
-                                            Copy
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="border-l border-gray-200 flex flex-col px-4 py-4 gap-3">
-                                    <div class="flex items-center justify-between">
-                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Notes</p>
-                                        <button *ngIf="editingNotesAppId !== app.id"
-                                            class="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded hover:bg-blue-50 transition"
-                                            (click)="startEditNotes(app)">
-                                            Edit
-                                        </button>
-                                    </div>
-
-                                    <ng-container *ngIf="editingNotesAppId !== app.id">
-                                        <p *ngIf="app.notes; else noNotes"
-                                            class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-lg p-3 flex-1">
-                                            {{ app.notes }}
-                                        </p>
-                                        <ng-template #noNotes>
-                                            <p class="text-sm text-gray-400 italic bg-gray-50 rounded-lg p-3 flex-1">No
-                                                notes yet.</p>
-                                        </ng-template>
-                                        <p *ngIf="notesSavedForId === app.id"
-                                            class="text-xs text-emerald-600 font-medium flex items-center gap-1 animate-pulse">
-                                            ✓ Saved
-                                        </p>
-                                    </ng-container>
-
-                                    <ng-container *ngIf="editingNotesAppId === app.id">
-                                        <textarea [(ngModel)]="editingNotesValue" name="editNotes_{{ app.id }}" rows="6"
-                                            class="w-full rounded-lg border border-blue-400 px-3 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none leading-relaxed"
-                                            placeholder="Add your notes here...">
-                                        </textarea>
-                                        <div class="flex gap-2 justify-end">
-                                            <button
-                                                class="text-xs text-gray-600 hover:text-gray-800 font-medium px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 transition"
-                                                (click)="cancelEditNotes()">
-                                                Cancel
-                                            </button>
-                                            <button
-                                                class="text-xs text-white font-medium px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 transition"
-                                                (click)="saveNotes(app)">
-                                                Save
-                                            </button>
-                                        </div>
-                                    </ng-container>
-                                </div>
-
-                            </div>
+                            <app-email-panel [app]="app" [isSending]="isSendingEmail" (sendEmail)="onSendEmail($event)"
+                                (copyBody)="onCopyBody($event)" (notesSaved)="onSaveNotes($event.appId, $event.notes)">
+                            </app-email-panel>
                         </td>
                     </tr>
 
@@ -198,6 +91,7 @@
         </table>
     </div>
 
+    <!-- Empty state -->
     <div *ngIf="!isLoading && !appPage?.content?.length"
         class="text-center py-16 bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-500">
         <p class="font-medium text-base">No tracking records populated.</p>
@@ -209,7 +103,8 @@
     </app-pagination>
 
     <app-delete-popup [isModalOpen]="showDeleteModal" [title]="'Confirm Deletion'" [message]="deleteMessage"
-        (confirm)="onConfirmDelete()" (close)="onCancelDelete()" [isLoading]="isLoading"></app-delete-popup>
+        (confirm)="onConfirmDelete()" (close)="onCancelDelete()" [isLoading]="isLoading">
+    </app-delete-popup>
 
     <app-application-popup *ngIf="isModalOpen" [availableSkills]="availableSkills"
         [availableCvVariants]="availableCvVariants" [availableTemplates]="availableTemplates" [isLoading]="isLoading"
