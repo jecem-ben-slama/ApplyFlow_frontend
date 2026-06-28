@@ -117,36 +117,50 @@
 <nav
     class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex justify-around items-center h-14 px-2 shadow-lg">
 
-    <a routerLink="/templates" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-medium"
+    <a routerLink="/templates"
+routerLinkActive="text-blue-700 dark:text-white font-normal [&>span:first-child]:bg-blue-600 [&>span:first-child]:text-white dark:[&>span:first-child]:bg-slate-200 dark:[&>span:first-child]:text-slate-950"
         [routerLinkActiveOptions]="{ exact: true }"
         class="flex flex-col items-center justify-center w-full h-full text-[10px] gap-0.5 text-slate-500 dark:text-slate-400 no-underline">
-        <mat-icon class="scale-75">auto_awesome_mosaic</mat-icon>
+        <span class="flex items-center justify-center w-10 h-6 rounded-full transition-colors">
+            <mat-icon class="scale-75">auto_awesome_mosaic</mat-icon>
+        </span>
         <span>Templates</span>
     </a>
 
-    <a routerLink="/cv-variants" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-medium"
+    <a routerLink="/cv-variants"
+routerLinkActive="text-blue-700 dark:text-white font-normal [&>span:first-child]:bg-blue-600 [&>span:first-child]:text-white dark:[&>span:first-child]:bg-slate-200 dark:[&>span:first-child]:text-slate-950"
         [routerLinkActiveOptions]="{ exact: true }"
         class="flex flex-col items-center justify-center w-full h-full text-[10px] gap-0.5 text-slate-500 dark:text-slate-400 no-underline">
-        <mat-icon class="scale-75">description</mat-icon>
+        <span class="flex items-center justify-center w-10 h-6 rounded-full transition-colors">
+            <mat-icon class="scale-75">description</mat-icon>
+        </span>
         <span>CV Variants</span>
     </a>
 
-    <a routerLink="/skills" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-medium"
+    <a routerLink="/skills"
+        routerLinkActive="text-blue-700 dark:text-white font-normal [&>span:first-child]:bg-blue-600 [&>span:first-child]:text-white dark:[&>span:first-child]:bg-slate-200 dark:[&>span:first-child]:text-slate-950"
         class="flex flex-col items-center justify-center w-full h-full text-[10px] gap-0.5 text-slate-500 dark:text-slate-400 no-underline">
-        <mat-icon class="scale-75">psychology</mat-icon>
+        <span class="flex items-center justify-center w-10 h-6 rounded-full transition-colors">
+            <mat-icon class="scale-75">psychology</mat-icon>
+        </span>
         <span>Skills</span>
     </a>
 
-    <a routerLink="/applications" routerLinkActive="text-indigo-600 dark:text-indigo-400 font-medium"
+    <a routerLink="/applications"
+        routerLinkActive="text-blue-400 dark:text-white font-normal [&>span:first-child]:bg-blue-600 [&>span:first-child]:text-white dark:[&>span:first-child]:bg-slate-200 dark:[&>span:first-child]:text-slate-950"
         [routerLinkActiveOptions]="{ exact: true }"
         class="flex flex-col items-center justify-center w-full h-full text-[10px] gap-0.5 text-slate-500 dark:text-slate-400 no-underline">
-        <mat-icon class="scale-75">send</mat-icon>
+        <span class="flex items-center justify-center w-10 h-6 rounded-full transition-colors">
+            <mat-icon class="scale-75">send</mat-icon>
+        </span>
         <span>Apps</span>
     </a>
 
     <button (click)="toggleGearMenu($event)"
         class="flex flex-col items-center justify-center w-full h-full text-[10px] gap-0.5 text-slate-500 dark:text-slate-400 relative">
-        <mat-icon class="scale-75">settings</mat-icon>
+        <span class="flex items-center justify-center w-10 h-6 rounded-full transition-colors">
+            <mat-icon class="scale-75">settings</mat-icon>
+        </span>
         <span>Settings</span>
 
         <div *ngIf="isGearOpen"

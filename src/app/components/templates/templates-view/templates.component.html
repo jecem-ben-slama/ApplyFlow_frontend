@@ -9,7 +9,7 @@
             layout parsing.</p>
     </div>
 
-    <div class="space-y-6">
+    <div class="grid gap-4">
         <app-template-form [isFormVisible]="isFormVisible" [isEditing]="editingTemplateId !== null" [loading]="loading"
             [errorMessage]="errorMessage" [templateData]="newTemplate" [subjectPlaceholder]="subjectPlaceholder"
             (onToggle)="onToggleForm()" (submit)="onSubmitTemplate()" (cancel)="onCancelEdit()">
