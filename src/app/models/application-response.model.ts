@@ -7,7 +7,7 @@ export interface ApplicationResponseDto {
   status: string;
   generatedSubject: string;
   generatedBody: string;
-  dateApplied: string; // ISO LocalDateTime format string
+  dateApplied: string; 
   notes?: string;
   templateId?: number;
   cvVariantId?: number;

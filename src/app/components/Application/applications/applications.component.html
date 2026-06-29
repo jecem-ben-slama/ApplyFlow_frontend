@@ -1,81 +1,99 @@
-<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-8">
 
+    <!-- HEADER -->
     <div
-        class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-200 dark:border-slate-700 pb-4">
-        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100 tracking-tight">Applications Pipeline
-            Engine</h2>
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 border-b border-gray-200 dark:border-slate-700">
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100 tracking-tight">
+                Applications
+            </h2>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mt-1">
+                Track, manage and automate your job applications workflow
+            </p>
+        </div>
+
         <button
-            class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition duration-150 ease-in-out text-xs sm:text-sm"
+            class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-medium py-2.5 px-5 rounded-xl shadow-sm transition-all duration-200 text-sm"
             (click)="openCreateModal()">
             + Compile New Application
         </button>
     </div>
 
+    <!-- FILTERS -->
     <div
-        class="flex flex-col sm:flex-row sm:flex-wrap gap-3 items-end bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3">
-        <div class="flex flex-col gap-1 w-full sm:flex-1 min-w-0 sm:min-w-[180px]">
-            <label
-                class="text-[10px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Keyword</label>
-            <input type="text" [(ngModel)]="filterKeyword" placeholder="Search company or job title..."
-                (keyup.enter)="onSearch()"
-                class="rounded-md border border-gray-300 dark:border-slate-600 shadow-sm px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 w-full" />
-        </div>
-        <div class="flex flex-col gap-1 w-full sm:w-40 md:w-48">
-            <label
-                class="text-[10px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Status</label>
-            <select [(ngModel)]="filterStatus"
-                class="rounded-md border border-gray-300 dark:border-slate-600 shadow-sm px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-900 dark:text-slate-100 w-full">
-                <option value="">All Statuses</option>
-                <option value="COMPILED">Compiled</option>
-                <option value="SENT">Sent</option>
-                <option value="INTERVIEWING">Interviewing</option>
-                <option value="REJECTED">Rejected</option>
-            </select>
-        </div>
-        <div class="flex gap-2 w-full sm:w-auto mt-1 justify-end">
-            <button (click)="onSearch()"
-                class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium text-xs sm:text-sm px-4 py-2 rounded-md shadow-sm transition">
-                Search
-            </button>
-            <button (click)="onClearFilters()"
-                class="flex-1 sm:flex-none bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300 font-medium text-xs sm:text-sm px-4 py-2 rounded-md border border-gray-300 dark:border-slate-600 transition">
-                Clear
-            </button>
+        class="bg-white/70 dark:bg-slate-800/40 backdrop-blur border border-gray-200 dark:border-slate-700 rounded-2xl p-4 sm:p-5 shadow-sm">
+
+        <div class="flex flex-col sm:flex-row gap-4">
+
+            <!-- SEARCH -->
+            <div class="flex-1">
+                <label class="text-[10px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
+                    Keyword
+                </label>
+                <input type="text" [(ngModel)]="filterKeyword" placeholder="Search company or job title..."
+                    (ngModelChange)="onFilterInput()" class="mt-1 w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm
+                    focus:outline-none focus:ring-2 focus:ring-blue-500
+                    bg-white dark:bg-slate-900 dark:text-slate-100" />
+            </div>
+
+            <!-- STATUS -->
+            <div class="w-full sm:w-48">
+                <label class="text-[10px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
+                    Status
+                </label>
+                <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterInput()" class="mt-1 w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm
+                    focus:outline-none focus:ring-2 focus:ring-blue-500
+                    bg-white dark:bg-slate-900 dark:text-slate-100">
+                    <option value="">All</option>
+                    <option value="COMPILED">Compiled</option>
+                    <option value="SENT">Sent</option>
+                    <option value="INTERVIEWING">Interviewing</option>
+                    <option value="REJECTED">Rejected</option>
+                </select>
+            </div>
+
         </div>
     </div>
 
+    <!-- ALERTS -->
     <div *ngIf="errorMessage"
-        class="bg-red-50 dark:bg-red-950/40 border-l-4 border-red-500 p-4 text-xs text-red-800 dark:text-red-300 rounded shadow-sm">
+        class="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs">
         {{ errorMessage }}
     </div>
+
     <div *ngIf="successMessage"
-        class="bg-emerald-50 dark:bg-emerald-950/40 border-l-4 border-emerald-500 p-4 text-xs text-emerald-800 dark:text-emerald-300 rounded shadow-sm">
+        class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs">
         {{ successMessage }}
     </div>
 
-    <div *ngIf="isLoading" class="text-center py-8 text-gray-500 dark:text-slate-400 animate-pulse font-medium text-xs">
-        Querying pipeline data layers...
+    <!-- LOADING -->
+    <div *ngIf="isLoading" class="text-center py-10 text-gray-500 dark:text-slate-400 animate-pulse text-sm">
+        Syncing applications pipeline...
     </div>
 
+    <!-- TABLE VIEW -->
     <div *ngIf="!isLoading && appPage?.content?.length"
-        class="hidden md:block overflow-x-auto bg-white dark:bg-slate-900 rounded-xl shadow border border-gray-200 dark:border-slate-700">
-        <table class="min-w-full text-left text-xs">
+        class="hidden md:block bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+
+        <table class="min-w-full text-left text-sm">
+
             <thead
-                class="bg-gray-50 dark:bg-slate-800 text-[10px] font-semibold text-gray-700 dark:text-slate-400 uppercase tracking-wider">
+                class="bg-gray-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider text-gray-600 dark:text-slate-400">
                 <tr>
                     <th class="px-6 py-4">Company</th>
                     <th class="px-6 py-4">Job Title</th>
-                    <th class="px-6 py-4">Date Applied</th>
+                    <th class="px-6 py-4">Date</th>
                     <th class="px-6 py-4">Language</th>
                     <th class="px-6 py-4">Status</th>
                     <th class="px-6 py-4 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody
-                class="text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-900 divide-y divide-gray-100 dark:divide-slate-800">
+
+            <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
+
                 <ng-container *ngFor="let app of appPage!.content">
 
-                    <tr app-application-row class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition" [app]="app"
+                    <tr app-application-row class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition" [app]="app"
                         [isExpanded]="expandedAppId === app.id" [isSendingEmail]="isSendingEmail"
                         (togglePanel)="onTogglePanel($event)" (statusChange)="onUpdateStatus($event.id, $event.status)"
                         (deleteApp)="onDelete($event)" (sendEmail)="onSendEmail($event)" (copyBody)="onCopyBody($event)"
@@ -83,7 +101,7 @@
                     </tr>
 
                     <tr *ngIf="expandedAppId === app.id" class="bg-gray-50 dark:bg-slate-800/40">
-                        <td colspan="6" class="px-4 pb-4 pt-0">
+                        <td colspan="6" class="px-4 pb-4">
                             <app-email-panel [app]="app" [isSending]="isSendingEmail" (sendEmail)="onSendEmail($event)"
                                 (copyBody)="onCopyBody($event)" (notesSaved)="onSaveNotes($event.appId, $event.notes)">
                             </app-email-panel>
@@ -91,96 +109,106 @@
                     </tr>
 
                 </ng-container>
+
             </tbody>
         </table>
     </div>
 
+    <!-- MOBILE CARDS -->
     <div *ngIf="!isLoading && appPage?.content?.length" class="block md:hidden space-y-4">
-        <ng-container *ngFor="let app of appPage!.content">
-            <div class="bg-white dark:bg-slate-900 rounded-xl shadow border border-gray-200 dark:border-slate-700 p-4 space-y-4 relative"
-                [ngClass]="{'border-blue-500/50': expandedAppId === app.id}">
 
-                <div class="flex justify-between items-start gap-3">
-                    <div class="min-w-0 flex-1">
-                        <h3 class="font-bold text-sm text-gray-900 dark:text-slate-100 truncate">{{ app.companyName }}
+        <ng-container *ngFor="let app of appPage!.content">
+
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 space-y-4"
+                [ngClass]="{'ring-2 ring-blue-500/30': expandedAppId === app.id}">
+
+                <div class="flex justify-between items-start">
+                    <div class="min-w-0">
+                        <h3 class="font-semibold text-gray-900 dark:text-slate-100 truncate">
+                            {{ app.companyName }}
                         </h3>
-                        <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 truncate">{{ app.jobTitle || 'No
-                            Title Provided' }}</p>
+                        <p class="text-xs text-gray-500 dark:text-slate-400 truncate">
+                            {{ app.jobTitle || 'No title provided' }}
+                        </p>
                     </div>
+
                     <span
-                        class="inline-flex px-2.5 py-1 text-[10px] font-bold rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800 uppercase tracking-wider shrink-0">
+                        class="text-[10px] px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50
+                        text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900 font-semibold uppercase">
                         {{ app.status }}
                     </span>
                 </div>
 
                 <div
-                    class="grid grid-cols-2 gap-3 text-[11px] bg-gray-50 dark:bg-slate-800/60 p-3 rounded-lg border border-gray-100 dark:border-slate-700">
+                    class="grid grid-cols-2 gap-3 text-xs bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl border border-gray-100 dark:border-slate-700">
+
                     <div>
-                        <span
-                            class="block text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Applied
-                            Date</span>
-                        <span class="text-gray-700 dark:text-slate-300 font-medium">{{ (app.dateApplied | date) || 'N/A'
-                            }}</span>
+                        <p class="text-[10px] text-gray-400 uppercase">Applied</p>
+                        <p class="font-medium text-gray-700 dark:text-slate-200">
+                            {{ (app.dateApplied | date) || 'N/A' }}
+                        </p>
                     </div>
+
                     <div>
-                        <span
-                            class="block text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Language</span>
-                        <span
-                            class="font-mono text-[10px] bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-slate-200 px-2 py-0.5 rounded font-semibold inline-block uppercase tracking-wider">
+                        <p class="text-[10px] text-gray-400 uppercase">Language</p>
+                        <p class="font-mono text-[11px] text-gray-800 dark:text-slate-200">
                             {{ app.language || 'EN' }}
-                        </span>
+                        </p>
                     </div>
+
                 </div>
 
-                <div class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-slate-700">
+                <div class="flex gap-2">
                     <button (click)="onTogglePanel(app.id)"
-                        class="flex-1 text-center text-xs font-semibold py-2 rounded-lg border transition-colors"
-                        [ngClass]="expandedAppId === app.id 
-                            ? 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-950' 
-                            : 'text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'">
-                        {{ expandedAppId === app.id ? '▲ Hide Email' : '▼ View Email' }}
+                        class="flex-1 py-2 text-xs font-semibold rounded-xl border transition"
+                        [ngClass]="expandedAppId === app.id
+                            ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+                            : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-300'">
+                        {{ expandedAppId === app.id ? 'Hide Email' : 'View Email' }}
                     </button>
 
                     <button (click)="onDelete(app.id)"
-                        class="px-3 py-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900 hover:bg-red-100 dark:hover:bg-red-950 rounded-lg transition-colors flex items-center justify-center">
-                        <mat-icon class="scale-75 m-0 leading-none">delete</mat-icon>
+                        class="px-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900">
+                        <mat-icon class="scale-75">delete</mat-icon>
                     </button>
                 </div>
 
-                <div *ngIf="expandedAppId === app.id" class="pt-2 border-t border-gray-100 dark:border-slate-700 mt-2">
+                <div *ngIf="expandedAppId === app.id" class="pt-3 border-t border-gray-100 dark:border-slate-700">
                     <app-email-panel [app]="app" [isSending]="isSendingEmail" (sendEmail)="onSendEmail($event)"
                         (copyBody)="onCopyBody($event)" (notesSaved)="onSaveNotes($event.appId, $event.notes)">
                     </app-email-panel>
                 </div>
+
             </div>
+
         </ng-container>
+
     </div>
 
-    <ng-template #rowActions let-app="app">
-        <tr app-application-row class="contents" [app]="app" [isExpanded]="expandedAppId === app.id"
-            [isSendingEmail]="isSendingEmail" (togglePanel)="onTogglePanel($event)"
-            (statusChange)="onUpdateStatus($event.id, $event.status)" (deleteApp)="onDelete($event)"
-            (sendEmail)="onSendEmail($event)" (copyBody)="onCopyBody($event)"
-            (notesSaved)="onSaveNotes($event.appId, $event.notes)">
-        </tr>
-    </ng-template>
-
+    <!-- EMPTY STATE -->
     <div *ngIf="!isLoading && !appPage?.content?.length"
-        class="text-center py-16 bg-gray-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-gray-300 dark:border-slate-600 text-gray-500 dark:text-slate-400">
-        <p class="font-medium text-base">No tracking records populated.</p>
-        <p class="text-sm text-gray-400 dark:text-slate-500 mt-1">Click create to trigger the configuration wizard.</p>
+        class="text-center py-20 bg-white dark:bg-slate-900 border border-dashed border-gray-300 dark:border-slate-700 rounded-2xl">
+        <p class="text-lg font-semibold text-gray-700 dark:text-slate-200">
+            No applications yet
+        </p>
+        <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
+            Start by compiling your first application
+        </p>
     </div>
 
+    <!-- PAGINATION -->
     <app-pagination [currentPage]="currentPage" [totalPages]="appTotalPages" [loading]="isLoading"
         (pageChange)="onPageChange($event)">
     </app-pagination>
 
+    <!-- MODALS -->
     <app-delete-popup [isModalOpen]="showDeleteModal" [title]="'Confirm Deletion'" [message]="deleteMessage"
         (confirm)="onConfirmDelete()" (close)="onCancelDelete()" [isLoading]="isLoading">
     </app-delete-popup>
 
-    <app-application-popup *ngIf="isModalOpen" [availableSkills]="availableSkills"
+    <app-application-popup *ngIf="isModalOpen" [availableSkills]="availableSkills" [availableCategories]="availableCategories"
         [availableCvVariants]="availableCvVariants" [availableTemplates]="availableTemplates" [isLoading]="isLoading"
-        (close)="closeModal()" (submit)="onCreateSubmit($event)">
+        (close)="closeModal()" (formSubmit)="onCreateSubmit($event)">
     </app-application-popup>
+
 </div>

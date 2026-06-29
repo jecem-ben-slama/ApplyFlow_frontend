@@ -29,12 +29,12 @@
         [disabled]="isSending || !app.recipientEmail" (click)="sendEmail.emit(app)">
         <span *ngIf="isSending"
           class="inline-block animate-spin rounded-full h-3 w-3 border-2 border-blue-600 dark:border-blue-400 border-t-transparent"></span>
-        {{ isSending ? 'Dispatching...' : '🚀 Send Now' }}
+        {{ isSending ? 'Dispatching...' : 'Send Now' }}
       </button>
       <button
         class="flex-1 sm:flex-none justify-center text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-slate-100 font-medium text-[11px] sm:text-xs bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 px-3 py-2 rounded-md transition"
         (click)="copyBody.emit(app.generatedBody)">
-        📋 Copy Body
+        Copy
       </button>
     </div>
   </div>
