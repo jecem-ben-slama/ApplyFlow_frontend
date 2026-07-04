@@ -2,18 +2,19 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { API_CONFIG } from '../config';
 import { ApiResponse, Page, CvVariantDto } from '../models';
+import { ApiConfig } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CvVariantsService {
   // Pulling the absolute URL directly to guarantee CORS cookies work perfectly
-  private readonly baseUrl = API_CONFIG.endpoints.cvVariants.base;
+ constructor(private http: HttpClient, private api: ApiConfig) {}
 
-  constructor(private http: HttpClient) {}
-
+  private get baseUrl(): string {
+    return this.api.endpoints.cvVariants.base;
+  }
   /**
    * GET /api/cv-variants
    * Retrieves a paginated slice of CV variants matching the current user context.
@@ -43,7 +44,7 @@ export class CvVariantsService {
     return this.http
       .get<ApiResponse<Page<CvVariantDto>>>(this.baseUrl, {
         params,
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map((response) => response.data));
   }
@@ -54,7 +55,7 @@ export class CvVariantsService {
   getCvVariantById(id: number): Observable<CvVariantDto> {
     return this.http
       .get<ApiResponse<CvVariantDto>>(`${this.baseUrl}/${id}`, {
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map((response) => response.data));
   }
@@ -68,7 +69,7 @@ export class CvVariantsService {
   ): Observable<CvVariantDto> {
     return this.http
       .post<ApiResponse<CvVariantDto>>(this.baseUrl, cvVariant, {
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map((response) => response.data));
   }
@@ -83,7 +84,7 @@ export class CvVariantsService {
   ): Observable<CvVariantDto> {
     return this.http
       .put<ApiResponse<CvVariantDto>>(`${this.baseUrl}/${id}`, cvVariant, {
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map((response) => response.data));
   }
@@ -95,7 +96,7 @@ export class CvVariantsService {
   deleteCvVariant(id: number): Observable<void> {
     return this.http
       .delete<ApiResponse<void>>(`${this.baseUrl}/${id}`, {
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map(() => undefined));
   }

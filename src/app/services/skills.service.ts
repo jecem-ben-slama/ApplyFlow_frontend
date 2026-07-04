@@ -2,16 +2,18 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { API_CONFIG } from '../config';
 import { ApiResponse, Page, Skill } from '../models';
+import { ApiConfig } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SkillsService {
-  private readonly baseUrl = API_CONFIG.endpoints.skills.base;
+  constructor(private http: HttpClient, private api: ApiConfig) {}
 
-  constructor(private http: HttpClient) {}
+  private get baseUrl(): string {
+    return this.api.endpoints.skills.base;
+  }
 
   getAllSkills(
     page: number = 0,
@@ -33,7 +35,7 @@ export class SkillsService {
 
     return this.http
       .get<ApiResponse<Page<Skill>>>(this.baseUrl, {
-        ...API_CONFIG.httpOptions,
+        ...this.api.httpOptions,
         params,
       })
       .pipe(map((response) => response.data));
@@ -41,7 +43,7 @@ export class SkillsService {
 
   getSkillById(id: number): Observable<Skill> {
     return this.http
-      .get<ApiResponse<Skill>>(`${this.baseUrl}/${id}`, API_CONFIG.httpOptions)
+      .get<ApiResponse<Skill>>(`${this.baseUrl}/${id}`, this.api.httpOptions)
       .pipe(map((response) => response.data));
   }
 
@@ -49,7 +51,7 @@ export class SkillsService {
     skill: Omit<Skill, 'id' | 'userId' | 'categoryName'>
   ): Observable<Skill> {
     return this.http
-      .post<ApiResponse<Skill>>(this.baseUrl, skill, API_CONFIG.httpOptions)
+      .post<ApiResponse<Skill>>(this.baseUrl, skill, this.api.httpOptions)
       .pipe(map((response) => response.data));
   }
 
@@ -61,7 +63,7 @@ export class SkillsService {
       .put<ApiResponse<Skill>>(
         `${this.baseUrl}/${id}`,
         skill,
-        API_CONFIG.httpOptions
+        this.api.httpOptions
       )
       .pipe(map((response) => response.data));
   }
@@ -70,7 +72,7 @@ export class SkillsService {
     return this.http
       .delete<ApiResponse<void>>(
         `${this.baseUrl}/${id}`,
-        API_CONFIG.httpOptions
+        this.api.httpOptions
       )
       .pipe(map(() => undefined));
   }

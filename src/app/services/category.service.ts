@@ -2,24 +2,25 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { API_CONFIG } from '../config';
 import { ApiResponse, Category } from '../models';
+import { ApiConfig } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CategoryService {
-  private readonly baseUrl = API_CONFIG.endpoints.categories.base;
-
-  constructor(private http: HttpClient) {}
-
+   constructor(private http: HttpClient, private api: ApiConfig) {}
+  
+    private get baseUrl(): string {
+      return this.api.endpoints.categories.base;
+    }
   /**
    * GET /api/categories
    * Returns all categories owned by the authenticated user.
    */
   getAllCategories(): Observable<Category[]> {
     return this.http
-      .get<ApiResponse<Category[]>>(this.baseUrl, API_CONFIG.httpOptions)
+      .get<ApiResponse<Category[]>>(this.baseUrl, this.api.httpOptions)
       .pipe(map((response) => response.data));
   }
 
@@ -30,7 +31,7 @@ export class CategoryService {
     return this.http
       .get<ApiResponse<Category>>(
         `${this.baseUrl}/${id}`,
-        API_CONFIG.httpOptions
+        this.api.httpOptions
       )
       .pipe(map((response) => response.data));
   }
@@ -43,7 +44,7 @@ export class CategoryService {
       .post<ApiResponse<Category>>(
         this.baseUrl,
         { name },
-        API_CONFIG.httpOptions
+        this.api.httpOptions
       )
       .pipe(map((response) => response.data));
   }
@@ -56,7 +57,7 @@ export class CategoryService {
       .put<ApiResponse<Category>>(
         `${this.baseUrl}/${id}`,
         { name },
-        API_CONFIG.httpOptions
+        this.api.httpOptions
       )
       .pipe(map((response) => response.data));
   }
@@ -69,7 +70,7 @@ export class CategoryService {
     return this.http
       .delete<ApiResponse<void>>(
         `${this.baseUrl}/${id}`,
-        API_CONFIG.httpOptions
+        this.api.httpOptions
       )
       .pipe(map(() => undefined));
   }

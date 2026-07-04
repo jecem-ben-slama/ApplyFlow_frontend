@@ -2,7 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { API_CONFIG } from '../config';
+import { ApiConfig } from '../config/api.config';
+
 import { ApiResponse, User } from '../models';
 
 @Injectable({
@@ -10,6 +11,7 @@ import { ApiResponse, User } from '../models';
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly api = inject(ApiConfig);
 
   private readonly currentUserSubject = new BehaviorSubject<User | null>(null);
   public readonly currentUser$ = this.currentUserSubject.asObservable();
@@ -18,15 +20,12 @@ export class AuthService {
   public readonly isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
   loginWithGoogle(): void {
-    window.location.href = API_CONFIG.endpoints.auth.login;
+    window.location.href = this.api.endpoints.auth.login;
   }
 
   checkSession(): Observable<boolean> {
     return this.http
-      .get<ApiResponse<User>>(
-        API_CONFIG.endpoints.auth.me,
-        API_CONFIG.httpOptions
-      )
+      .get<ApiResponse<User>>(this.api.endpoints.auth.me, this.api.httpOptions)
       .pipe(
         tap((response) => {
           if (response.success && response.data) {
@@ -50,7 +49,7 @@ export class AuthService {
    */
   logout(): void {
     this.http
-      .post(API_CONFIG.endpoints.auth.logout, {}, API_CONFIG.httpOptions)
+      .post(this.api.endpoints.auth.logout, {}, this.api.httpOptions)
       .subscribe({
         next: () => this.handleLogoutRedirect(),
         error: () => this.handleLogoutRedirect(),

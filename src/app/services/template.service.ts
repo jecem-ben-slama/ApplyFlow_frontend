@@ -2,16 +2,16 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { API_CONFIG } from '../config';
+import {  ApiConfig } from '../config';
 import { ApiResponse, Page, TemplateDto } from '../models';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TemplateService {
-  private readonly baseUrl = API_CONFIG.endpoints.templates.base;
+  private readonly baseUrl = this.api.endpoints.templates.base;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private api: ApiConfig) {}
 
   /**
    * GET /api/templates
@@ -38,7 +38,7 @@ export class TemplateService {
     return this.http
       .get<ApiResponse<Page<TemplateDto>>>(this.baseUrl, {
         params,
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map((response) => response.data));
   }
@@ -50,7 +50,7 @@ export class TemplateService {
   getTemplateById(id: number): Observable<TemplateDto> {
     return this.http
       .get<ApiResponse<TemplateDto>>(`${this.baseUrl}/${id}`, {
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map((response) => response.data));
   }
@@ -64,7 +64,7 @@ export class TemplateService {
   ): Observable<TemplateDto> {
     return this.http
       .post<ApiResponse<TemplateDto>>(this.baseUrl, template, {
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map((response) => response.data));
   }
@@ -79,7 +79,7 @@ export class TemplateService {
   ): Observable<TemplateDto> {
     return this.http
       .put<ApiResponse<TemplateDto>>(`${this.baseUrl}/${id}`, template, {
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map((response) => response.data));
   }
@@ -91,7 +91,7 @@ export class TemplateService {
   deleteTemplate(id: number): Observable<void> {
     return this.http
       .delete<ApiResponse<any>>(`${this.baseUrl}/${id}`, {
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map(() => undefined));
   }

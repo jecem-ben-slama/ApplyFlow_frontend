@@ -1,0 +1,25 @@
+# Dependency folders
+node_modules
+npm-debug.log
+
+# Build output
+dist
+tmp
+
+# IDE / Editor files
+.vscode
+.idea
+.DS_Store
+
+# Version control
+.git
+.gitignore
+
+# Testing / Coverage
+coverage
+.angular
+
+.env
+# Optional: keep if you want these inside the container, 
+# but usually they are not needed in production
+README.md

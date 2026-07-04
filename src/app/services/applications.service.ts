@@ -2,21 +2,23 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { API_CONFIG } from '../config';
 import {
   ApiResponse,
   Page,
   ApplicationCreateDto,
   ApplicationResponseDto,
 } from '../models';
+import { ApiConfig } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ApplicationsService {
-  private readonly baseUrl = API_CONFIG.endpoints.applications.base;
+  constructor(private http: HttpClient, private api: ApiConfig) {}
 
-  constructor(private http: HttpClient) {}
+  private get baseUrl(): string {
+    return this.api.endpoints.applications.base;
+  }
 
   getAllApplications(
     page: number = 0,
@@ -38,7 +40,7 @@ export class ApplicationsService {
     return this.http
       .get<ApiResponse<Page<ApplicationResponseDto>>>(this.baseUrl, {
         params,
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map((response) => response.data));
   }
@@ -46,7 +48,7 @@ export class ApplicationsService {
   getApplicationById(id: number): Observable<ApplicationResponseDto> {
     return this.http
       .get<ApiResponse<ApplicationResponseDto>>(`${this.baseUrl}/${id}`, {
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map((response) => response.data));
   }
@@ -56,7 +58,7 @@ export class ApplicationsService {
   ): Observable<ApplicationResponseDto> {
     return this.http
       .post<ApiResponse<ApplicationResponseDto>>(this.baseUrl, application, {
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map((response) => response.data));
   }
@@ -76,7 +78,7 @@ export class ApplicationsService {
         {},
         {
           params,
-          withCredentials: API_CONFIG.httpOptions.withCredentials,
+          withCredentials: this.api.httpOptions.withCredentials,
         }
       )
       .pipe(map((response) => response.data));
@@ -85,7 +87,7 @@ export class ApplicationsService {
   deleteApplication(id: number): Observable<void> {
     return this.http
       .delete<ApiResponse<void>>(`${this.baseUrl}/${id}`, {
-        withCredentials: API_CONFIG.httpOptions.withCredentials,
+        withCredentials: this.api.httpOptions.withCredentials,
       })
       .pipe(map(() => undefined));
   }

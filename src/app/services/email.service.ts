@@ -1,27 +1,28 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { API_CONFIG } from '../config';
+import { ApiConfig } from '../config';
 
 export interface EmailSendRequest {
   recipientEmail: string;
   subject: string;
   body: string;
-  cvVariantId?: number; // Uses the variant ID identifier
+  cvVariantId?: number;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class EmailService {
-  constructor(private http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly api = inject(ApiConfig);
 
   /**
    * Dispatches the compiled form payload over to the Spring Boot pipeline
    */
   sendEmail(payload: EmailSendRequest): Observable<string> {
-    return this.http.post(API_CONFIG.endpoints.emails.send, payload, {
-      ...API_CONFIG.httpOptions,
+    return this.http.post(this.api.endpoints.emails.send, payload, {
+      ...this.api.httpOptions,
       responseType: 'text',
     });
   }
