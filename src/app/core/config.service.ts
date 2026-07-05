@@ -16,8 +16,13 @@ export class ConfigService {
       });
       if (response.ok) {
         const loaded = await response.json();
-        if (loaded?.apiUrl) {
+        // Check if apiUrl property exists (even if empty), not just if it's truthy
+        if (loaded && 'apiUrl' in loaded) {
           this.config = loaded;
+          console.log(
+            '✅ Loaded runtime config:',
+            this.config.apiUrl || '(empty - will use environment.ts)'
+          );
         }
       }
     } catch {
