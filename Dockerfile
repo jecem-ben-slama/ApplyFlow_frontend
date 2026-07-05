@@ -17,7 +17,7 @@ RUN npm run build -- --configuration=${BUILD_PROFILE}
 FROM nginx:alpine
 
 # Copy the compiled build from the previous stage to Nginx's web root
-COPY --from=build /app/dist/applyflow /usr/share/nginx/html
+COPY --from=build /app/dist/applyflow-ui /usr/share/nginx/html
 
 # Copy your custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
