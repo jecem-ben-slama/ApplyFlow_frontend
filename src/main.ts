@@ -8,7 +8,9 @@ import { routes } from './app/app-routing.module';
 
 async function initializeApp() {
   const configService = new ConfigService();
+  console.log(' Initializing: Loading config...');
   await configService.loadConfig();
+  console.log(' Config loaded. API URL:', configService.apiUrl);
 
   return bootstrapApplication(AppComponent, {
     providers: [
@@ -19,4 +21,4 @@ async function initializeApp() {
   });
 }
 
-initializeApp().catch((err) => console.error(err));
+initializeApp().catch((err) => console.error('❌ Bootstrap error:', err));
