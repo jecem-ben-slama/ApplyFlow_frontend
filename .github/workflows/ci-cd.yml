@@ -29,11 +29,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Update Render service image and deploy
+      - name: Trigger Render deploy with specific image
         run: |
-          curl -X PATCH "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}" \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "imagePath": "ghcr.io/${{ github.repository_owner }}/tracker-frontend:${{ github.sha }}"
-            }'
+          IMG_URL="ghcr.io/${{ github.repository_owner }}/tracker-frontend:${{ github.sha }}"
+          ENCODED_IMG_URL=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$IMG_URL")
+          curl -f "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}&imgURL=$ENCODED_IMG_URL"
