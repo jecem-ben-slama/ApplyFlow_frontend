@@ -1,15 +1,22 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient } from '@angular/common/http';
-import { provideRouter, Routes } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { AppComponent } from './app/app.component';
-
+import { ConfigService } from './app/core/config.service';
 import { routes } from './app/app-routing.module';
 
-bootstrapApplication(AppComponent, {
-  providers: [
-    provideRouter(routes), // 2. This now hooks up your active tracking endpoints!
-    provideHttpClient(),
-    provideAnimations(),
-  ],
-}).catch((err) => console.error(err));
+async function initializeApp() {
+  const configService = new ConfigService();
+  await configService.loadConfig();
+
+  return bootstrapApplication(AppComponent, {
+    providers: [
+      provideRouter(routes),
+      provideHttpClient(),
+      provideAnimations(),
+    ],
+  });
+}
+
+initializeApp().catch((err) => console.error(err));
