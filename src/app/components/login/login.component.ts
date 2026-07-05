@@ -10,7 +10,7 @@ import { AuthService } from '../../services/auth.service';
     <div class="login-wrapper">
       <div class="login-card">
         <div class="brand-header">
-          <h1>ApplyFlow</h1>
+          <h1>Apply Flow</h1>
           <p class="subtitle">Smart Application & Skill Tracker</p>
         </div>
 
