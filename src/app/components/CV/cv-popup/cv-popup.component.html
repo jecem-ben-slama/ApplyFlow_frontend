@@ -99,9 +99,13 @@
                             <p class="text-rose-600 text-xs mt-1.5 ml-1 flex items-center gap-1">
                                 <mat-icon class="!text-sm !w-4 !h-4">error_outline</mat-icon>
                                 <span *ngIf="fileUrlField.errors?.['required']">A CV link is required.</span>
-                                <span *ngIf="fileUrlField.errors?.['pattern'] && !fileUrlField.errors?.['required']">
-                                    Must be a valid Google Drive share link.
-                                </span>
+                            <span *ngIf="fileUrlField.hasError('pattern')">
+                                Invalid file URL format.
+                            </span>
+                            
+                            <span *ngIf="fileUrlField.hasError('required')">
+                                File URL is required.
+                            </span>
                             </p>
                         </div>
                     </div>
