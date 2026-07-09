@@ -5,8 +5,10 @@ import { getPageMeta, Page, TemplateDto } from 'src/app/models';
 import { TemplateService } from 'src/app/services/template.service';
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
 import { TemplateListComponent } from '../template-list/template-list.component';
-import { TemplateFormComponent } from "../template-form/template-form.component";
-
+import {
+  TemplateFormComponent,
+  TemplateData,
+} from '../template-form/template-form.component';
 
 export interface TemplateComponent extends TemplateDto {
   isExpanded?: boolean;
@@ -19,8 +21,8 @@ export interface TemplateComponent extends TemplateDto {
     CommonModule,
     DeletePopupComponent,
     TemplateListComponent,
-    TemplateFormComponent
-],
+    TemplateFormComponent,
+  ],
   templateUrl: './templates.component.html',
   animations: [
     trigger('formSlide', [
@@ -59,7 +61,7 @@ export class TemplatesComponent implements OnInit {
   searchTerm = '';
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
-  newTemplate = {
+  newTemplate: TemplateData = {
     name: '',
     language: 'EN',
     subjectTemplate: '',
@@ -159,28 +161,29 @@ export class TemplatesComponent implements OnInit {
     };
   }
 
-  onSubmitTemplate(): void {
+  onSubmitTemplate(data: TemplateData): void {
     this.loading = true;
     this.errorMessage = '';
-    if (!this.newTemplate.name?.trim()) {
-      this.errorMessage = 'Template name is required.';
-      this.loading = false;
-      return;
-    }
-    if (!this.newTemplate.subjectTemplate?.trim()) {
-      this.errorMessage = 'Template subject is required.';
-      this.loading = false;
-      return;
-    }
-    if (!this.newTemplate.bodyTemplate?.trim()) {
-      this.errorMessage = 'Template body content is required.';
+
+    // Form-level required-field validation is already enforced in
+    // TemplateFormComponent (NgForm), so we don't need to re-check
+    // trimmed emptiness here — but we keep this as a defensive backstop
+    // in case the component is ever driven programmatically.
+    if (
+      !data.name?.trim() ||
+      !data.subjectTemplate?.trim() ||
+      !data.bodyTemplate?.trim()
+    ) {
+      this.errorMessage = 'Please fill in all required fields.';
       this.loading = false;
       return;
     }
 
+    this.newTemplate = data;
+
     if (this.editingTemplateId !== null) {
       this.templateService
-        .updateTemplate(this.editingTemplateId, this.newTemplate)
+        .updateTemplate(this.editingTemplateId, data)
         .subscribe({
           next: () => {
             this.onCancelEdit();
@@ -191,11 +194,12 @@ export class TemplatesComponent implements OnInit {
               'Failed to patch targeted template entry context:',
               err
             );
+            this.errorMessage = 'Failed to update template. Please try again.';
             this.loading = false;
           },
         });
     } else {
-      this.templateService.createTemplate(this.newTemplate).subscribe({
+      this.templateService.createTemplate(data).subscribe({
         next: () => {
           this.onCancelEdit();
           this.loadTemplates();
@@ -205,6 +209,7 @@ export class TemplatesComponent implements OnInit {
             'Failed to append custom profile template record template entry:',
             err
           );
+          this.errorMessage = 'Failed to create template. Please try again.';
           this.loading = false;
         },
       });

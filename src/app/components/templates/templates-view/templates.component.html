@@ -12,7 +12,7 @@
     <div class="grid gap-4">
         <app-template-form [isFormVisible]="isFormVisible" [isEditing]="editingTemplateId !== null" [loading]="loading"
             [errorMessage]="errorMessage" [templateData]="newTemplate" [subjectPlaceholder]="subjectPlaceholder"
-            (onToggle)="onToggleForm()" (submit)="onSubmitTemplate()" (cancel)="onCancelEdit()">
+            (toggle)="onToggleForm()" (formSubmit)="onSubmitTemplate($event)" (cancel)="onCancelEdit()">
         </app-template-form>
 
         <app-template-list [templates]="templates" [totalElements]="totalElements" [currentPage]="currentPage"
