@@ -76,6 +76,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   toggleTheme(): void {
     this.themeService.toggleTheme();
   }
+  onPhotoError(): void {
+    this.userProfilePic = undefined;
+  }
 
   /** Opens the confirmation dialog instead of logging out immediately. */
   requestLogout(): void {
