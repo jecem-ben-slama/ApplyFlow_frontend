@@ -1,11 +1,13 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './components/login/login.component';
 import { authGuard } from './core/guards/auth.guard'; // Adjust this path to where your guard file is located
+import { guestGuard } from './core/guards/guest.guard';
 
 export const routes: Routes = [
   {
     path: 'login',
     component: LoginComponent,
+    canActivate: [guestGuard],
   },
 
   {
@@ -18,7 +20,7 @@ export const routes: Routes = [
   },
   {
     path: 'templates',
- 
+
     loadComponent: () =>
       import('./components/templates/templates-view/templates.component').then(
         (m) => m.TemplatesComponent
@@ -43,11 +45,11 @@ export const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: 'skills',
+    redirectTo: 'applications',
     pathMatch: 'full',
   },
   {
     path: '**',
-    redirectTo: 'skills',
+    redirectTo: 'applications',
   },
 ];
