@@ -1,24 +1,27 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { APP_INITIALIZER } from '@angular/core';
 import { AppComponent } from './app/app.component';
 import { ConfigService } from './app/core/config.service';
 import { routes } from './app/app-routing.module';
 
-async function initializeApp() {
-  const configService = new ConfigService();
-  console.log(' Initializing: Loading config...');
-  await configService.loadConfig();
-  console.log(' Config loaded. API URL:', configService.apiUrl);
-
-  return bootstrapApplication(AppComponent, {
-    providers: [
-      provideRouter(routes),
-      provideHttpClient(),
-      provideAnimations(),
-    ],
-  });
+export function initializeAppFactory(configService: ConfigService) {
+  return () => configService.loadConfig();
 }
 
-initializeApp().catch((err) => console.error('❌ Bootstrap error:', err));
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideRouter(routes),
+    provideHttpClient(), // add withInterceptors(...) here once you share your interceptor
+    provideAnimations(),
+    ConfigService,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeAppFactory,
+      deps: [ConfigService],
+      multi: true,
+    },
+  ],
+}).catch((err) => console.error('❌ Bootstrap error:', err));
