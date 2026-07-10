@@ -29,49 +29,87 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div class="space-y-2">
-                    <label
-                        class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Display
-                        Name</label>
-                    <input type="text" [(ngModel)]="formData.name" placeholder="e.g., Next.js"
-                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm" />
-                </div>
-
+                <!-- Display Name -->
                 <div class="space-y-2">
                     <label class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                        Category <span
-                            class="text-slate-400 normal-case font-normal font-sans text-[10px] lowercase ml-1">(optional)</span>
+                        Display Name <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" [(ngModel)]="formData.name" (blur)="onFieldBlur('name')"
+                        placeholder="e.g., Next.js" [attr.aria-invalid]="hasError('name')"
+                        [ngClass]="fieldClasses('name')"
+                        class="w-full bg-white dark:bg-slate-900 border rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all shadow-sm" />
+                    <p *ngIf="hasError('name')"
+                        class="flex items-center gap-1.5 text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+                        <mat-icon class="!text-sm !w-3.5 !h-3.5">error</mat-icon>
+                        {{ fieldErrors.name }}
+                    </p>
+                </div>
+
+                <!-- Category (required) -->
+                <div class="space-y-2">
+                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                        Category <span class="text-rose-500">*</span>
                     </label>
                     <div class="relative">
-                        <select [(ngModel)]="formData.categoryId"
-                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm appearance-none">
-                            <option [ngValue]="null">— No category —</option>
+                        <select [(ngModel)]="formData.categoryId" (blur)="onFieldBlur('categoryId')"
+                            (ngModelChange)="onFieldBlur('categoryId')" [attr.aria-invalid]="hasError('categoryId')"
+                            [ngClass]="fieldClasses('categoryId')"
+                            class="w-full bg-white dark:bg-slate-900 border rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 transition-all shadow-sm appearance-none">
+                            <option [ngValue]="null" disabled>— Select a category —</option>
                             <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
                         </select>
                         <mat-icon
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-base">expand_more</mat-icon>
                     </div>
+                    <p *ngIf="hasError('categoryId')"
+                        class="flex items-center gap-1.5 text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+                        <mat-icon class="!text-sm !w-3.5 !h-3.5">error</mat-icon>
+                        {{ fieldErrors.categoryId }}
+                    </p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <!-- English Sentence -->
                 <div class="space-y-2">
-                    <label
-                        class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">English
-                        Sentence</label>
-                    <textarea [(ngModel)]="formData.sentenceEn"
+                    <div class="flex items-center justify-between">
+                        <label
+                            class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            English Sentence <span class="text-rose-500">*</span>
+                        </label>
+                        <span class="text-[10px] text-slate-400 tabular-nums">{{ formData.sentenceEn || 0
+                            }}/400</span>
+                    </div>
+                    <textarea [(ngModel)]="formData.sentenceEn" (blur)="onFieldBlur('sentenceEn')"
                         placeholder="e.g., Developed high-performance web apps leveraging Next.js SSR configurations."
-                        rows="3"
-                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y min-h-[80px] transition-all shadow-sm"></textarea>
+                        rows="3" [attr.aria-invalid]="hasError('sentenceEn')" [ngClass]="fieldClasses('sentenceEn')"
+                        class="w-full bg-white dark:bg-slate-900 border rounded-xl p-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 resize-y min-h-[80px] transition-all shadow-sm"></textarea>
+                    <p *ngIf="hasError('sentenceEn')"
+                        class="flex items-center gap-1.5 text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+                        <mat-icon class="!text-sm !w-3.5 !h-3.5">error</mat-icon>
+                        {{ fieldErrors.sentenceEn }}
+                    </p>
                 </div>
+
+                <!-- French Sentence (required) -->
                 <div class="space-y-2">
-                    <label
-                        class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">French
-                        Sentence</label>
-                    <textarea [(ngModel)]="formData.sentenceFr"
+                    <div class="flex items-center justify-between">
+                        <label
+                            class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            French Sentence <span class="text-rose-500">*</span>
+                        </label>
+                        <span class="text-[10px] text-slate-400 tabular-nums">{{ formData.sentenceFr || 0
+                            }}/400</span>
+                    </div>
+                    <textarea [(ngModel)]="formData.sentenceFr" (blur)="onFieldBlur('sentenceFr')"
                         placeholder="e.g., Développé des applications web performantes via les configurations SSR de Next.js."
-                        rows="3"
-                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y min-h-[80px] transition-all shadow-sm"></textarea>
+                        rows="3" [attr.aria-invalid]="hasError('sentenceFr')" [ngClass]="fieldClasses('sentenceFr')"
+                        class="w-full bg-white dark:bg-slate-900 border rounded-xl p-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 resize-y min-h-[80px] transition-all shadow-sm"></textarea>
+                    <p *ngIf="hasError('sentenceFr')"
+                        class="flex items-center gap-1.5 text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+                        <mat-icon class="!text-sm !w-3.5 !h-3.5">error</mat-icon>
+                        {{ fieldErrors.sentenceFr }}
+                    </p>
                 </div>
             </div>
 

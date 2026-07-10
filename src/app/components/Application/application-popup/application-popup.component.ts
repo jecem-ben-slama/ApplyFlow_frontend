@@ -10,6 +10,18 @@ import {
   Category,
 } from '../../../models';
 
+type ValidatedField =
+  | 'templateId'
+  | 'companyName'
+  | 'jobTitle'
+  | 'recipientEmail'
+  | 'language';
+
+const FIELD_LIMITS = {
+  companyName: 100,
+  jobTitle: 100,
+} as const;
+
 @Component({
   selector: 'app-application-popup',
   standalone: true,
@@ -39,10 +51,17 @@ export class ApplicationPopupComponent implements OnInit {
     notes: '',
   };
 
+  readonly fieldLimits = FIELD_LIMITS;
+
   selectedTemplatePreview?: TemplateDto;
   errorMessage = '';
   copied = false;
   selectedCategoryId: number | null = null;
+
+  /** Tracks which fields the user has interacted with, so errors only show after blur/change. */
+  private touched: Partial<Record<ValidatedField, boolean>> = {};
+  /** Set true once the user attempts a submit — forces all field errors to show. */
+  private submitAttempted = false;
 
   ngOnInit(): void {}
 
@@ -77,6 +96,7 @@ export class ApplicationPopupComponent implements OnInit {
   // ─── Template helpers ─────────────────────────────────────────────────────
 
   onTemplateChange(): void {
+    this.markTouched('templateId');
     if (!this.formModel.templateId) {
       this.selectedTemplatePreview = undefined;
       return;
@@ -262,22 +282,107 @@ export class ApplicationPopupComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  // ─── Validation ─────────────────────────────────────────────────────────
+
+  /** Call on (blur)/(change) for a given field so its error can appear. */
+  markTouched(field: ValidatedField): void {
+    this.touched[field] = true;
+  }
+
+  /** Whether a field's error should currently be displayed. */
+  private shouldShowError(field: ValidatedField): boolean {
+    return this.submitAttempted || !!this.touched[field];
+  }
+
+  private isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  }
+
+  /**
+   * Returns the current error message for a field, or '' if valid or not yet
+   * shown. Used by the template to render inline messages and red borders.
+   */
+  getFieldError(field: ValidatedField): string {
+    if (!this.shouldShowError(field)) return '';
+
+    switch (field) {
+      case 'templateId':
+        return this.formModel.templateId
+          ? ''
+          : 'Select a template to build the email from.';
+
+      case 'companyName': {
+        const value = (this.formModel.companyName || '').trim();
+        if (!value) return 'Company name is required.';
+        if (value.length > FIELD_LIMITS.companyName)
+          return `Company name must be under ${FIELD_LIMITS.companyName} characters.`;
+        return '';
+      }
+
+      case 'jobTitle': {
+        const value = (this.formModel.jobTitle || '').trim();
+        if (!value) return 'Position is required.';
+        if (value.length > FIELD_LIMITS.jobTitle)
+          return `Position must be under ${FIELD_LIMITS.jobTitle} characters.`;
+        return '';
+      }
+
+      case 'recipientEmail': {
+        const value = (this.formModel.recipientEmail || '').trim();
+        if (!value) return 'Recipient email is required.';
+        if (!this.isValidEmail(value)) return 'Enter a valid email address.';
+        return '';
+      }
+
+      case 'language':
+        return this.formModel.language ? '' : 'Select a language.';
+
+      default:
+        return '';
+    }
+  }
+
+  hasFieldError(field: ValidatedField): boolean {
+    return !!this.getFieldError(field);
+  }
+
+  /**
+   * Pure validity check — does not touch display state. Safe to call from
+   * the template (e.g. to disable the submit button) without side effects.
+   */
+  isFormValid(): boolean {
+    return (
+      !!this.formModel.templateId &&
+      !!this.formModel.companyName?.trim() &&
+      this.formModel.companyName.trim().length <= FIELD_LIMITS.companyName &&
+      !!this.formModel.jobTitle?.trim() &&
+      this.formModel.jobTitle.trim().length <= FIELD_LIMITS.jobTitle &&
+      !!this.formModel.recipientEmail?.trim() &&
+      this.isValidEmail(this.formModel.recipientEmail) &&
+      !!this.formModel.language
+    );
+  }
+
   // ─── Submit ───────────────────────────────────────────────────────────────
 
   onSubmit(): void {
     if (this.isLoading) return;
     this.errorMessage = '';
+    this.submitAttempted = true;
 
-    if (!this.formModel.templateId) {
-      this.errorMessage = 'Please select an email template to build from.';
-      return;
-    }
+    const fields: ValidatedField[] = [
+      'templateId',
+      'companyName',
+      'jobTitle',
+      'recipientEmail',
+      'language',
+    ];
+    const firstError = fields
+      .map((field) => this.getFieldError(field))
+      .find((error) => !!error);
 
-    if (
-      this.formModel.recipientEmail &&
-      !/^\S+@\S+\.\S+$/.test(this.formModel.recipientEmail)
-    ) {
-      this.errorMessage = 'Please enter a valid recipient email address.';
+    if (firstError) {
+      this.setError('Please fix the highlighted fields before compiling.');
       return;
     }
 
@@ -286,18 +391,25 @@ export class ApplicationPopupComponent implements OnInit {
       (t) => t.id === Number(this.formModel.templateId)
     );
     if (activeTemplate) {
-      activeTemplate.bodyTemplate = activeTemplate.bodyTemplate.replace(
-        /\{\{companyname\}\}/gi,
-        '{{company}}'
-      );
-      activeTemplate.subjectTemplate = activeTemplate.subjectTemplate.replace(
-        /\{\{companyname\}\}/gi,
-        '{{company}}'
-      );
+      if (activeTemplate.bodyTemplate) {
+        activeTemplate.bodyTemplate = activeTemplate.bodyTemplate.replace(
+          /\{\{companyname\}\}/gi,
+          '{{company}}'
+        );
+      }
+      if (activeTemplate.subjectTemplate) {
+        activeTemplate.subjectTemplate = activeTemplate.subjectTemplate.replace(
+          /\{\{companyname\}\}/gi,
+          '{{company}}'
+        );
+      }
     }
 
     const payload: ApplicationCreateDto = {
       ...this.formModel,
+      companyName: (this.formModel.companyName ?? '').trim(),
+      jobTitle: (this.formModel.jobTitle ?? '').trim(),
+      recipientEmail: (this.formModel.recipientEmail ?? '').trim(),
       templateId: Number(this.formModel.templateId),
       cvVariantId: this.formModel.cvVariantId
         ? Number(this.formModel.cvVariantId)

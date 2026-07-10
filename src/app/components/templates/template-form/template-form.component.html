@@ -1,10 +1,12 @@
 <div
     class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-    <div (click)="onToggle.emit()"
-        class="flex items-center justify-between p-4 md:px-6 border-b border-slate-100 dark:border-slate-800 cursor-pointer select-none hover:bg-slate-50/80 dark:hover:bg-slate-800/20 transition-colors">
+    <div (click)="toggle.emit()" (keydown.enter)="toggle.emit()"
+        (keydown.space)="$event.preventDefault(); toggle.emit()" role="button" tabindex="0"
+        [attr.aria-expanded]="isFormVisible"
+        class="flex items-center justify-between p-4 md:px-6 border-b border-slate-100 dark:border-slate-800 cursor-pointer select-none hover:bg-slate-50/80 dark:hover:bg-slate-800/20 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:ring-inset">
         <div class="flex items-center gap-3">
             <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                {{ isEditing ? 'Modify Template' : 'Create Templates' }}
+                {{ isEditing ? 'Modify Template' : 'Create Template' }}
             </h3>
             <span *ngIf="isEditing"
                 class="text-[9px] bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-mono uppercase tracking-wide animate-pulse">
@@ -18,59 +20,228 @@
     </div>
 
     <div *ngIf="isFormVisible">
-        <div class="p-4 md:p-6 space-y-5 bg-slate-50/40 dark:bg-slate-950/20">
-            <div *ngIf="errorMessage"
+        <form #templateForm="ngForm" (ngSubmit)="onSubmit(templateForm)" novalidate
+            class="p-4 md:p-6 space-y-5 bg-slate-50/40 dark:bg-slate-950/20">
+
+            <!-- Placeholder explainer -->
+            <div
+                class="rounded-xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/60 dark:bg-indigo-500/5 overflow-hidden">
+                <button type="button" (click)="togglePlaceholderInfo()"
+                    class="w-full flex items-center justify-between px-4 py-3 text-left"
+                    [attr.aria-expanded]="showPlaceholderInfo">
+                    <span class="flex items-center gap-2 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                        <mat-icon class="!text-base !w-4 !h-4">info</mat-icon>
+                        What do the <code class="font-mono">{{ '{{ }}' }}</code> placeholders do?
+                    </span>
+                    <mat-icon class="text-indigo-400 scale-90 transition-transform duration-200"
+                        [class.rotate-180]="showPlaceholderInfo">expand_more</mat-icon>
+                </button>
+
+                <div *ngIf="showPlaceholderInfo" class="px-4 pb-4 space-y-3">
+                    <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                        When you generate an application from this template, any placeholder below is
+                        automatically swapped for real content. Type the exact text shown, or click a button
+                        above the Subject/Body fields to insert it for you — that way there's no risk of a typo
+                        breaking the substitution.
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div *ngFor="let p of placeholders"
+                            class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono text-[10px] font-bold text-indigo-600 dark:text-indigo-400">{{
+                                    p.token }}</span>
+                                <span class="text-[9px] uppercase tracking-wide text-slate-400 dark:text-slate-500">{{
+                                    p.label }}</span>
+                            </div>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ p.hint }}</p>
+                            <p class="text-[10px] text-slate-400 dark:text-slate-500 italic whitespace-pre-line">
+                                e.g. becomes: <span class="not-italic text-slate-600 dark:text-slate-300">"{{ p.example
+                                    }}"</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <p
+                        class="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-indigo-200/60 dark:border-indigo-500/10">
+                        Note: <span class="font-mono">{{ '{{position}}' }}</span> and
+                        <span class="font-mono">{{ '{{role}}' }}</span>
+                        are interchangeable — use whichever reads better in your sentence, both pull the same
+                        job title.
+                    </p>
+                </div>
+            </div>
+
+            <div *ngIf="errorMessage" role="alert" aria-live="assertive"
                 class="rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3 text-xs dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100">
                 {{ errorMessage }}
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="space-y-1.5">
-                    <label
-                        class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template
-                        Name</label>
-                    <input type="text" [(ngModel)]="templateData.name" placeholder="e.g., Follow-up Standard"
-                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm" />
+                <div class="space-y-1.5 md:col-span-2">
+                    <label for="templateName"
+                        class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        Template Name <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" id="templateName" name="name" [(ngModel)]="templateData.name"
+                        #nameField="ngModel" required [maxlength]="nameMaxLength" [disabled]="loading"
+                        placeholder="e.g., Follow-up Standard"
+                        [attr.aria-invalid]="nameField.invalid && nameField.touched"
+                        aria-describedby="templateName-error" [ngClass]="{
+                            'border-rose-400 focus:ring-rose-500/20': nameField.invalid && nameField.touched,
+                            'border-slate-200 dark:border-slate-800 focus:ring-indigo-500/20 focus:border-indigo-500': !(nameField.invalid && nameField.touched)
+                        }"
+                        class="w-full bg-white dark:bg-slate-900 border rounded-xl px-3 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed" />
+                    <div id="templateName-error" class="min-h-[14px]">
+                        <p *ngIf="nameField.invalid && nameField.touched" class="text-[10px] text-rose-500">
+                            <ng-container *ngIf="nameField.errors?.['required']">Template name is
+                                required.</ng-container>
+                            <ng-container *ngIf="nameField.errors?.['maxlength']">Name must be under
+                                {{ nameMaxLength }} characters.</ng-container>
+                        </p>
+                    </div>
                 </div>
+
                 <div class="space-y-1.5">
-                    <label
-                        class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template
-                        Language</label>
-                    <select [(ngModel)]="templateData.language"
-                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm">
+                    <label for="templateLanguage"
+                        class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        Template Language <span class="text-rose-500">*</span>
+                    </label>
+                    <select id="templateLanguage" name="language" [(ngModel)]="templateData.language"
+                        #languageField="ngModel" required [disabled]="loading"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed">
+                        <option value="" disabled>Select a language</option>
                         <option value="EN">English (EN)</option>
                         <option value="FR">French (FR)</option>
                     </select>
+                    <div class="min-h-[14px]">
+                        <p *ngIf="languageField.invalid && languageField.touched" class="text-[10px] text-rose-500">
+                            Please select a language.
+                        </p>
+                    </div>
                 </div>
             </div>
 
+            <!-- Subject -->
             <div class="space-y-1.5">
-                <label
-                    class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template
-                    Subject</label>
-                <input type="text" [(ngModel)]="templateData.subjectTemplate" [placeholder]="subjectPlaceholder"
-                    class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm" />
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <label for="templateSubject"
+                        class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        Template Subject <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <button type="button" *ngFor="let p of placeholders" (click)="insertToken('subject', p.token)"
+                            [disabled]="loading" [title]="p.hint"
+                            class="text-[9px] font-mono font-semibold uppercase tracking-wide bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 px-2 py-1 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                            + {{ p.label }}
+                        </button>
+                    </div>
+                </div>
+                <input type="text" id="templateSubject" name="subjectTemplate" #subjectInput
+                    [(ngModel)]="templateData.subjectTemplate" #subjectField="ngModel" required
+                    [maxlength]="subjectMaxLength" [disabled]="loading" [placeholder]="subjectPlaceholder"
+                    aria-describedby="templateSubject-error templateSubject-count"
+                    [attr.aria-invalid]="subjectField.invalid && subjectField.touched" [ngClass]="{
+                        'border-rose-400 focus:ring-rose-500/20': subjectField.invalid && subjectField.touched,
+                        'border-slate-200 dark:border-slate-800 focus:ring-indigo-500/20 focus:border-indigo-500': !(subjectField.invalid && subjectField.touched)
+                    }"
+                    class="w-full bg-white dark:bg-slate-900 border rounded-xl px-3 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed" />
+                <div class="flex justify-between items-start min-h-[14px] gap-2 flex-wrap">
+                    <div class="space-y-0.5">
+                        <p id="templateSubject-error" *ngIf="subjectField.invalid && subjectField.touched"
+                            class="text-[10px] text-rose-500">
+                            <ng-container *ngIf="subjectField.errors?.['required']">Subject is
+                                required.</ng-container>
+                            <ng-container *ngIf="subjectField.errors?.['maxlength']">Subject must be under
+                                {{ subjectMaxLength }} characters.</ng-container>
+                        </p>
+                        <p *ngIf="getUnknownPlaceholders(templateData.subjectTemplate).length"
+                            class="text-[10px] text-amber-500">
+                            Unrecognized placeholder(s), will not be replaced:
+                            <span class="font-mono">{{ getUnknownPlaceholders(templateData.subjectTemplate).join(', ')
+                                }}</span>
+                        </p>
+                    </div>
+                    <span id="templateSubject-count" class="text-[10px] text-slate-400 ml-auto shrink-0">
+                        {{ templateData.subjectTemplate || 0 }}/{{ subjectMaxLength }}
+                    </span>
+                </div>
             </div>
 
+            <!-- Body -->
             <div class="space-y-1.5">
-                <label
-                    class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Template
-                    Body</label>
-                <textarea [(ngModel)]="templateData.bodyTemplate"
-                    placeholder="Write message body layout context here..." rows="5"
-                    class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y min-h-[120px] transition-all shadow-sm"></textarea>
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <label for="templateBody"
+                        class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        Template Body <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <button type="button" *ngFor="let p of placeholders" (click)="insertToken('body', p.token)"
+                            [disabled]="loading" [title]="p.hint"
+                            class="text-[9px] font-mono font-semibold uppercase tracking-wide bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 px-2 py-1 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                            + {{ p.label }}
+                        </button>
+                    </div>
+                </div>
+                <textarea id="templateBody" name="bodyTemplate" #bodyInput [(ngModel)]="templateData.bodyTemplate"
+                    #bodyField="ngModel" required [minlength]="bodyMinLength" [maxlength]="bodyMaxLength"
+                    [disabled]="loading" placeholder="Write message body layout context here..." rows="6"
+                    aria-describedby="templateBody-error templateBody-count"
+                    [attr.aria-invalid]="bodyField.invalid && bodyField.touched" [ngClass]="{
+                        'border-rose-400 focus:ring-rose-500/20': bodyField.invalid && bodyField.touched,
+                        'border-slate-200 dark:border-slate-800 focus:ring-indigo-500/20 focus:border-indigo-500': !(bodyField.invalid && bodyField.touched)
+                    }"
+                    class="w-full bg-white dark:bg-slate-900 border rounded-xl p-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 resize-y min-h-[140px] transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
+                <div class="flex justify-between items-start min-h-[14px] gap-2 flex-wrap">
+                    <div class="space-y-0.5">
+                        <p id="templateBody-error" *ngIf="bodyField.invalid && bodyField.touched"
+                            class="text-[10px] text-rose-500">
+                            <ng-container *ngIf="bodyField.errors?.['required']">Body is required.</ng-container>
+                            <ng-container *ngIf="bodyField.errors?.['minlength']">Body must be at least
+                                {{ bodyMinLength }} characters.</ng-container>
+                            <ng-container *ngIf="bodyField.errors?.['maxlength']">Body must be under
+                                {{ bodyMaxLength }} characters.</ng-container>
+                        </p>
+                        <p *ngIf="getUnknownPlaceholders(templateData.bodyTemplate).length"
+                            class="text-[10px] text-amber-500">
+                            Unrecognized placeholder(s), will not be replaced:
+                            <span class="font-mono">{{ getUnknownPlaceholders(templateData.bodyTemplate).join(', ')
+                                }}</span>
+                        </p>
+                        <p *ngIf="templateData.bodyTemplate && !templateData.bodyTemplate.includes('{{skills_block}}')"
+                            class="text-[10px] text-slate-400">
+                            No {{ '{{skills_block}}' }} placeholder — selected skills will be appended to the end
+                            automatically.
+                        </p>
+                    </div>
+                    <span id="templateBody-count" class="text-[10px] text-slate-400 ml-auto shrink-0">
+                        {{ templateData.bodyTemplate || 0 }}/{{ bodyMaxLength }}
+                    </span>
+                </div>
             </div>
 
             <div class="flex flex-col sm:flex-row justify-end items-center gap-3 pt-2">
-                <button *ngIf="isEditing" (click)="cancel.emit()" [disabled]="loading"
-                    class="border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold px-5 py-2.5 rounded-xl transition-colors w-full sm:w-auto">
+                <button type="button" *ngIf="isEditing" (click)="cancel.emit()" [disabled]="loading"
+                    class="border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold px-5 py-2.5 rounded-xl transition-colors w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
                     Cancel
                 </button>
-                <button (click)="submit.emit()" [disabled]="loading"
-                    class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition-colors w-full sm:w-auto shadow-sm">
-                    <span>{{ isEditing ? 'Update Template' : 'Save Template' }}</span>
+                <button type="submit" [disabled]="loading || (templateForm.submitted && templateForm.invalid)"
+                    [attr.aria-busy]="loading"
+                    class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition-colors w-full sm:w-auto shadow-sm inline-flex items-center justify-center gap-2 min-w-[140px]">
+                    <svg *ngIf="loading" class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                        </path>
+                    </svg>
+                    <span>
+                        {{ loading
+                        ? (isEditing ? 'Updating…' : 'Saving…')
+                        : (isEditing ? 'Update Template' : 'Save Template') }}
+                    </span>
                 </button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
