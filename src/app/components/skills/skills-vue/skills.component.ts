@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
 import { Skill, Category, getPageMeta } from 'src/app/models';
 import { CategoryService } from 'src/app/services/category.service';
@@ -10,21 +12,21 @@ import { SkillTableComponent } from '../skill-table/skill-table.component';
 import { SkillFormComponent } from '../skills-form/skill-form.component';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 
-
 // Sub-components
-
 
 @Component({
   selector: 'app-skills',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     SkillFormComponent,
     CategoryListComponent,
     SkillTableComponent,
     DeletePopupComponent,
     CategoryPopupComponent,
     SkeletonComponent,
+    MatIconModule,
   ],
   templateUrl: './skills.component.html',
 })
@@ -33,6 +35,7 @@ export class SkillsComponent implements OnInit {
   categories: Category[] = [];
 
   loading = false;
+  initialLoading = true; // true only until the first fetch completes; controls the full-page skeleton
   errorMessage = '';
 
   editingSkillId: number | null = null;
@@ -44,6 +47,8 @@ export class SkillsComponent implements OnInit {
 
   selectedFilterCategoryId: number | null = null;
   searchTerm = '';
+  searchInputValue = '';
+  isSearching = false;
 
   // Added Debounce property
   private privateDebounce: ReturnType<typeof setTimeout> | null = null;
@@ -77,10 +82,26 @@ export class SkillsComponent implements OnInit {
     this.loadSkills();
   }
 
+  // Used by the active-filters bar to show which category the search is scoped to
+  get selectedCategoryName(): string | null {
+    return (
+      this.categories.find((c) => c.id === this.selectedFilterCategoryId)
+        ?.name ?? null
+    );
+  }
+
+  get hasActiveFilters(): boolean {
+    return !!this.searchTerm || this.selectedFilterCategoryId !== null;
+  }
+
   loadCategories(): void {
     this.categoryService.getAllCategories().subscribe({
       next: (cats) => (this.categories = cats),
-      error: (err) => console.error('Failed to load categories:', err),
+      error: (err) => {
+        console.error('Failed to load categories:', err);
+        this.errorMessage =
+          'Could not load categories. Please refresh the page.';
+      },
     });
   }
 
@@ -102,16 +123,27 @@ export class SkillsComponent implements OnInit {
           this.totalPages = meta.totalPages;
           this.totalElements = meta.totalElements;
           this.loading = false;
+          this.isSearching = false;
+          this.initialLoading = false;
         },
         error: (err) => {
           console.error('Error fetching skills:', err);
+          this.errorMessage = 'Could not load skills. Please try again.';
           this.loading = false;
+          this.isSearching = false;
+          this.initialLoading = false;
         },
       });
   }
+
+  dismissError(): void {
+    this.errorMessage = '';
+  }
+
   // --- Handlers for Skill Form ---
   onSaveSkill(formData: any): void {
     this.loading = true;
+    this.errorMessage = '';
     if (this.editingSkillId !== null) {
       this.skillsService.updateSkill(this.editingSkillId, formData).subscribe({
         next: () => {
@@ -120,6 +152,8 @@ export class SkillsComponent implements OnInit {
         },
         error: (err) => {
           console.error('Failed to update skill:', err);
+          this.errorMessage =
+            err.error?.message || 'Failed to update skill. Please try again.';
           this.loading = false;
         },
       });
@@ -142,6 +176,8 @@ export class SkillsComponent implements OnInit {
         },
         error: (err) => {
           console.error('Failed to create skill:', err);
+          this.errorMessage =
+            err.error?.message || 'Failed to create skill. Please try again.';
           this.loading = false;
         },
       });
@@ -235,12 +271,34 @@ export class SkillsComponent implements OnInit {
 
   // --- Search & Pagination with Debounce Logic ---
   onSearchChange(term: string): void {
+    this.searchInputValue = term;
+    this.isSearching = true;
     if (this.privateDebounce) clearTimeout(this.privateDebounce);
     this.privateDebounce = setTimeout(() => {
       this.searchTerm = term;
       this.currentPage = 0;
       this.loadSkills();
     }, 350);
+  }
+
+  // Clears just the search term, keeps the category filter intact
+  clearSearchTerm(): void {
+    if (this.privateDebounce) clearTimeout(this.privateDebounce);
+    this.searchTerm = '';
+    this.searchInputValue = '';
+    this.isSearching = false;
+    this.currentPage = 0;
+    this.loadSkills();
+  }
+
+  clearAllFilters(): void {
+    if (this.privateDebounce) clearTimeout(this.privateDebounce);
+    this.searchTerm = '';
+    this.searchInputValue = '';
+    this.selectedFilterCategoryId = null;
+    this.isSearching = false;
+    this.currentPage = 0;
+    this.loadSkills();
   }
 
   onPageChange(page: number): void {
@@ -250,10 +308,12 @@ export class SkillsComponent implements OnInit {
 
   // --- Deletion Logic ---
   onDeleteSkillClicked(id: number): void {
+    const skill = this.skills.find((s) => s.id === id);
     this.deleteTargetId = id;
     this.deleteTargetType = 'skill';
-    this.deleteMessage =
-      'Are you sure you want to drop this skill parsing block?';
+    this.deleteMessage = skill
+      ? `Are you sure you want to delete "${skill.name}"? This cannot be undone.`
+      : 'Are you sure you want to delete this skill? This cannot be undone.';
     this.showDeleteModal = true;
   }
 
@@ -261,6 +321,7 @@ export class SkillsComponent implements OnInit {
     if (!this.deleteTargetId) return;
     this.showDeleteModal = false;
     this.loading = true;
+    this.errorMessage = '';
 
     if (this.deleteTargetType === 'skill') {
       if (this.editingSkillId === this.deleteTargetId) this.resetForm();
@@ -273,6 +334,8 @@ export class SkillsComponent implements OnInit {
         },
         error: (err) => {
           console.error('Failed to delete skill:', err);
+          this.errorMessage =
+            err.error?.message || 'Failed to delete skill. Please try again.';
           this.loading = false;
         },
       });
@@ -287,6 +350,9 @@ export class SkillsComponent implements OnInit {
         },
         error: (err) => {
           console.error('Failed to delete category:', err);
+          this.errorMessage =
+            err.error?.message ||
+            'Failed to delete category. Please try again.';
           this.loading = false;
         },
       });
