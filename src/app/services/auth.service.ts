@@ -20,13 +20,23 @@ export class AuthService {
   private readonly isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public readonly isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
-  // ─── ADDED LOADING STATE SUBJECT ───
-  // Defaults to true so guards block immediately on application boot up
   private readonly isCheckingSessionSubject = new BehaviorSubject<boolean>(
     true
   );
   public readonly isCheckingSession$ =
     this.isCheckingSessionSubject.asObservable();
+
+  // ─── LOGOUT BROADCAST KEY ───
+  private readonly LOGOUT_EVENT_KEY = 'applyflow_logout_event';
+
+  constructor() {
+    // ─── LISTEN FOR LOGOUT ACTIONS FROM OTHER TABS ───
+    window.addEventListener('storage', (event) => {
+      if (event.key === this.LOGOUT_EVENT_KEY) {
+        this.handleCrossTabLogout();
+      }
+    });
+  }
 
   public get isAuthenticated(): boolean {
     return this.isAuthenticatedSubject.value;
@@ -37,7 +47,6 @@ export class AuthService {
   }
 
   checkSession(): Observable<boolean> {
-    // 1. Mark that we are actively validating the session
     this.isCheckingSessionSubject.next(true);
 
     return this.http
@@ -50,13 +59,11 @@ export class AuthService {
           } else {
             this.clearLocalState();
           }
-          // 2. Clear loading block on success response
           this.isCheckingSessionSubject.next(false);
         }),
         map((response) => !!response.success),
         catchError(() => {
           this.clearLocalState();
-          // 3. Clear loading block on fallback error paths
           this.isCheckingSessionSubject.next(false);
           return of(false);
         })
@@ -74,7 +81,10 @@ export class AuthService {
 
   handleCrossTabLogout(): void {
     this.clearLocalState();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login']).then(() => {
+      // Force a UI refresh to drop existing routing state/DOM trees entirely
+      window.location.reload();
+    });
   }
 
   private clearLocalState(): void {
@@ -84,6 +94,12 @@ export class AuthService {
 
   private handleLogoutRedirect(): void {
     this.clearLocalState();
-    this.router.navigate(['/login']);
+
+    // ─── SIGNAL ALL OTHER OPEN TABS TO LOG OUT ───
+    localStorage.setItem(this.LOGOUT_EVENT_KEY, Date.now().toString());
+
+    this.router.navigate(['/login']).then(() => {
+      window.location.reload();
+    });
   }
 }
