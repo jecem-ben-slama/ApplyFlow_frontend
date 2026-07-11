@@ -2,7 +2,6 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApplicationResponseDto } from '../../../models';
-import { EmailPanelComponent } from '../email-panel/email-panel.component';
 
 @Component({
   selector: '[app-application-row]',

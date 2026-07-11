@@ -8,6 +8,7 @@ import { CategoryListComponent } from '../category-list/category-list.component'
 import { CategoryPopupComponent } from '../category-popup/category-popup.component';
 import { SkillTableComponent } from '../skill-table/skill-table.component';
 import { SkillFormComponent } from '../skills-form/skill-form.component';
+import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 
 
 // Sub-components
@@ -23,6 +24,7 @@ import { SkillFormComponent } from '../skills-form/skill-form.component';
     SkillTableComponent,
     DeletePopupComponent,
     CategoryPopupComponent,
+    SkeletonComponent,
   ],
   templateUrl: './skills.component.html',
 })
@@ -107,7 +109,6 @@ export class SkillsComponent implements OnInit {
         },
       });
   }
-
   // --- Handlers for Skill Form ---
   onSaveSkill(formData: any): void {
     this.loading = true;
@@ -162,7 +163,7 @@ export class SkillsComponent implements OnInit {
 
   resetForm(): void {
     this.editingSkillId = null;
-    
+
     this.newSkillData = {
       name: '',
       sentenceEn: '',

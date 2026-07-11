@@ -1,6 +1,7 @@
 <div
     class="p-4 sm:p-6 md:p-8 space-y-6 text-slate-800 dark:text-slate-100 max-w-full mx-auto w-full transition-colors duration-200">
 
+    <!-- ─── HEADER ROW (Kept static for instant visual feedback) ─── -->
     <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
         <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             Manage Your Email Templates
@@ -10,19 +11,42 @@
     </div>
 
     <div class="grid gap-4">
-        <app-template-form [isFormVisible]="isFormVisible" [isEditing]="editingTemplateId !== null" [loading]="loading"
-            [errorMessage]="errorMessage" [templateData]="newTemplate" [subjectPlaceholder]="subjectPlaceholder"
-            (toggle)="onToggleForm()" (formSubmit)="onSubmitTemplate($event)" (cancel)="onCancelEdit()">
-        </app-template-form>
 
-        <app-template-list [templates]="templates" [totalElements]="totalElements" [currentPage]="currentPage"
-            [totalPages]="totalPages" [loading]="loading" [selectedLanguage]="selectedLanguage"
-            [searchTerm]="searchTerm" [editingId]="editingTemplateId" (filterChange)="onLanguageFilterChange($event)"
-            (searchChange)="updateSearchTerm($event)" (pageChange)="onPageChange($event)" (edit)="onEditClick($event)"
-            (delete)="onDeleteTemplate($event)">
-        </app-template-list>
+        <!-- ─── SKELETON LOADER LAYER ─── -->
+        <!-- Displays automatically on page load while isLoading is true -->
+        <ng-container *ngIf="loading">
+            <!-- Simulated Form Collapse/Expand Box -->
+            <div class="h-14 w-full bg-slate-100 dark:bg-slate-900 rounded-xl animate-pulse"></div>
 
+            <!-- Simulated Template List Content Area -->
+            <div class="space-y-4">
+                <!-- Search bar and filter controls simulation -->
+                <div class="h-10 w-full sm:w-1/3 bg-slate-100 dark:bg-slate-900 rounded-lg animate-pulse"></div>
+                <!-- Universal table skeleton placeholder -->
+                <app-skeleton type="table" [itemsCount]="5"></app-skeleton>
+            </div>
+        </ng-container>
+
+        <!-- ─── REAL DATA CONTENT LAYER ─── -->
+        <!-- Unmounts the skeletons and brings in your components when the backend finishes -->
+        <ng-container *ngIf="!loading">
+            <app-template-form [isFormVisible]="isFormVisible" [isEditing]="editingTemplateId !== null"
+                [loading]="loading" [errorMessage]="errorMessage" [templateData]="newTemplate"
+                [subjectPlaceholder]="subjectPlaceholder" (toggle)="onToggleForm()"
+                (formSubmit)="onSubmitTemplate($event)" (cancel)="onCancelEdit()">
+            </app-template-form>
+
+            <app-template-list [templates]="templates" [totalElements]="totalElements" [currentPage]="currentPage"
+                [totalPages]="totalPages" [loading]="loading" [selectedLanguage]="selectedLanguage"
+                [searchTerm]="searchTerm" [editingId]="editingTemplateId"
+                (filterChange)="onLanguageFilterChange($event)" (searchChange)="updateSearchTerm($event)"
+                (pageChange)="onPageChange($event)" (edit)="onEditClick($event)" (delete)="onDeleteTemplate($event)">
+            </app-template-list>
+        </ng-container>
+
+        <!-- Modals kept outside content logic to maintain their global viewport overlays -->
         <app-delete-popup [isModalOpen]="showDeleteModal" [title]="'Confirm Deletion'" [message]="deleteMessage"
-            (confirm)="onConfirmDelete()" (close)="onCancelDelete()" [isLoading]="loading"></app-delete-popup>
+            (confirm)="onConfirmDelete()" (close)="onCancelDelete()" [isLoading]="loading">
+        </app-delete-popup>
     </div>
 </div>

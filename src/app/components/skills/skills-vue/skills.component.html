@@ -6,8 +6,9 @@
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Add, update, and organize skills and
                 translations.</p>
         </div>
-        <div
-            class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-2 py-1 text-[10px] font-mono text-slate-500 dark:text-slate-400 shadow-sm">
+
+        <div *ngIf="!loading"
+            class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-2 py-1 text-[10px] font-mono text-slate-500 dark:text-slate-400 shadow-sm animate-fade-in">
             <span><strong>{{ totalElements }}</strong> skills</span>
             <span>|</span>
             <span><strong>{{ categories.length }}</strong> categories</span>
@@ -15,22 +16,33 @@
     </div>
 
     <div class="space-y-1">
-        <app-skill-form class="block pb-4" [categories]="categories" [editingSkillId]="editingSkillId"
-            [isFormExpanded]="isFormExpanded" [initialData]="newSkillData" [loading]="loading"
-            (save)="onSaveSkill($event)" (cancel)="resetForm()">
-        </app-skill-form>
 
-        <app-category-list class="block pb-4" [categories]="categories"
-            [selectedFilterCategoryId]="selectedFilterCategoryId" (filterChange)="onFilterChange($event)"
-            (addCategory)="openAddCategoryModal()" (editCategory)="onEditCategoryClicked($event)"
-            (deleteCategory)="onDeleteCategoryClicked($event)">
-        </app-category-list>
+        <ng-container *ngIf="loading">
+            <div class="h-16 w-full bg-slate-100 dark:bg-slate-900 rounded-xl mb-4 animate-pulse"></div>
+            <app-skeleton type="list" [itemsCount]="1" class="block pb-4"></app-skeleton>
+            <app-skeleton type="table" [itemsCount]="5" class="block"></app-skeleton>
+        </ng-container>
 
-        <app-skill-table class="block" [skills]="skills" [loading]="loading" [totalPages]="totalPages"
-            [currentPage]="currentPage" [searchTerm]="searchTerm" [selectedFilterCategoryId]="selectedFilterCategoryId"
-            (searchChange)="onSearchChange($event)" (pageChange)="onPageChange($event)"
-            (editSkill)="onEditSkillClicked($event)" (deleteSkill)="onDeleteSkillClicked($event)">
-        </app-skill-table>
+        <ng-container *ngIf="!loading">
+            <app-skill-form class="block pb-4" [categories]="categories" [editingSkillId]="editingSkillId"
+                [isFormExpanded]="isFormExpanded" [initialData]="newSkillData" [loading]="loading"
+                (save)="onSaveSkill($event)" (cancel)="resetForm()">
+            </app-skill-form>
+
+            <app-category-list class="block pb-4" [categories]="categories"
+                [selectedFilterCategoryId]="selectedFilterCategoryId" (filterChange)="onFilterChange($event)"
+                (addCategory)="openAddCategoryModal()" (editCategory)="onEditCategoryClicked($event)"
+                (deleteCategory)="onDeleteCategoryClicked($event)">
+            </app-category-list>
+
+            <app-skill-table class="block" [skills]="skills" [loading]="loading" [totalPages]="totalPages"
+                [currentPage]="currentPage" [searchTerm]="searchTerm"
+                [selectedFilterCategoryId]="selectedFilterCategoryId" (searchChange)="onSearchChange($event)"
+                (pageChange)="onPageChange($event)" (editSkill)="onEditSkillClicked($event)"
+                (deleteSkill)="onDeleteSkillClicked($event)">
+            </app-skill-table>
+        </ng-container>
+
     </div>
 
     <app-delete-popup [isModalOpen]="showDeleteModal" [title]="'Confirm Deletion'" [message]="deleteMessage"
