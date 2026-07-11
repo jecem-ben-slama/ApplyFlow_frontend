@@ -1,26 +1,37 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { APP_INITIALIZER } from '@angular/core';
 import { AppComponent } from './app/app.component';
 import { ConfigService } from './app/core/config.service';
 import { routes } from './app/app-routing.module';
+import { from } from 'rxjs'; // 1. Import 'from'
+import { switchMap } from 'rxjs/operators';
+import { AuthService } from './app/services/auth.service';
 
-export function initializeAppFactory(configService: ConfigService) {
-  return () => configService.loadConfig();
+// 2. Wrap the Promise with from() so we can stream into checkSession()
+export function initializeAppFactory(
+  configService: ConfigService,
+  authService: AuthService
+) {
+  return () =>
+    from(configService.loadConfig()).pipe(
+      switchMap(() => authService.checkSession())
+    );
 }
 
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
-    provideHttpClient(), // add withInterceptors(...) here once you share your interceptor
+    provideHttpClient(),
     provideAnimations(),
     ConfigService,
+    AuthService,
     {
       provide: APP_INITIALIZER,
       useFactory: initializeAppFactory,
-      deps: [ConfigService],
+      deps: [ConfigService, AuthService],
       multi: true,
     },
   ],

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router'; // 1. Added Router import
+import { Router } from '@angular/router';
 import { Observable, tap, catchError, of, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiConfig } from '../config/api.config';
@@ -12,7 +12,7 @@ import { ApiResponse, User } from '../models';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly api = inject(ApiConfig);
-  private readonly router = inject(Router); // 2. Injected Router
+  private readonly router = inject(Router);
 
   private readonly currentUserSubject = new BehaviorSubject<User | null>(null);
   public readonly currentUser$ = this.currentUserSubject.asObservable();
@@ -20,11 +20,26 @@ export class AuthService {
   private readonly isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public readonly isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
+  // ─── ADDED LOADING STATE SUBJECT ───
+  // Defaults to true so guards block immediately on application boot up
+  private readonly isCheckingSessionSubject = new BehaviorSubject<boolean>(
+    true
+  );
+  public readonly isCheckingSession$ =
+    this.isCheckingSessionSubject.asObservable();
+
+  public get isAuthenticated(): boolean {
+    return this.isAuthenticatedSubject.value;
+  }
+
   loginWithGoogle(): void {
     window.location.href = this.api.endpoints.auth.login;
   }
 
   checkSession(): Observable<boolean> {
+    // 1. Mark that we are actively validating the session
+    this.isCheckingSessionSubject.next(true);
+
     return this.http
       .get<ApiResponse<User>>(this.api.endpoints.auth.me, this.api.httpOptions)
       .pipe(
@@ -35,10 +50,14 @@ export class AuthService {
           } else {
             this.clearLocalState();
           }
+          // 2. Clear loading block on success response
+          this.isCheckingSessionSubject.next(false);
         }),
         map((response) => !!response.success),
         catchError(() => {
           this.clearLocalState();
+          // 3. Clear loading block on fallback error paths
+          this.isCheckingSessionSubject.next(false);
           return of(false);
         })
       );
@@ -55,7 +74,7 @@ export class AuthService {
 
   handleCrossTabLogout(): void {
     this.clearLocalState();
-    this.router.navigate(['/login']); // 3. Single Page App routing path
+    this.router.navigate(['/login']);
   }
 
   private clearLocalState(): void {
@@ -65,6 +84,6 @@ export class AuthService {
 
   private handleLogoutRedirect(): void {
     this.clearLocalState();
-    this.router.navigate(['/login']); // 4. Single Page App routing path
+    this.router.navigate(['/login']);
   }
 }
