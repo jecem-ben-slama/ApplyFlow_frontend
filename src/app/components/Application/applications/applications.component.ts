@@ -131,8 +131,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       categories: this.categoriesService.getAllCategories(),
       cvVariants: this.cvService.getAllCvVariants(0, 100),
       templates: this.templateService.getAllTemplates(0, 100),
-    })
-    .subscribe({
+    }).subscribe({
       next: (result) => {
         this.appPage = result.applications;
         const meta = getPageMeta(result.applications);
@@ -220,7 +219,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
           (this.errorMessage = err.error?.message || 'Could not save notes.'),
       });
   }
-
   onSendEmail(app: ApplicationResponseDto): void {
     if (!app.recipientEmail) {
       this.errorMessage = 'Cannot send: recipient email is missing.';
@@ -236,6 +234,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         subject: app.generatedSubject,
         body: app.generatedBody,
         cvVariantId: app.cvVariantId ? Number(app.cvVariantId) : undefined,
+        applicationId: app.id,
       })
       .subscribe({
         next: (msg) => {
