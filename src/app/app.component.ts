@@ -3,7 +3,6 @@ import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
-// Import your actual sidebar component here
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 
 @Component({

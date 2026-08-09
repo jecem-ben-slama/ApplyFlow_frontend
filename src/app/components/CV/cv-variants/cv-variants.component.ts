@@ -10,6 +10,7 @@ import { CvTableComponent } from '../cv-table/cv-table.component';
 import { CvFeedbackComponent } from '../cv-feedback/cv-feedback.component';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 
 @Component({
   selector: 'app-cv-variants',
@@ -22,6 +23,7 @@ import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
     CvFiltersBarComponent,
     CvTableComponent,
     CvFeedbackComponent,
+    SkeletonComponent,
   ],
   templateUrl: './cv-variants.component.html',
 })

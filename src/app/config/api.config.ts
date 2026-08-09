@@ -21,7 +21,7 @@ export class ApiConfig {
     return {
       auth: {
         login: `${base}/oauth2/authorization/google`,
-        logout: `${base}/logout`,
+        logout: `${base}/api/auth/logout`,
         me: `${base}/api/auth/me`,
       },
       applications: {

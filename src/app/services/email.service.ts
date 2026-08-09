@@ -8,6 +8,7 @@ export interface EmailSendRequest {
   subject: string;
   body: string;
   cvVariantId?: number;
+  applicationId: number;
 }
 
 @Injectable({

@@ -9,36 +9,44 @@
 
     <div class="space-y-6">
 
-        <app-cv-filters-bar [selectedLanguage]="selectedLanguage" [searchQuery]="searchQuery"
-            (languageChange)="onLanguageFilterChange($event)" (searchChange)="onSearchChange($event)"
-            (clearSearch)="clearSearch()" (addClick)="openCreateModal()">
-        </app-cv-filters-bar>
+        <ng-container *ngIf="isLoading">
+            <div
+                class="h-16 w-full bg-slate-100 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800 rounded-2xl animate-pulse mb-4">
+            </div>
+            <app-skeleton type="list" [itemsCount]="1" class="block pb-2"></app-skeleton>
+            <app-skeleton type="table" [itemsCount]="5" class="block"></app-skeleton>
+        </ng-container>
 
-        <app-cv-feedback [error]="errorMessage" [success]="successMessage" />
+        <ng-container *ngIf="!isLoading">
 
-        <div *ngIf="isLoading"
-            class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-6 text-center text-slate-600 dark:text-slate-400">
-            Processing data pipelines...
-        </div>
+            <app-cv-filters-bar [selectedLanguage]="selectedLanguage" [searchQuery]="searchQuery"
+                (languageChange)="onLanguageFilterChange($event)" (searchChange)="onSearchChange($event)"
+                (clearSearch)="clearSearch()" (addClick)="openCreateModal()" class="block animate-fade-in">
+            </app-cv-filters-bar>
 
-        <app-cv-table *ngIf="!isLoading && cvPage?.content?.length" [rows]="cvPage!.content"
-            (edit)="openEditModal($event)" (delete)="onDelete($event)">
-        </app-cv-table>
+            <app-cv-feedback [error]="errorMessage" [success]="successMessage" />
 
-        <div *ngIf="!isLoading && !cvPage?.content?.length"
-            class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-8 text-center text-slate-500 dark:text-slate-400">
-            <ng-container *ngIf="searchQuery; else noData">
-                No CV variants matched <span class="font-semibold text-slate-700 dark:text-slate-200">"{{ searchQuery
-                    }}"</span>.
-                <button (click)="clearSearch()" class="ml-2 text-indigo-500 hover:underline text-sm">Clear
-                    search</button>
-            </ng-container>
-            <ng-template #noData>No tracked CV configurations matched your query parameters.</ng-template>
-        </div>
+            <app-cv-table *ngIf="cvPage?.content?.length" [rows]="cvPage!.content" (edit)="openEditModal($event)"
+                (delete)="onDelete($event)">
+            </app-cv-table>
 
-        <app-pagination *ngIf="(cvPage?.totalPages ?? 0) > 1" [currentPage]="currentPage"
-            [totalPages]="cvPage?.totalPages ?? 0" [loading]="isLoading" (pageChange)="onPageChange($event)">
-        </app-pagination>
+            <div *ngIf="!cvPage?.content?.length"
+                class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-8 text-center text-slate-500 dark:text-slate-400 animate-fade-in">
+                <ng-container *ngIf="searchQuery; else noData">
+                    No CV variants matched <span class="font-semibold text-slate-700 dark:text-slate-200">"{{
+                        searchQuery }}"</span>.
+                    <button (click)="clearSearch()" class="ml-2 text-indigo-500 hover:underline text-sm">
+                        Clear search
+                    </button>
+                </ng-container>
+                <ng-template #noData>No tracked CV configurations matched your query parameters.</ng-template>
+            </div>
+
+            <app-pagination *ngIf="(cvPage?.totalPages ?? 0) > 1" [currentPage]="currentPage"
+                [totalPages]="cvPage?.totalPages ?? 0" [loading]="isLoading" (pageChange)="onPageChange($event)">
+            </app-pagination>
+
+        </ng-container>
 
     </div>
 

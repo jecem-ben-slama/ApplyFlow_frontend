@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime,  } from 'rxjs/operators';
 
 import { ApplicationsService } from '../../../services/applications.service';
 import { SkillsService } from '../../../services/skills.service';
@@ -28,6 +28,7 @@ import { ApplicationRowComponent } from '../aplication-row/application-row.compo
 import { EmailPanelComponent } from '../email-panel/email-panel.component';
 import { MatIconModule } from '@angular/material/icon';
 import { CategoryService } from 'src/app/services/category.service';
+import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 
 @Component({
   selector: 'app-applications',
@@ -41,6 +42,7 @@ import { CategoryService } from 'src/app/services/category.service';
     DeletePopupComponent,
     ApplicationRowComponent,
     EmailPanelComponent,
+    SkeletonComponent,
   ],
   templateUrl: './applications.component.html',
   styleUrls: ['./applications.component.css'],
@@ -217,7 +219,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
           (this.errorMessage = err.error?.message || 'Could not save notes.'),
       });
   }
-
   onSendEmail(app: ApplicationResponseDto): void {
     if (!app.recipientEmail) {
       this.errorMessage = 'Cannot send: recipient email is missing.';
@@ -233,6 +234,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         subject: app.generatedSubject,
         body: app.generatedBody,
         cvVariantId: app.cvVariantId ? Number(app.cvVariantId) : undefined,
+        applicationId: app.id,
       })
       .subscribe({
         next: (msg) => {

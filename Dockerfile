@@ -20,8 +20,7 @@ FROM nginx:alpine
 COPY --from=build /app/dist/applyflow-ui /usr/share/nginx/html
 
 # Copy your custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
+COPY nginx.conf /etc/nginx/nginx.conf
 # Copy the entrypoint script that writes config.json from env vars at container startup
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

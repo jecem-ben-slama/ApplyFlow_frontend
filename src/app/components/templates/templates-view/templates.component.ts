@@ -9,6 +9,7 @@ import {
   TemplateFormComponent,
   TemplateData,
 } from '../template-form/template-form.component';
+import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 
 export interface TemplateComponent extends TemplateDto {
   isExpanded?: boolean;
@@ -22,6 +23,7 @@ export interface TemplateComponent extends TemplateDto {
     DeletePopupComponent,
     TemplateListComponent,
     TemplateFormComponent,
+    SkeletonComponent,
   ],
   templateUrl: './templates.component.html',
   animations: [
