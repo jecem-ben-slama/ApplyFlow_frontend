@@ -1,15 +1,24 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from '../models';
 import { ApiConfig } from '../config/api.config';
 import { StatMetricDto } from '../models/statsmetric.model';
+import { DateRange } from './stats.service';
 
+export interface ApplicationSummaryDto {
+  id: number;
+  companyName: string | null;
+  jobTitle: string | null;
+  status: string | null;
+}
 
-@Injectable({
-  providedIn: 'root',
-})
+export interface AnalyticsQuery extends DateRange {
+  successStatuses?: string[];
+}
+
+@Injectable({ providedIn: 'root' })
 export class AnalyticsService {
   constructor(private http: HttpClient, private api: ApiConfig) {}
 
@@ -17,37 +26,64 @@ export class AnalyticsService {
     return this.api.endpoints.analytics.base;
   }
 
-  /**
-   * GET /api/analytics/cv-performance
-   */
-  getCvStats(): Observable<StatMetricDto[]> {
+  private buildParams(query?: AnalyticsQuery): HttpParams {
+    let params = new HttpParams();
+    if (query?.from) params = params.set('from', query.from);
+    if (query?.to) params = params.set('to', query.to);
+    if (query?.successStatuses?.length) {
+      for (const status of query.successStatuses) {
+        params = params.append('successStatuses', status);
+      }
+    }
+    return params;
+  }
+
+  getCvStats(query?: AnalyticsQuery): Observable<StatMetricDto[]> {
     return this.http
-      .get<ApiResponse<StatMetricDto[]>>(
-        `${this.baseUrl}/cv-performance`,
-        this.api.httpOptions
-      )
+      .get<ApiResponse<StatMetricDto[]>>(`${this.baseUrl}/cv-performance`, {
+        ...this.api.httpOptions,
+        params: this.buildParams(query),
+      })
       .pipe(map((response) => response.data));
   }
 
-  /**
-   * GET /api/analytics/language-performance
-   */
-  getLanguageStats(): Observable<StatMetricDto[]> {
+  getLanguageStats(query?: AnalyticsQuery): Observable<StatMetricDto[]> {
     return this.http
       .get<ApiResponse<StatMetricDto[]>>(
         `${this.baseUrl}/language-performance`,
-        this.api.httpOptions
+        {
+          ...this.api.httpOptions,
+          params: this.buildParams(query),
+        }
       )
       .pipe(map((response) => response.data));
   }
 
-  /**
-   * GET /api/analytics/job-performance
-   */
-  getJobStats(): Observable<StatMetricDto[]> {
+  getJobStats(query?: AnalyticsQuery): Observable<StatMetricDto[]> {
+    return this.http
+      .get<ApiResponse<StatMetricDto[]>>(`${this.baseUrl}/job-performance`, {
+        ...this.api.httpOptions,
+        params: this.buildParams(query),
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  getTemplateStats(query?: AnalyticsQuery): Observable<StatMetricDto[]> {
     return this.http
       .get<ApiResponse<StatMetricDto[]>>(
-        `${this.baseUrl}/job-performance`,
+        `${this.baseUrl}/template-performance`,
+        {
+          ...this.api.httpOptions,
+          params: this.buildParams(query),
+        }
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  listApplications(): Observable<ApplicationSummaryDto[]> {
+    return this.http
+      .get<ApiResponse<ApplicationSummaryDto[]>>(
+        `${this.baseUrl}/applications`,
         this.api.httpOptions
       )
       .pipe(map((response) => response.data));

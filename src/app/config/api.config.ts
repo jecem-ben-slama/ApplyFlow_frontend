@@ -50,6 +50,10 @@ export class ApiConfig {
       analytics: {
         base: `${base}/api/analytics`,
       },
+      stats: {
+        base: `${base}/api/stats`,
+        summary: `${base}/api/stats/summary`,
+      },
     };
   }
 
