@@ -1,0 +1,34 @@
+<div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-5">
+    <div class="flex items-baseline justify-between mb-5">
+        <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Application funnel</h3>
+        <span class="text-[11px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500">By status</span>
+    </div>
+
+    <p *ngIf="loading" class="text-sm text-zinc-400 italic text-center py-8">Loading…</p>
+
+    <ng-container *ngIf="!loading">
+        <div *ngIf="stages.length; else empty" class="space-y-4">
+            <div *ngFor="let stage of stages; trackBy: trackByStatus" class="flex items-center gap-3">
+                <span class="w-1 self-stretch rounded-full" [class]="stage.colorClass"></span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-baseline text-sm mb-1">
+                        <span class="font-medium text-zinc-700 dark:text-zinc-200">{{ stage.label }}</span>
+                        <span class="font-mono tabular-nums text-xs text-zinc-500 dark:text-zinc-400">
+                            {{ stage.count }}
+                            <span *ngIf="stage.dropOffPercent !== null" class="text-rose-500 dark:text-rose-400 ml-1.5">
+                                −{{ stage.dropOffPercent }}%
+                            </span>
+                        </span>
+                    </div>
+                    <div class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                        <div [class]="stage.colorClass" class="h-1.5 rounded-full transition-all duration-500"
+                            [style.width.%]="stage.percentageOfMax"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <ng-template #empty>
+            <p class="text-sm text-zinc-400 italic text-center py-8">No funnel data yet.</p>
+        </ng-template>
+    </ng-container>
+</div>

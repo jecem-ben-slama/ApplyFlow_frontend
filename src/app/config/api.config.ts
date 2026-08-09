@@ -47,6 +47,13 @@ export class ApiConfig {
         base: `${base}/api/cv-variants`,
         upload: `${base}/api/cv-variants/upload`,
       },
+      analytics: {
+        base: `${base}/api/analytics`,
+      },
+      stats: {
+        base: `${base}/api/stats`,
+        summary: `${base}/api/stats/summary`,
+      },
     };
   }
 
