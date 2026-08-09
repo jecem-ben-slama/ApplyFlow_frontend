@@ -35,7 +35,7 @@ export class SkillsComponent implements OnInit {
   categories: Category[] = [];
 
   loading = false;
-  initialLoading = true; // true only until the first fetch completes; controls the full-page skeleton
+  initialLoading = true; // true only until the first fetch completes; controls the data/table skeleton
   errorMessage = '';
 
   editingSkillId: number | null = null;

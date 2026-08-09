@@ -9,22 +9,25 @@
 
     <div class="space-y-6">
 
+        <!-- Filters bar + feedback: always mounted, never replaced by skeleton -->
+        <app-cv-filters-bar [selectedLanguage]="selectedLanguage" [searchQuery]="searchQuery"
+            (languageChange)="onLanguageFilterChange($event)" (searchChange)="onSearchChange($event)"
+            (clearSearch)="clearSearch()" (addClick)="openCreateModal()" class="block animate-fade-in">
+        </app-cv-filters-bar>
+
+        <app-cv-feedback [error]="errorMessage" [success]="successMessage" />
+
+        <!-- Data area: skeleton only replaces THIS section -->
         <ng-container *ngIf="isLoading">
             <div
-                class="h-16 w-full bg-slate-100 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800 rounded-2xl animate-pulse mb-4">
+                class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-4 sm:p-5">
+                <div class="space-y-4">
+                    <app-skeleton type="table" [itemsCount]="5" class="block"></app-skeleton>
+                </div>
             </div>
-            <app-skeleton type="list" [itemsCount]="1" class="block pb-2"></app-skeleton>
-            <app-skeleton type="table" [itemsCount]="5" class="block"></app-skeleton>
         </ng-container>
 
         <ng-container *ngIf="!isLoading">
-
-            <app-cv-filters-bar [selectedLanguage]="selectedLanguage" [searchQuery]="searchQuery"
-                (languageChange)="onLanguageFilterChange($event)" (searchChange)="onSearchChange($event)"
-                (clearSearch)="clearSearch()" (addClick)="openCreateModal()" class="block animate-fade-in">
-            </app-cv-filters-bar>
-
-            <app-cv-feedback [error]="errorMessage" [success]="successMessage" />
 
             <app-cv-table *ngIf="cvPage?.content?.length" [rows]="cvPage!.content" (edit)="openEditModal($event)"
                 (delete)="onDelete($event)">

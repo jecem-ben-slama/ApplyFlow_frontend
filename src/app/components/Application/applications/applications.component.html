@@ -1,83 +1,86 @@
 <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-8">
 
-<div
-    class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 border-b border-gray-200 dark:border-slate-700">
-    <div>
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100 tracking-tight">
-            Applications
-        </h2>
-        <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mt-1">
-            Track, manage and automate your job applications workflow
-        </p>
-    </div>
-
-    <button [disabled]="isLoading"
-        class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 text-white font-medium py-2.5 px-5 rounded-xl shadow-sm transition-all duration-200 text-sm"
-        (click)="openCreateModal()">
-        <span *ngIf="!isLoading">+ Compile New Application</span>
-        <span *ngIf="isLoading" class="flex items-center justify-center gap-2">
-            <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                </path>
-            </svg>
-            Loading ...
-        </span>
-    </button>
-</div>
-
-    <ng-container *ngIf="isLoading">
-        <div
-            class="h-24 w-full bg-slate-100 dark:bg-slate-800/30 border border-gray-200 dark:border-slate-700 rounded-2xl animate-pulse mb-6">
+    <div
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 border-b border-gray-200 dark:border-slate-700">
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100 tracking-tight">
+                Applications
+            </h2>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mt-1">
+                Track, manage and automate your job applications workflow
+            </p>
         </div>
 
-        <app-skeleton type="table" [itemsCount]="5" class="hidden md:block"></app-skeleton>
+        <button [disabled]="isLoading"
+            class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 text-white font-medium py-2.5 px-5 rounded-xl shadow-sm transition-all duration-200 text-sm"
+            (click)="openCreateModal()">
+            <span *ngIf="!isLoading">+ Compile New Application</span>
+            <span *ngIf="isLoading" class="flex items-center justify-center gap-2">
+                <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                Loading ...
+            </span>
+        </button>
+    </div>
 
-        <app-skeleton type="card" [itemsCount]="3" class="block md:hidden"></app-skeleton>
+    <!-- Filters bar: always visible, never replaced by skeleton -->
+    <div
+        class="bg-white/70 dark:bg-slate-800/40 backdrop-blur border border-gray-200 dark:border-slate-700 rounded-2xl p-4 sm:p-5 shadow-sm animate-fade-in">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex-1">
+                <label class="text-[10px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
+                    Keyword
+                </label>
+                <input type="text" [(ngModel)]="filterKeyword" placeholder="Search company or job title..."
+                    (ngModelChange)="onFilterInput()" class="mt-1 w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm
+                    focus:outline-none focus:ring-2 focus:ring-blue-500
+                    bg-white dark:bg-slate-900 dark:text-slate-100" />
+            </div>
+
+            <div class="w-full sm:w-48">
+                <label class="text-[10px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
+                    Status
+                </label>
+                <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterInput()" class="mt-1 w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm
+                    focus:outline-none focus:ring-2 focus:ring-blue-500
+                    bg-white dark:bg-slate-900 dark:text-slate-100">
+                    <option value="">All</option>
+                    <option value="COMPILED">Compiled</option>
+                    <option value="SENT">Sent</option>
+                    <option value="INTERVIEWING">Interviewing</option>
+                    <option value="REJECTED">Rejected</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback messages: always visible -->
+    <div *ngIf="errorMessage"
+        class="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs">
+        {{ errorMessage }}
+    </div>
+
+    <div *ngIf="successMessage"
+        class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs">
+        {{ successMessage }}
+    </div>
+
+    <!-- Data area: skeleton only replaces THIS section -->
+    <ng-container *ngIf="isLoading">
+        <div
+            class="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/40 p-4 sm:p-5 shadow-sm">
+            <div class="space-y-4">
+                <app-skeleton type="table" [itemsCount]="5" class="hidden md:block"></app-skeleton>
+                <app-skeleton type="card" [itemsCount]="3" class="block md:hidden"></app-skeleton>
+            </div>
+        </div>
     </ng-container>
 
     <ng-container *ngIf="!isLoading">
-
-        <div
-            class="bg-white/70 dark:bg-slate-800/40 backdrop-blur border border-gray-200 dark:border-slate-700 rounded-2xl p-4 sm:p-5 shadow-sm animate-fade-in">
-            <div class="flex flex-col sm:flex-row gap-4">
-                <div class="flex-1">
-                    <label class="text-[10px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
-                        Keyword
-                    </label>
-                    <input type="text" [(ngModel)]="filterKeyword" placeholder="Search company or job title..."
-                        (ngModelChange)="onFilterInput()" class="mt-1 w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm
-                        focus:outline-none focus:ring-2 focus:ring-blue-500
-                        bg-white dark:bg-slate-900 dark:text-slate-100" />
-                </div>
-
-                <div class="w-full sm:w-48">
-                    <label class="text-[10px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
-                        Status
-                    </label>
-                    <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterInput()" class="mt-1 w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm
-                        focus:outline-none focus:ring-2 focus:ring-blue-500
-                        bg-white dark:bg-slate-900 dark:text-slate-100">
-                        <option value="">All</option>
-                        <option value="COMPILED">Compiled</option>
-                        <option value="SENT">Sent</option>
-                        <option value="INTERVIEWING">Interviewing</option>
-                        <option value="REJECTED">Rejected</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div *ngIf="errorMessage"
-            class="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs">
-            {{ errorMessage }}
-        </div>
-
-        <div *ngIf="successMessage"
-            class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs">
-            {{ successMessage }}
-        </div>
 
         <div *ngIf="appPage?.content?.length"
             class="hidden md:block bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
