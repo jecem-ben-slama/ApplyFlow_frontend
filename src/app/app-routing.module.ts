@@ -44,6 +44,15 @@ export const routes: Routes = [
     canActivate: [authGuard], // Protected from anonymous access
   },
   {
+    path: 'dashboard',
+    loadComponent: () =>
+      import('./components/Dashboard/analytics-dashboard.component').then(
+        (m) => m.AnalyticsDashboardComponent
+      ),
+    canActivate: [authGuard], // Protected from anonymous access
+  },
+ 
+  {
     path: '',
     redirectTo: 'applications',
     pathMatch: 'full',
