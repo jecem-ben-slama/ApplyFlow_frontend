@@ -1,10 +1,20 @@
 <div class="space-y-3">
     <div *ngIf="error"
-        class="rounded-2xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3 text-sm dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100">
-        {{ error }}
+        class="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3 text-sm dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100">
+        <mat-icon class="!text-base !w-5 !h-5 mt-0.5 shrink-0">error_outline</mat-icon>
+        <span class="flex-1">{{ error }}</span>
+        <button type="button" (click)="dismissError.emit()" aria-label="Dismiss error"
+            class="shrink-0 rounded-lg p-1 -m-1 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors">
+            <mat-icon class="!text-base !w-4 !h-4 block">close</mat-icon>
+        </button>
     </div>
     <div *ngIf="success"
-        class="rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 text-sm dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-100">
-        {{ success }}
+        class="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 text-sm dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-100">
+        <mat-icon class="!text-base !w-5 !h-5 mt-0.5 shrink-0">check_circle_outline</mat-icon>
+        <span class="flex-1">{{ success }}</span>
+        <button type="button" (click)="dismissSuccess.emit()" aria-label="Dismiss message"
+            class="shrink-0 rounded-lg p-1 -m-1 text-emerald-500 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors">
+            <mat-icon class="!text-base !w-4 !h-4 block">close</mat-icon>
+        </button>
     </div>
 </div>

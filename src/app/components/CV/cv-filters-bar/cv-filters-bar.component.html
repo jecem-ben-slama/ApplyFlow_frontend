@@ -33,4 +33,13 @@
         </button>
     </div>
 
+    <div *ngIf="resultsLabel || hasActiveFilters" class="flex items-center justify-between gap-3 text-xs">
+        <span class="text-slate-500 dark:text-slate-400">{{ resultsLabel }}</span>
+        <button *ngIf="hasActiveFilters" type="button" (click)="clearAllFilters.emit()"
+            class="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline font-semibold">
+            <mat-icon class="!text-sm !w-3.5 !h-3.5">filter_alt_off</mat-icon>
+            Clear all filters
+        </button>
+    </div>
+
 </div>

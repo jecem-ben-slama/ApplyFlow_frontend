@@ -1,5 +1,18 @@
 <div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-8">
 
+    <!-- Toasts -->
+    <div class="fixed top-4 right-4 z-[60] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm" aria-live="polite">
+        <div *ngFor="let toast of toasts" role="status"
+            class="rounded-xl px-4 py-3 shadow-lg border text-sm flex items-start justify-between gap-3 animate-fade-in"
+            [ngClass]="toast.type === 'success'
+                ? 'bg-emerald-50 dark:bg-emerald-950/90 border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-200'
+                : 'bg-red-50 dark:bg-red-950/90 border-red-200 dark:border-red-900 text-red-700 dark:text-red-200'">
+            <span class="flex-1">{{ toast.message }}</span>
+            <button type="button" (click)="dismissToast(toast.id)" aria-label="Dismiss notification"
+                class="shrink-0 opacity-60 hover:opacity-100 transition leading-none">✕</button>
+        </div>
+    </div>
+
     <div
         class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 border-b border-gray-200 dark:border-slate-700">
         <div>
@@ -30,8 +43,8 @@
     <!-- Filters bar: always visible, never replaced by skeleton -->
     <div
         class="bg-white/70 dark:bg-slate-800/40 backdrop-blur border border-gray-200 dark:border-slate-700 rounded-2xl p-4 sm:p-5 shadow-sm animate-fade-in">
-        <div class="flex flex-col sm:flex-row gap-4">
-            <div class="flex-1">
+        <div class="flex flex-col sm:flex-row gap-4 items-end">
+            <div class="flex-1 w-full">
                 <label class="text-[10px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                     Keyword
                 </label>
@@ -55,21 +68,43 @@
                     <option value="REJECTED">Rejected</option>
                 </select>
             </div>
+
+            <button *ngIf="hasActiveFilters" type="button" (click)="clearFilters()"
+                class="w-full sm:w-auto text-xs font-medium px-4 py-2 rounded-xl border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition whitespace-nowrap">
+                ✕ Clear filters
+            </button>
         </div>
     </div>
 
-    <!-- Feedback messages: always visible -->
-    <div *ngIf="errorMessage"
+    <!-- Persistent error banner: only for load-level failures -->
+    <div *ngIf="errorMessage" role="alert"
         class="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs">
         {{ errorMessage }}
     </div>
 
-    <div *ngIf="successMessage"
-        class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs">
-        {{ successMessage }}
+    <!-- Bulk actions bar -->
+    <div *ngIf="selectedIds.size > 0"
+        class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-sm">
+        <span class="text-blue-800 dark:text-blue-200 font-medium">
+            {{ selectedIds.size }} selected
+        </span>
+        <div class="flex gap-2">
+            <button type="button" (click)="bulkMarkSent()"
+                class="text-xs font-medium px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 transition">
+                Mark as Sent
+            </button>
+            <button type="button" (click)="onBulkDeleteClick()"
+                class="text-xs font-medium px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition">
+                Delete
+            </button>
+            <button type="button" (click)="clearSelection()"
+                class="text-xs font-medium px-3 py-1.5 rounded-lg text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition">
+                Cancel
+            </button>
+        </div>
     </div>
 
-    <!-- Data area: skeleton only replaces THIS section -->
+    <!-- Data area: skeleton only replaces THIS section, and only on first load -->
     <ng-container *ngIf="isLoading">
         <div
             class="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/40 p-4 sm:p-5 shadow-sm">
@@ -82,108 +117,177 @@
 
     <ng-container *ngIf="!isLoading">
 
-        <div *ngIf="appPage?.content?.length"
-            class="hidden md:block bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
-            <table class="min-w-full text-left text-sm">
-                <thead
-                    class="bg-gray-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider text-gray-600 dark:text-slate-400">
-                    <tr>
-                        <th class="px-6 py-4">Company</th>
-                        <th class="px-6 py-4">Job Title</th>
-                        <th class="px-6 py-4">Date</th>
-                        <th class="px-6 py-4">Language</th>
-                        <th class="px-6 py-4">Status</th>
-                        <th class="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
-                    <ng-container *ngFor="let app of appPage!.content">
-                        <tr app-application-row class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition"
-                            [app]="app" [isExpanded]="expandedAppId === app.id" [isSendingEmail]="isSendingEmail"
-                            (togglePanel)="onTogglePanel($event)"
-                            (statusChange)="onUpdateStatus($event.id, $event.status)" (deleteApp)="onDelete($event)"
-                            (sendEmail)="onSendEmail($event)" (copyBody)="onCopyBody($event)"
-                            (notesSaved)="onSaveNotes($event.appId, $event.notes)">
+        <div class="relative">
+            <!-- Lightweight overlay for quick refreshes (sort/filter/page) so layout doesn't jump -->
+            <div *ngIf="isRefreshing"
+                class="absolute inset-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-[1px] z-10 flex items-start justify-center pt-10 rounded-2xl">
+                <span
+                    class="inline-flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-full shadow border border-gray-200 dark:border-slate-700">
+                    <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    Updating…
+                </span>
+            </div>
+
+            <div *ngIf="appPage?.content?.length"
+                class="hidden md:block bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+                <table class="min-w-full text-left text-sm">
+                    <thead
+                        class="bg-gray-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider text-gray-600 dark:text-slate-400">
+                        <tr>
+                            <th class="px-3 sm:px-4 py-4 w-10">
+                                <input type="checkbox" [checked]="allVisibleSelected" (change)="toggleSelectAll()"
+                                    aria-label="Select all applications on this page"
+                                    class="rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 dark:bg-slate-800" />
+                            </th>
+                            <th class="px-6 py-4">
+                                <button type="button" (click)="onSortChange('companyName')"
+                                    class="flex items-center gap-1 hover:text-gray-900 dark:hover:text-slate-100 transition">
+                                    Company <span class="text-blue-500">{{ sortIndicator('companyName') }}</span>
+                                </button>
+                            </th>
+                            <th class="px-6 py-4">
+                                <button type="button" (click)="onSortChange('jobTitle')"
+                                    class="flex items-center gap-1 hover:text-gray-900 dark:hover:text-slate-100 transition">
+                                    Job Title <span class="text-blue-500">{{ sortIndicator('jobTitle') }}</span>
+                                </button>
+                            </th>
+                            <th class="px-6 py-4">
+                                <button type="button" (click)="onSortChange('dateApplied')"
+                                    class="flex items-center gap-1 hover:text-gray-900 dark:hover:text-slate-100 transition">
+                                    Date <span class="text-blue-500">{{ sortIndicator('dateApplied') }}</span>
+                                </button>
+                            </th>
+                            <th class="px-6 py-4">Language</th>
+                            <th class="px-6 py-4">
+                                <button type="button" (click)="onSortChange('status')"
+                                    class="flex items-center gap-1 hover:text-gray-900 dark:hover:text-slate-100 transition">
+                                    Status <span class="text-blue-500">{{ sortIndicator('status') }}</span>
+                                </button>
+                            </th>
+                            <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
-                        <tr *ngIf="expandedAppId === app.id" class="bg-gray-50 dark:bg-slate-800/40">
-                            <td colspan="6" class="px-4 pb-4">
-                                <app-email-panel [app]="app" [isSending]="isSendingEmail"
-                                    (sendEmail)="onSendEmail($event)" (copyBody)="onCopyBody($event)"
-                                    (notesSaved)="onSaveNotes($event.appId, $event.notes)">
-                                </app-email-panel>
-                            </td>
-                        </tr>
-                    </ng-container>
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
+                        <ng-container *ngFor="let app of appPage!.content">
+                            <tr app-application-row class="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition"
+                                [app]="app" [isExpanded]="expandedAppId === app.id" [isSendingEmail]="isSendingEmail"
+                                [isSelected]="selectedIds.has(app.id)" [isStatusPending]="pendingStatusIds.has(app.id)"
+                                (togglePanel)="onTogglePanel($event)"
+                                (statusChange)="onUpdateStatus($event.id, $event.status)" (deleteApp)="onDelete($event)"
+                                (sendEmail)="onSendEmail($event)" (copyBody)="onCopyBody($event)"
+                                (notesSaved)="onSaveNotes($event.appId, $event.notes)"
+                                (selectToggle)="toggleSelect($event)">
+                            </tr>
+                            <tr *ngIf="expandedAppId === app.id" class="bg-gray-50 dark:bg-slate-800/40">
+                                <td colspan="7" class="px-4 pb-4">
+                                    <app-email-panel [app]="app" [isSending]="isSendingEmail"
+                                        [sendError]="sendErrorFor(app.id)" (sendEmail)="onSendEmail($event)"
+                                        (copyBody)="onCopyBody($event)"
+                                        (notesSaved)="onSaveNotes($event.appId, $event.notes)">
+                                    </app-email-panel>
+                                </td>
+                            </tr>
+                        </ng-container>
+                    </tbody>
+                </table>
+            </div>
 
-        <div *ngIf="appPage?.content?.length" class="block md:hidden space-y-4">
-            <ng-container *ngFor="let app of appPage!.content">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 space-y-4"
-                    [ngClass]="{'ring-2 ring-blue-500/30': expandedAppId === app.id}">
-                    <div class="flex justify-between items-start">
-                        <div class="min-w-0">
-                            <h3 class="font-semibold text-gray-900 dark:text-slate-100 truncate">
-                                {{ app.companyName }}
-                            </h3>
-                            <p class="text-xs text-gray-500 dark:text-slate-400 truncate">
-                                {{ app.jobTitle || 'No title provided' }}
-                            </p>
+            <div *ngIf="appPage?.content?.length" class="block md:hidden space-y-4">
+                <ng-container *ngFor="let app of appPage!.content">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 space-y-4"
+                        [ngClass]="{'ring-2 ring-blue-500/30': expandedAppId === app.id}">
+                        <div class="flex justify-between items-start gap-2">
+                            <div class="flex items-start gap-2 min-w-0">
+                                <input type="checkbox" [checked]="selectedIds.has(app.id)"
+                                    (change)="toggleSelect(app.id)" [attr.aria-label]="'Select ' + app.companyName"
+                                    class="mt-1 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 dark:bg-slate-800 shrink-0" />
+                                <div class="min-w-0">
+                                    <h3 class="font-semibold text-gray-900 dark:text-slate-100 truncate">
+                                        {{ app.companyName }}
+                                    </h3>
+                                    <p class="text-xs text-gray-500 dark:text-slate-400 truncate">
+                                        {{ app.jobTitle || 'No title provided' }}
+                                    </p>
+                                </div>
+                            </div>
+                            <span
+                                class="text-[10px] px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900 font-semibold uppercase shrink-0">
+                                {{ app.status }}
+                            </span>
                         </div>
-                        <span
-                            class="text-[10px] px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900 font-semibold uppercase">
-                            {{ app.status }}
-                        </span>
-                    </div>
 
-                    <div
-                        class="grid grid-cols-2 gap-3 text-xs bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl border border-gray-100 dark:border-slate-700">
-                        <div>
-                            <p class="text-[10px] text-gray-400 uppercase">Applied</p>
-                            <p class="font-medium text-gray-700 dark:text-slate-200">
-                                {{ (app.dateApplied | date) || 'N/A' }}
-                            </p>
+                        <div
+                            class="grid grid-cols-2 gap-3 text-xs bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl border border-gray-100 dark:border-slate-700">
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase">Applied</p>
+                                <p class="font-medium text-gray-700 dark:text-slate-200">
+                                    {{ (app.dateApplied | date) || 'N/A' }}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase">Language</p>
+                                <p class="font-mono text-[11px] text-gray-800 dark:text-slate-200">
+                                    {{ app.language || 'EN' }}
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-[10px] text-gray-400 uppercase">Language</p>
-                            <p class="font-mono text-[11px] text-gray-800 dark:text-slate-200">
-                                {{ app.language || 'EN' }}
-                            </p>
+
+                        <div class="flex gap-2">
+                            <button (click)="onTogglePanel(app.id)" [attr.aria-expanded]="expandedAppId === app.id"
+                                class="flex-1 py-2 text-xs font-semibold rounded-xl border transition"
+                                [ngClass]="expandedAppId === app.id
+                                    ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+                                    : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-300'">
+                                {{ expandedAppId === app.id ? 'Hide Email' : 'View Email' }}
+                            </button>
+                            <button (click)="onDelete(app.id)" [attr.aria-label]="'Delete ' + app.companyName"
+                                class="px-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900">
+                                <mat-icon class="scale-75">delete</mat-icon>
+                            </button>
+                        </div>
+
+                        <div *ngIf="expandedAppId === app.id" class="pt-3 border-t border-gray-100 dark:border-slate-700">
+                            <app-email-panel [app]="app" [isSending]="isSendingEmail"
+                                [sendError]="sendErrorFor(app.id)" (sendEmail)="onSendEmail($event)"
+                                (copyBody)="onCopyBody($event)" (notesSaved)="onSaveNotes($event.appId, $event.notes)">
+                            </app-email-panel>
                         </div>
                     </div>
+                </ng-container>
+            </div>
 
-                    <div class="flex gap-2">
-                        <button (click)="onTogglePanel(app.id)"
-                            class="flex-1 py-2 text-xs font-semibold rounded-xl border transition"
-                            [ngClass]="expandedAppId === app.id
-                                ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
-                                : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-300'">
-                            {{ expandedAppId === app.id ? 'Hide Email' : 'View Email' }}
-                        </button>
-                        <button (click)="onDelete(app.id)"
-                            class="px-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900">
-                            <mat-icon class="scale-75">delete</mat-icon>
-                        </button>
-                    </div>
+            <div *ngIf="!appPage?.content?.length && !hasActiveFilters"
+                class="text-center py-20 bg-white dark:bg-slate-900 border border-dashed border-gray-300 dark:border-slate-700 rounded-2xl">
+                <p class="text-lg font-semibold text-gray-700 dark:text-slate-200">
+                    No applications yet
+                </p>
+                <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
+                    Start by compiling your first application
+                </p>
+                <button type="button" (click)="openCreateModal()"
+                    class="mt-4 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">
+                    + Compile New Application
+                </button>
+            </div>
 
-                    <div *ngIf="expandedAppId === app.id" class="pt-3 border-t border-gray-100 dark:border-slate-700">
-                        <app-email-panel [app]="app" [isSending]="isSendingEmail" (sendEmail)="onSendEmail($event)"
-                            (copyBody)="onCopyBody($event)" (notesSaved)="onSaveNotes($event.appId, $event.notes)">
-                        </app-email-panel>
-                    </div>
-                </div>
-            </ng-container>
-        </div>
-
-        <div *ngIf="!appPage?.content?.length"
-            class="text-center py-20 bg-white dark:bg-slate-900 border border-dashed border-gray-300 dark:border-slate-700 rounded-2xl">
-            <p class="text-lg font-semibold text-gray-700 dark:text-slate-200">
-                No applications yet
-            </p>
-            <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
-                Start by compiling your first application
-            </p>
+            <div *ngIf="!appPage?.content?.length && hasActiveFilters"
+                class="text-center py-20 bg-white dark:bg-slate-900 border border-dashed border-gray-300 dark:border-slate-700 rounded-2xl">
+                <p class="text-lg font-semibold text-gray-700 dark:text-slate-200">
+                    No matches for these filters
+                </p>
+                <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
+                    Try a different keyword or status
+                </p>
+                <button type="button" (click)="clearFilters()"
+                    class="mt-4 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">
+                    Clear filters
+                </button>
+            </div>
         </div>
 
         <app-pagination [currentPage]="currentPage" [totalPages]="appTotalPages" [loading]="isLoading"

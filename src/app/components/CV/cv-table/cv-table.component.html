@@ -6,8 +6,24 @@
             <thead>
                 <tr
                     class="bg-slate-100 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider">
-                    <th class="py-3 px-4">Name</th>
-                    <th class="py-3 px-4 w-28">Language</th>
+                    <th class="py-3 px-4">
+                        <button type="button" (click)="onSortClick('name')"
+                            class="inline-flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                            Name
+                            <mat-icon *ngIf="sortBy === 'name'" class="!text-sm !w-3.5 !h-3.5">
+                                {{ direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </mat-icon>
+                        </button>
+                    </th>
+                    <th class="py-3 px-4 w-28">
+                        <button type="button" (click)="onSortClick('language')"
+                            class="inline-flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                            Language
+                            <mat-icon *ngIf="sortBy === 'language'" class="!text-sm !w-3.5 !h-3.5">
+                                {{ direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                            </mat-icon>
+                        </button>
+                    </th>
                     <th class="py-3 px-4">File Destination</th>
                     <th class="py-3 px-4 text-right w-36">Actions</th>
                 </tr>
@@ -21,19 +37,19 @@
                             {{ cv.language | uppercase }}
                         </span>
                     </td>
-                    <td class="py-4 px-4 text-slate-600 dark:text-slate-400 truncate max-w-xs">
-                        <a [href]="cv.fileUrl" target="_blank"
-                            class="text-indigo-600 dark:text-indigo-300 hover:underline break-all">
+                    <td class="py-4 px-4 text-slate-600 dark:text-slate-400 max-w-xs">
+                        <a [href]="cv.fileUrl" target="_blank" [title]="cv.fileUrl"
+                            class="text-indigo-600 dark:text-indigo-300 hover:underline block truncate">
                             {{ cv.fileUrl }}
                         </a>
                     </td>
                     <td class="py-4 px-4 text-right">
-                        <button (click)="edit.emit(cv)"
-                            class="inline-flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mr-2">
+                        <button (click)="edit.emit(cv)" [disabled]="loading"
+                            class="inline-flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mr-2 disabled:opacity-50 disabled:cursor-not-allowed">
                             Edit
                         </button>
-                        <button (click)="delete.emit(cv.id)"
-                            class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-700 px-3 py-2 text-xs font-semibold hover:bg-rose-100 transition-colors dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100 dark:hover:bg-rose-500/20">
+                        <button (click)="delete.emit(cv)" [disabled]="loading"
+                            class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-700 px-3 py-2 text-xs font-semibold hover:bg-rose-100 transition-colors dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100 dark:hover:bg-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
                             Delete
                         </button>
                     </td>
@@ -67,12 +83,12 @@
             </div>
 
             <div class="flex gap-2 justify-end pt-1">
-                <button (click)="edit.emit(cv)"
-                    class="flex-1 sm:flex-none inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 px-4 py-2.5 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <button (click)="edit.emit(cv)" [disabled]="loading"
+                    class="flex-1 sm:flex-none inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 px-4 py-2.5 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     Edit Variant
                 </button>
-                <button (click)="delete.emit(cv.id)"
-                    class="flex-1 sm:flex-none inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-2.5 text-xs font-semibold hover:bg-rose-100 transition-colors dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100 dark:hover:bg-rose-500/20">
+                <button (click)="delete.emit(cv)" [disabled]="loading"
+                    class="flex-1 sm:flex-none inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-2.5 text-xs font-semibold hover:bg-rose-100 transition-colors dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100 dark:hover:bg-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
                     Delete
                 </button>
             </div>

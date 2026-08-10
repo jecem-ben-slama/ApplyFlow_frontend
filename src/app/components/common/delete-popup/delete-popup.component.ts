@@ -1,4 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  Output,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -19,6 +25,20 @@ export class DeletePopupComponent {
 
   @Output() confirm = new EventEmitter<void>();
   @Output() close = new EventEmitter<void>();
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.isModalOpen && !this.isLoading) {
+      this.onCancel();
+    }
+  }
+
+  onBackdropClick(event: MouseEvent): void {
+    if (this.isLoading) return;
+    if (event.target === event.currentTarget) {
+      this.onCancel();
+    }
+  }
 
   onCancel(): void {
     this.close.emit();

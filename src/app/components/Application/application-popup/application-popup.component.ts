@@ -63,6 +63,19 @@ export class ApplicationPopupComponent implements OnInit {
   /** Set true once the user attempts a submit — forces all field errors to show. */
   private submitAttempted = false;
 
+  /** Public read of submitAttempted, used by the template to gate the submit-button disabled state. */
+  get submitAttemptedOnce(): boolean {
+    return this.submitAttempted;
+  }
+
+  private static readonly FIELD_ORDER: ValidatedField[] = [
+    'templateId',
+    'companyName',
+    'jobTitle',
+    'recipientEmail',
+    'language',
+  ];
+
   ngOnInit(): void {}
 
   // ─── Skill helpers ────────────────────────────────────────────────────────
@@ -282,6 +295,15 @@ export class ApplicationPopupComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  /** Moves focus to the first field that failed validation, matching its `id="field-<name>"`. */
+  private focusField(field: ValidatedField): void {
+    const el = document.getElementById(`field-${field}`);
+    if (el) {
+      (el as HTMLElement).focus({ preventScroll: false });
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
   // ─── Validation ─────────────────────────────────────────────────────────
 
   /** Call on (blur)/(change) for a given field so its error can appear. */
@@ -370,19 +392,13 @@ export class ApplicationPopupComponent implements OnInit {
     this.errorMessage = '';
     this.submitAttempted = true;
 
-    const fields: ValidatedField[] = [
-      'templateId',
-      'companyName',
-      'jobTitle',
-      'recipientEmail',
-      'language',
-    ];
-    const firstError = fields
-      .map((field) => this.getFieldError(field))
-      .find((error) => !!error);
+    const firstInvalidField = ApplicationPopupComponent.FIELD_ORDER.find(
+      (field) => !!this.getFieldError(field)
+    );
 
-    if (firstError) {
+    if (firstInvalidField) {
       this.setError('Please fix the highlighted fields before compiling.');
+      this.focusField(firstInvalidField);
       return;
     }
 

@@ -13,14 +13,31 @@ export class NotesPanelComponent implements OnChanges {
   @Input() app!: ApplicationResponseDto;
   @Output() notesSaved = new EventEmitter<{ appId: number; notes: string }>();
 
+  readonly maxLength = 1000;
+
   isEditing = false;
   editValue = '';
   savedFlash = false;
 
   ngOnChanges(): void {
-    // Reset edit state if the parent swaps the app (e.g. panel closes and reopens)
+    // If notes are being edited, don't yank the user out mid-edit unless the
+    // underlying application actually changed (panel closed/reopened for a
+    // different app). Comparing against the original value is enough here
+    // since ngOnChanges only fires on @Input reference/property changes.
     this.isEditing = false;
     this.editValue = '';
+  }
+
+  get hasUnsavedChanges(): boolean {
+    return this.isEditing && this.editValue !== (this.app.notes ?? '');
+  }
+
+  get charCount(): number {
+    return this.editValue.length;
+  }
+
+  get isOverLimit(): boolean {
+    return this.charCount > this.maxLength;
   }
 
   startEdit(): void {
@@ -29,15 +46,33 @@ export class NotesPanelComponent implements OnChanges {
   }
 
   cancelEdit(): void {
+    if (this.hasUnsavedChanges) {
+      const confirmDiscard = window.confirm(
+        'Discard your unsaved note changes?'
+      );
+      if (!confirmDiscard) return;
+    }
     this.isEditing = false;
     this.editValue = '';
   }
 
   save(): void {
-    this.notesSaved.emit({ appId: this.app.id, notes: this.editValue });
+    if (this.isOverLimit) return;
+    this.notesSaved.emit({ appId: this.app.id, notes: this.editValue.trim() });
     this.isEditing = false;
     this.editValue = '';
     this.savedFlash = true;
     setTimeout(() => (this.savedFlash = false), 2000);
+  }
+
+  /** Ctrl/Cmd+Enter to save, Escape to cancel — standard textarea shortcuts. */
+  onKeydown(event: KeyboardEvent): void {
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+      event.preventDefault();
+      this.save();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cancelEdit();
+    }
   }
 }

@@ -1,4 +1,4 @@
-<div *ngIf="isModalOpen"
+<div *ngIf="isModalOpen" (click)="onBackdropClick($event)"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md transition-all duration-300">
     <div
         class="w-full max-w-2xl rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] dark:shadow-slate-950/50 relative overflow-hidden">
@@ -15,8 +15,8 @@
                     Configure locale-aware profile targets to correctly route your job applications.
                 </p>
             </div>
-            <button type="button" (click)="onCancel()"
-                class="rounded-2xl p-2.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-all">
+            <button type="button" (click)="onCancel()" [disabled]="isLoading"
+                class="rounded-2xl p-2.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 <mat-icon class="block">close</mat-icon>
             </button>
         </div>
@@ -98,14 +98,8 @@
                         <div *ngIf="fileUrlField.invalid && (fileUrlField.touched || cvForm.submitted)">
                             <p class="text-rose-600 text-xs mt-1.5 ml-1 flex items-center gap-1">
                                 <mat-icon class="!text-sm !w-4 !h-4">error_outline</mat-icon>
-                                <span *ngIf="fileUrlField.errors?.['required']">A CV link is required.</span>
-                            <span *ngIf="fileUrlField.hasError('pattern')">
-                                Invalid file URL format.
-                            </span>
-                            
-                            <span *ngIf="fileUrlField.hasError('required')">
-                                File URL is required.
-                            </span>
+                                <span *ngIf="fileUrlField.hasError('required')">File URL is required.</span>
+                                <span *ngIf="fileUrlField.hasError('pattern')">Invalid file URL format.</span>
                             </p>
                         </div>
                     </div>

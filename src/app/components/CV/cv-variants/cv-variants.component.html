@@ -1,4 +1,4 @@
-﻿<div class="p-6 md:p-8 space-y-6 text-slate-900 dark:text-slate-100 max-w-full mx-auto w-full">
+<div class="p-6 md:p-8 space-y-6 text-slate-900 dark:text-slate-100 max-w-full mx-auto w-full">
 
     <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
         <h1 class="text-xl md:text-2xl font-bold tracking-tight">Attachment Management</h1>
@@ -11,14 +11,16 @@
 
         <!-- Filters bar + feedback: always mounted, never replaced by skeleton -->
         <app-cv-filters-bar [selectedLanguage]="selectedLanguage" [searchQuery]="searchQuery"
+            [resultsLabel]="resultsLabel" [hasActiveFilters]="hasActiveFilters"
             (languageChange)="onLanguageFilterChange($event)" (searchChange)="onSearchChange($event)"
-            (clearSearch)="clearSearch()" (addClick)="openCreateModal()" class="block animate-fade-in">
+            (clearSearch)="clearSearch()" (addClick)="openCreateModal()" (clearAllFilters)="clearAllFilters()"
+            class="block animate-fade-in">
         </app-cv-filters-bar>
 
-        <app-cv-feedback [error]="errorMessage" [success]="successMessage" />
+        <app-cv-feedback [error]="errorMessage" (dismissError)="dismissError()" />
 
-        <!-- Data area: skeleton only replaces THIS section -->
-        <ng-container *ngIf="isLoading">
+        <!-- Full skeleton only replaces this section, and only on the very first load -->
+        <ng-container *ngIf="isListLoading">
             <div
                 class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-4 sm:p-5">
                 <div class="space-y-4">
@@ -27,26 +29,45 @@
             </div>
         </ng-container>
 
-        <ng-container *ngIf="!isLoading">
+        <ng-container *ngIf="!isListLoading">
 
-            <app-cv-table *ngIf="cvPage?.content?.length" [rows]="cvPage!.content" (edit)="openEditModal($event)"
-                (delete)="onDelete($event)">
-            </app-cv-table>
+            <div class="relative">
+                <!-- Later loads (search / filter / sort / page change) dim the existing
+                     table instead of tearing it down, so nothing flashes to a skeleton -->
+                <div *ngIf="isRefetching"
+                    class="absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-white/60 dark:bg-slate-950/60 backdrop-blur-[1px]">
+                    <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        Updating…
+                    </div>
+                </div>
 
-            <div *ngIf="!cvPage?.content?.length"
-                class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-8 text-center text-slate-500 dark:text-slate-400 animate-fade-in">
-                <ng-container *ngIf="searchQuery; else noData">
-                    No CV variants matched <span class="font-semibold text-slate-700 dark:text-slate-200">"{{
-                        searchQuery }}"</span>.
-                    <button (click)="clearSearch()" class="ml-2 text-indigo-500 hover:underline text-sm">
-                        Clear search
-                    </button>
-                </ng-container>
-                <ng-template #noData>No tracked CV configurations matched your query parameters.</ng-template>
+                <app-cv-table *ngIf="cvPage?.content?.length" [rows]="cvPage!.content"
+                    [loading]="isRefetching || isDeleting" [sortBy]="sortBy" [direction]="direction"
+                    (edit)="openEditModal($event)" (delete)="onDelete($event)" (sortChange)="onSortChange($event)">
+                </app-cv-table>
+
+                <div *ngIf="!cvPage?.content?.length"
+                    class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-8 text-center text-slate-500 dark:text-slate-400 animate-fade-in">
+                    <ng-container *ngIf="hasActiveFilters; else noData">
+                        No CV variants matched your current filters.
+                        <button (click)="clearAllFilters()" class="ml-2 text-indigo-500 hover:underline text-sm">
+                            Clear filters
+                        </button>
+                    </ng-container>
+                    <ng-template #noData>No tracked CV configurations yet. Add your first attachment to get
+                        started.</ng-template>
+                </div>
             </div>
 
             <app-pagination *ngIf="(cvPage?.totalPages ?? 0) > 1" [currentPage]="currentPage"
-                [totalPages]="cvPage?.totalPages ?? 0" [loading]="isLoading" (pageChange)="onPageChange($event)">
+                [totalPages]="cvPage?.totalPages ?? 0" [loading]="isRefetching" (pageChange)="onPageChange($event)">
             </app-pagination>
 
         </ng-container>
@@ -54,11 +75,13 @@
     </div>
 
     <app-delete-popup [isModalOpen]="showDeleteModal" [title]="'Confirm Deletion'" [message]="deleteMessage"
-        [isLoading]="isLoading" (confirm)="onConfirmDelete()" (close)="onCancelDelete()">
+        [isLoading]="isDeleting" (confirm)="onConfirmDelete()" (close)="onCancelDelete()">
     </app-delete-popup>
 
-    <app-cv-popup [isModalOpen]="isModalOpen" [isEditing]="isEditing" [formModel]="formModel" [isLoading]="isLoading"
-        (close)="closeModal()" (save)="onSubmit()">
+    <app-cv-popup [isModalOpen]="isModalOpen" [isEditing]="isEditing" [formModel]="formModel"
+        [isLoading]="isSubmitting" (close)="closeModal()" (save)="onSubmit()">
     </app-cv-popup>
+
+    <app-toast-container></app-toast-container>
 
 </div>
