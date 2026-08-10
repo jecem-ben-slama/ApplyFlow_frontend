@@ -7,18 +7,20 @@ export interface AppConfig {
 
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
-  private config: AppConfig = { apiUrl: environment.apiUrl };
+  private config: AppConfig = {
+    apiUrl: environment.apiUrl,
+  };
 
   async loadConfig(): Promise<void> {
     try {
       const response = await fetch('/assets/config.json', {
         cache: 'no-cache',
       });
+
       if (response.ok) {
         const loaded = await response.json();
 
         if (loaded && 'apiUrl' in loaded) {
-          // If loaded.apiUrl is empty or missing, fallback to environment.apiUrl
           this.config = {
             apiUrl: loaded.apiUrl ? loaded.apiUrl : environment.apiUrl,
           };
@@ -33,11 +35,45 @@ export class ConfigService {
       }
     } catch {
       console.warn(
-        'No runtime config.json found, falling back to environment.ts apiUrl'
+        '⚠️ No runtime config.json found, falling back to environment.ts apiUrl'
       );
     }
+
+    // Wake up the Render backend in the background.
+    this.wakeUpBackend();
   }
+
   get apiUrl(): string {
     return this.config.apiUrl;
+  }
+
+  private wakeUpBackend(): void {
+    const healthUrl = `${this.config.apiUrl}/actuator/health`;
+
+    console.log('🔥 Waking up backend:', healthUrl);
+
+    fetch(healthUrl, {
+      method: 'GET',
+      credentials: 'include',
+    })
+      .then(async (response) => {
+        if (response.ok) {
+          console.log('✅ Backend is awake');
+
+          try {
+            const health = await response.json();
+            console.log('Backend health:', health);
+          } catch {
+            // Health endpoint responded but didn't return JSON.
+          }
+        } else {
+          console.warn(
+            `⚠️ Backend health check returned HTTP ${response.status}`
+          );
+        }
+      })
+      .catch((error) => {
+        console.warn('⚠️ Backend wake-up request failed:', error);
+      });
   }
 }
