@@ -1,0 +1,31 @@
+<div *ngIf="open" role="dialog" aria-modal="true" aria-label="Confirm sign out"
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
+    (click)="cancel.emit()">
+
+    <div class="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-2xl border border-slate-200 dark:border-surface-muted w-full max-w-sm p-6 transform transition-all"
+        (click)="$event.stopPropagation()">
+
+        <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-danger-bgLight dark:bg-danger-bgDark/40 mb-4 shadow-sm border border-rose-200 dark:border-rose-900/30">
+            <mat-icon class="text-danger dark:text-danger-textDark">logout</mat-icon>
+        </div>
+
+        <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+            Sign out of ApplyFlow?
+        </h2>
+
+        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+            You'll be signed out of all open tabs. Any unsaved changes will be lost.
+        </p>
+
+        <div class="flex gap-2">
+            <button (click)="cancel.emit()"
+                class="flex-1 px-4 py-2.5 text-xs font-medium rounded-xl border border-slate-200 dark:border-surface-muted text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-surface-muted transition-colors active:scale-95">
+                Cancel
+            </button>
+            <button (click)="confirm.emit()"
+                class="flex-1 px-4 py-2.5 text-xs font-medium rounded-xl bg-danger hover:bg-danger/90 text-white transition-colors shadow-sm active:scale-95">
+                Sign out
+            </button>
+        </div>
+    </div>
+</div>

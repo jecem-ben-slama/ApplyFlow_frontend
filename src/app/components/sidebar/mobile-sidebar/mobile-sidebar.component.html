@@ -1,0 +1,58 @@
+<!-- Floating Action Button -->
+<div *ngIf="!isOpen" class="md:hidden fixed z-40"
+    style="bottom: calc(1.25rem + env(safe-area-inset-bottom)); right: calc(1.25rem + env(safe-area-inset-right));">
+    <button #fab (click)="open()" aria-label="Open navigation menu" aria-haspopup="dialog" [attr.aria-expanded]="isOpen"
+        aria-controls="mobile-drawer"
+        class="w-14 h-14 rounded-full bg-primary text-white shadow-xl shadow-primary/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200">
+        <mat-icon class="text-2xl">menu</mat-icon>
+    </button>
+</div>
+
+<!-- Drawer & Backdrop -->
+<div *ngIf="isOpen" class="md:hidden fixed inset-0 z-50 flex">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-xs animate-fade-in" (click)="close()"></div>
+
+    <div #drawer id="mobile-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu"
+        class="relative w-72 max-w-[80%] h-full bg-surface-light dark:bg-surface-dark border-r border-slate-200 dark:border-surface-muted shadow-2xl flex flex-col justify-between overflow-y-auto z-10"
+        style="padding: calc(1.25rem + env(safe-area-inset-top)) calc(1.25rem + env(safe-area-inset-right)) calc(1.25rem + env(safe-area-inset-bottom)) calc(1.25rem + env(safe-area-inset-left));"
+        [class.animate-slide-right]="!dragging" [class.transition-transform]="!dragging"
+        [style.transform]="dragTransform" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)"
+        (touchend)="onTouchEnd()" (keydown.tab)="onTabKey($event)">
+
+        <!-- Top: Profile & Close -->
+        <div class="space-y-6">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-surface-muted">
+                <div class="flex items-center gap-3">
+                    <img *ngIf="userProfilePic" [src]="userProfilePic" alt="Profile" (error)="photoError.emit()"
+                        class="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-xs" />
+                    <div *ngIf="!userProfilePic"
+                        class="w-9 h-9 rounded-full bg-gradient-to-tr from-accent-light to-accent flex items-center justify-center font-bold text-white text-xs shadow-xs">
+                        {{ userName.substring(0, 2) | uppercase }}
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ userName }}</span>
+                        <span class="text-[10px] text-slate-400">ApplyFlow</span>
+                    </div>
+                </div>
+
+                <button (click)="close()" aria-label="Close menu"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl p-1.5 hover:bg-slate-100 dark:hover:bg-surface-muted transition-colors">
+                    <mat-icon class="scale-90">close</mat-icon>
+                </button>
+            </div>
+
+            <app-sidebar-nav (navigate)="close()"></app-sidebar-nav>
+        </div>
+
+        <!-- Bottom: Theme Toggle & Logout -->
+        <div class="space-y-2 pt-4 border-t border-slate-100 dark:border-surface-muted">
+            <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
+
+            <button type="button" (click)="onLogoutClick()"
+                class="flex items-center gap-3 w-full px-3.5 py-3 text-xs font-medium text-danger dark:text-danger-textDark bg-danger-bgLight/40 dark:bg-danger-bgDark/20 rounded-xl transition-all">
+                <mat-icon class="scale-95">logout</mat-icon>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,37 @@
+<div *ngIf="open" class="md:hidden fixed inset-0 z-50 flex items-end">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-xs animate-fade-in" (click)="close.emit()"></div>
+
+    <div class="relative w-full bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-surface-muted rounded-t-3xl shadow-2xl p-5 z-10 animate-slide-up"
+        style="padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));"
+        (click)="$event.stopPropagation()">
+
+        <!-- Drag handle -->
+        <div class="flex justify-center mb-4">
+            <span class="w-10 h-1.5 rounded-full bg-slate-200 dark:bg-surface-muted"></span>
+        </div>
+
+        <!-- Profile -->
+        <div class="flex items-center gap-3 pb-4 mb-3 border-b border-slate-100 dark:border-surface-muted">
+            <img *ngIf="userProfilePic" [src]="userProfilePic" alt="Profile" (error)="photoError.emit()"
+                class="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-xs" />
+            <div *ngIf="!userProfilePic"
+                class="w-10 h-10 rounded-full bg-gradient-to-tr from-accent-light to-accent flex items-center justify-center font-bold text-white text-xs shadow-xs">
+                {{ userName.substring(0, 2) | uppercase }}
+            </div>
+            <div class="flex flex-col min-w-0">
+                <span class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ userName }}</span>
+                <span class="text-[10px] text-slate-400">ApplyFlow</span>
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
+
+            <button type="button" (click)="logout.emit()"
+                class="flex items-center gap-3 w-full px-3.5 py-3 text-xs font-medium text-danger dark:text-danger-textDark bg-danger-bgLight/40 dark:bg-danger-bgDark/20 rounded-xl transition-all">
+                <mat-icon class="scale-95">logout</mat-icon>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </div>
+</div>

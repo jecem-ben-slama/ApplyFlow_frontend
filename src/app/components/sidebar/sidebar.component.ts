@@ -1,15 +1,10 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  HostListener,
-  inject,
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
 import { ThemeService } from '../../services/theme.service';
 import { AuthService } from '../../services/auth.service';
+import { SidebarDesktopComponent } from './sidebar-desktop/sidebar-desktop.component';
+import { MobileSidebarComponent } from './mobile-sidebar/mobile-sidebar.component';
+import { LogoutConfirmDialogComponent } from './logout/logout-confirm-dialog.component';
 
 /** BroadcastChannel event key used to sync logout across tabs. */
 const LOGOUT_CHANNEL = 'applyflow_auth';
@@ -17,7 +12,12 @@ const LOGOUT_CHANNEL = 'applyflow_auth';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule],
+  imports: [
+    CommonModule,
+    SidebarDesktopComponent,
+    MobileSidebarComponent,
+    LogoutConfirmDialogComponent,
+  ],
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent implements OnInit, OnDestroy {
@@ -27,9 +27,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   userName = 'New User';
   userProfilePic?: string;
   isCollapsed = false;
-  isGearOpen = false;
   isConfirmLogoutOpen = false;
-  isMobileSidebarOpen = false;
 
   isDarkMode$ = this.themeService.isDarkMode$;
 
@@ -51,7 +49,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Listen for logout events broadcast from other tabs.
     this.logoutChannel.onmessage = (event) => {
       if (event.data === 'logout') {
         this.authService.handleCrossTabLogout();
@@ -63,21 +60,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.logoutChannel.close();
   }
 
-  toggleCollapse(): void {
-    this.isCollapsed = !this.isCollapsed;
-    if (this.isCollapsed) this.isGearOpen = false;
-  }
-
-  toggleGearMenu(event: MouseEvent): void {
-    event.stopPropagation();
-    this.isGearOpen = !this.isGearOpen;
-    this.isCollapsed = false;
-  }
-
-  toggleMobileSidebar(): void {
-    this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
-  }
-
   toggleTheme(): void {
     this.themeService.toggleTheme();
   }
@@ -86,10 +68,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.userProfilePic = undefined;
   }
 
-  /** Opens the confirmation dialog instead of logging out immediately. */
   requestLogout(): void {
-    this.isGearOpen = false;
-    this.isMobileSidebarOpen = false;
     this.isConfirmLogoutOpen = true;
   }
 
@@ -105,10 +84,5 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.isConfirmLogoutOpen = false;
     this.logoutChannel.postMessage('logout');
     this.authService.logout();
-  }
-
-  @HostListener('document:click')
-  onDocumentClick(): void {
-    this.isGearOpen = false;
   }
 }

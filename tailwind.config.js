@@ -65,6 +65,27 @@ module.exports = {
           textDark: '#fbbf24',
         },
       },
+
+      // ─── Animations ─────────────────────────────────────
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'slide-right': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
+        'slide-up': {
+          '0%': { transform: 'translateY(100%)' },
+          '100%': { transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 0.15s ease-out',
+        'slide-right': 'slide-right 0.2s ease-out',
+        'slide-up': 'slide-up 0.25s ease-out',
+      },
     },
   },
 
