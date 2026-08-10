@@ -1,4 +1,10 @@
-import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnChanges,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApplicationResponseDto } from '../../../models';
@@ -18,14 +24,12 @@ export class NotesPanelComponent implements OnChanges {
   isEditing = false;
   editValue = '';
   savedFlash = false;
+  showCancelConfirm = false;
 
   ngOnChanges(): void {
-    // If notes are being edited, don't yank the user out mid-edit unless the
-    // underlying application actually changed (panel closed/reopened for a
-    // different app). Comparing against the original value is enough here
-    // since ngOnChanges only fires on @Input reference/property changes.
     this.isEditing = false;
     this.editValue = '';
+    this.showCancelConfirm = false;
   }
 
   get hasUnsavedChanges(): boolean {
@@ -43,17 +47,25 @@ export class NotesPanelComponent implements OnChanges {
   startEdit(): void {
     this.editValue = this.app.notes ?? '';
     this.isEditing = true;
+    this.showCancelConfirm = false;
   }
 
   cancelEdit(): void {
     if (this.hasUnsavedChanges) {
-      const confirmDiscard = window.confirm(
-        'Discard your unsaved note changes?'
-      );
-      if (!confirmDiscard) return;
+      this.showCancelConfirm = true;
+      return;
     }
+    this.confirmDiscard();
+  }
+
+  confirmDiscard(): void {
+    this.showCancelConfirm = false;
     this.isEditing = false;
     this.editValue = '';
+  }
+
+  dismissDiscard(): void {
+    this.showCancelConfirm = false;
   }
 
   save(): void {
@@ -61,8 +73,9 @@ export class NotesPanelComponent implements OnChanges {
     this.notesSaved.emit({ appId: this.app.id, notes: this.editValue.trim() });
     this.isEditing = false;
     this.editValue = '';
+    this.showCancelConfirm = false;
     this.savedFlash = true;
-    setTimeout(() => (this.savedFlash = false), 2000);
+    setTimeout(() => (this.savedFlash = false), 2500);
   }
 
   /** Ctrl/Cmd+Enter to save, Escape to cancel — standard textarea shortcuts. */

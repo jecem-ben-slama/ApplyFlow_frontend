@@ -1,17 +1,16 @@
-<div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3.5 shadow-sm">
+<div
+    class="bg-surface-light dark:bg-surface rounded-xl border border-slate-200 dark:border-surface-muted px-4 py-3.5 shadow-sm">
     <div class="flex items-center justify-between gap-2">
-        <p class="text-[11px] uppercase tracking-wide font-medium text-zinc-400 dark:text-zinc-500">
+        <p class="text-[11px] uppercase tracking-wide font-medium text-slate-400 dark:text-slate-500">
             {{ label }}
         </p>
         <span *ngIf="deltaText"
             class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium border"
-            [class.text-emerald-600]="deltaPositive" [class.bg-emerald-50]="deltaPositive"
-            [class.border-emerald-200]="deltaPositive" [class.text-rose-600]="!deltaPositive"
-            [class.bg-rose-50]="!deltaPositive" [class.border-rose-200]="!deltaPositive">
+            [ngClass]="deltaPositive ? 'text-success-textLight bg-success-bgLight dark:text-success-textDark dark:bg-success-bgDark border-success/20' : 'text-danger-textLight bg-danger-bgLight dark:text-danger-textDark dark:bg-danger-bgDark border-danger/20'">
             {{ deltaText }}
         </span>
     </div>
-    <p class="mt-2 font-mono tabular-nums text-zinc-900 dark:text-zinc-50" [class.text-2xl]="emphasis === 'primary'"
+    <p class="mt-2 font-mono tabular-nums text-slate-900 dark:text-slate-50" [class.text-2xl]="emphasis === 'primary'"
         [class.font-semibold]="emphasis === 'primary'" [class.text-lg]="emphasis === 'secondary'"
         [class.font-medium]="emphasis === 'secondary'">
         {{ loading ? '—' : value }}

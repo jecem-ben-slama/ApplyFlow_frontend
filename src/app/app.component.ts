@@ -13,9 +13,9 @@ import { SidebarComponent } from './components/sidebar/sidebar.component';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
-  // Pull your authentication stream straight into the template context
   protected authService = inject(AuthService);
 
-  // Instantiating ThemeService here ensures theme preference is applied before the app renders
-  private themeService = inject(ThemeService);
+  constructor() {
+    inject(ThemeService);
+  }
 }

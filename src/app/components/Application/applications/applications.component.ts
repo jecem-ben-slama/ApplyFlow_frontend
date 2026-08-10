@@ -38,6 +38,11 @@ interface Toast {
   message: string;
 }
 
+interface StatusOption {
+  value: string;
+  label: string;
+}
+
 @Component({
   selector: 'app-applications',
   standalone: true,
@@ -66,6 +71,18 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   filterStatus = '';
   filterKeyword = '';
 
+  /** Controls the collapsible filter panel on mobile. Always visible on desktop. */
+  filtersOpen = false;
+
+  /** Used to render the mobile status pill chips in the filter bar. */
+  statusOptions: StatusOption[] = [
+    { value: '', label: 'All' },
+    { value: 'COMPILED', label: 'Compiled' },
+    { value: 'SENT', label: 'Sent' },
+    { value: 'INTERVIEWING', label: 'Interviewing' },
+    { value: 'REJECTED', label: 'Rejected' },
+  ];
+
   availableSkills: Skill[] = [];
   availableCategories: Category[] = [];
   availableCvVariants: CvVariantDto[] = [];
@@ -93,10 +110,29 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   expandedAppId: number | null = null;
 
-  selectedIds = new Set<number>();
-
   private searchSubject = new Subject<void>();
   private readonly DEBOUNCE_MS = 400;
+
+  /** Palette used to derive a consistent avatar color per company name on mobile cards. */
+  private readonly avatarPalette = [
+    'bg-indigo-500',
+    'bg-emerald-500',
+    'bg-amber-500',
+    'bg-rose-500',
+    'bg-sky-500',
+    'bg-violet-500',
+  ];
+
+  /** Color classes for the mobile status pill/select, keyed by status value. */
+  private readonly statusClassMap: Record<string, string> = {
+    COMPILED:
+      'bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+    SENT: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900',
+    INTERVIEWING:
+      'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
+    REJECTED:
+      'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900',
+  };
 
   constructor(
     private appService: ApplicationsService,
@@ -125,6 +161,11 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   get hasActiveFilters(): boolean {
     return !!this.filterStatus || !!this.filterKeyword.trim();
+  }
+
+  /** Number of active filters, shown as a badge on the mobile filter toggle. */
+  get activeFilterCount(): number {
+    return (this.filterKeyword.trim() ? 1 : 0) + (this.filterStatus ? 1 : 0);
   }
 
   onFilterInput(): void {
@@ -233,7 +274,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
           this.appTotalPages = meta.totalPages;
           this.isLoading = false;
           this.isRefreshing = false;
-          this.selectedIds.clear();
         },
         error: (err) => {
           this.errorMessage =
@@ -348,68 +388,12 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       .catch(() => this.pushToast('error', 'Could not copy to clipboard.'));
   }
 
-  // ── Bulk selection ─────────────────────────────────────────────────────────
-
-  toggleSelect(id: number): void {
-    if (this.selectedIds.has(id)) {
-      this.selectedIds.delete(id);
-    } else {
-      this.selectedIds.add(id);
-    }
-  }
-
-  get allVisibleSelected(): boolean {
-    const content = this.appPage?.content ?? [];
-    return content.length > 0 && content.every((a) => this.selectedIds.has(a.id));
-  }
-
-  toggleSelectAll(): void {
-    const content = this.appPage?.content ?? [];
-    if (this.allVisibleSelected) {
-      content.forEach((a) => this.selectedIds.delete(a.id));
-    } else {
-      content.forEach((a) => this.selectedIds.add(a.id));
-    }
-  }
-
-  clearSelection(): void {
-    this.selectedIds.clear();
-  }
-
-  bulkMarkSent(): void {
-    const ids = Array.from(this.selectedIds);
-    if (!ids.length) return;
-
-    const requests = ids.map((id) =>
-      this.appService.patchApplicationStatusOrNotes(id, 'SENT', undefined)
-    );
-
-    forkJoin(requests).subscribe({
-      next: () => {
-        this.pushToast('success', `Marked ${ids.length} application(s) as sent.`);
-        this.loadApplicationsPage();
-      },
-      error: (err) =>
-        this.pushToast(
-          'error',
-          err.error?.message || 'Could not update some applications.'
-        ),
-    });
-  }
-
   // ── Delete ─────────────────────────────────────────────────────────────────
 
   onDelete(id: number): void {
     this.deleteTargetIds = [id];
-    this.deleteMessage = 'Permanently purge this compiled tracking profile record?';
-    this.showDeleteModal = true;
-  }
-
-  onBulkDeleteClick(): void {
-    const ids = Array.from(this.selectedIds);
-    if (!ids.length) return;
-    this.deleteTargetIds = ids;
-    this.deleteMessage = `Permanently purge ${ids.length} selected application(s)?`;
+    this.deleteMessage =
+      'Permanently purge this compiled tracking profile record?';
     this.showDeleteModal = true;
   }
 
@@ -425,13 +409,14 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       next: () => {
         this.pushToast(
           'success',
-          ids.length > 1 ? `${ids.length} applications deleted.` : 'Application deleted.'
+          ids.length > 1
+            ? `${ids.length} applications deleted.`
+            : 'Application deleted.'
         );
 
         if (this.expandedAppId !== null && ids.includes(this.expandedAppId)) {
           this.expandedAppId = null;
         }
-        ids.forEach((id) => this.selectedIds.delete(id));
 
         this.loadApplicationsPage();
       },
@@ -489,5 +474,35 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   dismissToast(id: number): void {
     this.toasts = this.toasts.filter((t) => t.id !== id);
+  }
+
+  // ── Mobile card helpers ──────────────────────────────────────────────────
+
+  /** Status pill/select color classes for the mobile card view. */
+  getStatusClasses(status: string): string {
+    return this.statusClassMap[status] ?? this.statusClassMap['COMPILED'];
+  }
+
+  /** Deterministic avatar background color derived from the company name. */
+  avatarColor(name: string): string {
+    const hash = (name || '')
+      .split('')
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return this.avatarPalette[hash % this.avatarPalette.length];
+  }
+
+  /** Human-friendly relative date used on mobile cards (e.g. "3d ago"). */
+  timeAgo(date: string | Date | null | undefined): string {
+    if (!date) return 'N/A';
+
+    const diffMs = Date.now() - new Date(date).getTime();
+    const days = Math.floor(diffMs / 86400000);
+
+    if (days <= 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 30) return `${days}d ago`;
+
+    const months = Math.floor(days / 30);
+    return months < 12 ? `${months}mo ago` : `${Math.floor(months / 12)}y ago`;
   }
 }

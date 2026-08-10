@@ -29,6 +29,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   isCollapsed = false;
   isGearOpen = false;
   isConfirmLogoutOpen = false;
+  isMobileSidebarOpen = false;
 
   isDarkMode$ = this.themeService.isDarkMode$;
 
@@ -73,9 +74,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.isCollapsed = false;
   }
 
+  toggleMobileSidebar(): void {
+    this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
+  }
+
   toggleTheme(): void {
     this.themeService.toggleTheme();
   }
+
   onPhotoError(): void {
     this.userProfilePic = undefined;
   }
@@ -83,6 +89,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   /** Opens the confirmation dialog instead of logging out immediately. */
   requestLogout(): void {
     this.isGearOpen = false;
+    this.isMobileSidebarOpen = false;
     this.isConfirmLogoutOpen = true;
   }
 

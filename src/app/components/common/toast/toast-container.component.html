@@ -2,8 +2,8 @@
     <div *ngFor="let toast of (toasts$ | async)"
         class="pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm shadow-lg backdrop-blur-md animate-fade-in"
         [ngClass]="{
-            'border-emerald-200 bg-emerald-50/95 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-100': toast.type === 'success',
-            'border-rose-200 bg-rose-50/95 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100': toast.type === 'error',
+            'border-success bg-success-bg/95 text-success-text dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-100': toast.type === 'success',
+            'border-danger bg-danger-bg/95 text-danger-text dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100': toast.type === 'error',
             'border-slate-200 bg-white/95 text-slate-700 dark:border-slate-800 dark:bg-slate-900/95 dark:text-slate-200': toast.type === 'info'
         }">
         <mat-icon class="!text-base !w-5 !h-5 mt-0.5 shrink-0">{{ iconFor(toast.type) }}</mat-icon>

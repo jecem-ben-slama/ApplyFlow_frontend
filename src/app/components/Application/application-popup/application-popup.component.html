@@ -1,19 +1,20 @@
-<div class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
+<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
 
     <div
-        class="bg-white dark:bg-slate-900 w-full max-w-6xl max-h-[92vh] rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-slate-800 flex flex-col">
+        class="bg-surface-light dark:bg-surface-dark w-full max-w-6xl max-h-[92vh] rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-surface-muted flex flex-col">
 
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-start justify-between">
+        <div
+            class="px-6 py-4 border-b border-slate-200 dark:border-surface-muted flex items-start justify-between bg-background-light/50 dark:bg-surface-muted/20">
             <div>
-                <h2 class="text-lg font-bold text-gray-900 dark:text-white">
+                <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">
                     Compile New Email
                 </h2>
-                <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Build a dynamic, context-aware outreach email
                 </p>
             </div>
             <button (click)="closeModal()" type="button" aria-label="Close dialog"
-                class="text-gray-400 hover:text-red-500 transition text-xl leading-none mt-0.5">
+                class="text-slate-400 hover:text-danger-textLight dark:hover:text-danger-textDark transition text-lg leading-none mt-0.5 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-surface-muted">
                 ✕
             </button>
         </div>
@@ -22,64 +23,71 @@
 
             <div class="lg:col-span-7 space-y-5">
 
-                <div *ngIf="errorMessage"
-                    class="rounded-xl border border-red-200 bg-red-50 dark:bg-red-500/10 dark:border-red-500/20 text-red-700 dark:text-red-200 text-sm px-4 py-3">
+                <div *ngIf="errorMessage" role="alert"
+                    class="rounded-xl border border-rose-200 dark:border-rose-900 bg-danger-bgLight dark:bg-danger-bgDark text-danger-textLight dark:text-danger-textDark text-xs px-4 py-3">
                     {{ errorMessage }}
                 </div>
 
                 <div
-                    class="bg-gray-50 dark:bg-slate-800/40 rounded-xl p-4 border border-gray-100 dark:border-slate-700">
+                    class="bg-background-light dark:bg-surface-muted/30 rounded-2xl p-4 border border-slate-200 dark:border-surface-muted/60">
 
-                    <label class="text-xs font-semibold text-gray-600 dark:text-slate-300">
-                        Template <span class="text-red-500">*</span>
+                    <label class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
+                        Template <span class="text-rose-500">*</span>
                     </label>
 
-                    <select id="field-templateId" [(ngModel)]="formModel.templateId" name="templateId" (change)="onTemplateChange()"
-                        (blur)="markTouched('templateId')" [ngClass]="hasFieldError('templateId')
-                            ? 'border-red-400 focus:ring-red-400 dark:border-red-500/50'
-                            : 'border-gray-200 dark:border-slate-700 focus:ring-blue-500'"
-                        class="mt-2 w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border focus:outline-none focus:ring-2 text-sm text-gray-900 dark:text-white">
+                    <select id="field-templateId" [(ngModel)]="formModel.templateId" name="templateId"
+                        (change)="onTemplateChange()" (blur)="markTouched('templateId')" [ngClass]="hasFieldError('templateId')
+                            ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
+                            : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
+                        class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border focus:outline-none focus:ring-2 text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all">
                         <option [ngValue]="null">Select template</option>
                         <option *ngFor="let t of availableTemplates" [ngValue]="t.id">
                             {{ t.name }} ({{ t.language | uppercase }})
                         </option>
                     </select>
-                    <p *ngIf="getFieldError('templateId')" class="mt-1.5 text-xs text-red-500">
+                    <p *ngIf="getFieldError('templateId')"
+                        class="mt-1.5 text-xs text-rose-500 dark:text-rose-400 font-medium">
                         {{ getFieldError('templateId') }}
                     </p>
 
                 </div>
 
                 <div
-                    class="bg-gray-50 dark:bg-slate-800/40 rounded-xl p-4 space-y-4 border border-gray-100 dark:border-slate-700">
+                    class="bg-background-light dark:bg-surface-muted/30 rounded-2xl p-4 space-y-4 border border-slate-200 dark:border-surface-muted/60">
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="text-xs font-semibold text-gray-600 dark:text-slate-300">
-                                Company <span class="text-red-500">*</span>
+                            <label
+                                class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
+                                Company <span class="text-rose-500">*</span>
                             </label>
                             <input id="field-companyName" [(ngModel)]="formModel.companyName" name="companyName"
-                                (blur)="markTouched('companyName')" [maxlength]="fieldLimits.companyName" [ngClass]="hasFieldError('companyName')
-                                    ? 'border-red-400 focus:ring-red-400 dark:border-red-500/50'
-                                    : 'border-gray-200 dark:border-slate-700 focus:ring-blue-500'"
-                                class="mt-1 w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border focus:outline-none focus:ring-2 text-sm text-gray-900 dark:text-white"
+                                (blur)="markTouched('companyName')" [maxlength]="fieldLimits.companyName"
+                                [ngClass]="hasFieldError('companyName')
+                                    ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
+                                    : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
+                                class="mt-1.5 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border focus:outline-none focus:ring-2 text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all"
                                 placeholder="Google" />
-                            <p *ngIf="getFieldError('companyName')" class="mt-1.5 text-xs text-red-500">
+                            <p *ngIf="getFieldError('companyName')"
+                                class="mt-1.5 text-xs text-rose-500 dark:text-rose-400 font-medium">
                                 {{ getFieldError('companyName') }}
                             </p>
                         </div>
 
                         <div>
-                            <label class="text-xs font-semibold text-gray-600 dark:text-slate-300">
-                                Position <span class="text-red-500">*</span>
+                            <label
+                                class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
+                                Position <span class="text-rose-500">*</span>
                             </label>
-                            <input id="field-jobTitle" [(ngModel)]="formModel.jobTitle" name="jobTitle" (blur)="markTouched('jobTitle')"
-                                [maxlength]="fieldLimits.jobTitle" [ngClass]="hasFieldError('jobTitle')
-                                    ? 'border-red-400 focus:ring-red-400 dark:border-red-500/50'
-                                    : 'border-gray-200 dark:border-slate-700 focus:ring-blue-500'"
-                                class="mt-1 w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border focus:outline-none focus:ring-2 text-sm text-gray-900 dark:text-white"
+                            <input id="field-jobTitle" [(ngModel)]="formModel.jobTitle" name="jobTitle"
+                                (blur)="markTouched('jobTitle')" [maxlength]="fieldLimits.jobTitle"
+                                [ngClass]="hasFieldError('jobTitle')
+                                    ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
+                                    : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
+                                class="mt-1.5 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border focus:outline-none focus:ring-2 text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all"
                                 placeholder="Senior Engineer" />
-                            <p *ngIf="getFieldError('jobTitle')" class="mt-1.5 text-xs text-red-500">
+                            <p *ngIf="getFieldError('jobTitle')"
+                                class="mt-1.5 text-xs text-rose-500 dark:text-rose-400 font-medium">
                                 {{ getFieldError('jobTitle') }}
                             </p>
                         </div>
@@ -87,33 +95,39 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="text-xs font-semibold text-gray-600 dark:text-slate-300">
-                                Email <span class="text-red-500">*</span>
+                            <label
+                                class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
+                                Email <span class="text-rose-500">*</span>
                             </label>
-                            <input id="field-recipientEmail" [(ngModel)]="formModel.recipientEmail" name="recipientEmail" type="email"
-                                (blur)="markTouched('recipientEmail')" [ngClass]="hasFieldError('recipientEmail')
-                                    ? 'border-red-400 focus:ring-red-400 dark:border-red-500/50'
-                                    : 'border-gray-200 dark:border-slate-700 focus:ring-blue-500'"
-                                class="mt-1 w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border focus:outline-none focus:ring-2 text-sm text-gray-900 dark:text-white"
+                            <input id="field-recipientEmail" [(ngModel)]="formModel.recipientEmail"
+                                name="recipientEmail" type="email" (blur)="markTouched('recipientEmail')"
+                                [ngClass]="hasFieldError('recipientEmail')
+                                    ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
+                                    : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
+                                class="mt-1.5 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border focus:outline-none focus:ring-2 text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all"
                                 placeholder="hr@company.com" />
-                            <p *ngIf="getFieldError('recipientEmail')" class="mt-1.5 text-xs text-red-500">
+                            <p *ngIf="getFieldError('recipientEmail')"
+                                class="mt-1.5 text-xs text-rose-500 dark:text-rose-400 font-medium">
                                 {{ getFieldError('recipientEmail') }}
                             </p>
                         </div>
 
                         <div>
-                            <label class="text-xs font-semibold text-gray-600 dark:text-slate-300">
-                                Language <span class="text-red-500">*</span>
+                            <label
+                                class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
+                                Language <span class="text-rose-500">*</span>
                             </label>
-                            <select id="field-language" [(ngModel)]="formModel.language" name="language" (blur)="markTouched('language')"
+                            <select id="field-language" [(ngModel)]="formModel.language" name="language"
+                                (blur)="markTouched('language')"
                                 [ngClass]="hasFieldError('language')
-                                    ? 'border-red-400 focus:ring-red-400 dark:border-red-500/50'
-                                    : 'border-gray-200 dark:border-slate-700 focus:ring-blue-500'"
-                                class="mt-1 w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border focus:outline-none focus:ring-2 text-sm text-gray-900 dark:text-white">
+                                    ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
+                                    : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
+                                class="mt-1.5 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border focus:outline-none focus:ring-2 text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all">
                                 <option value="en">English</option>
                                 <option value="fr">French</option>
                             </select>
-                            <p *ngIf="getFieldError('language')" class="mt-1.5 text-xs text-red-500">
+                            <p *ngIf="getFieldError('language')"
+                                class="mt-1.5 text-xs text-rose-500 dark:text-rose-400 font-medium">
                                 {{ getFieldError('language') }}
                             </p>
                         </div>
@@ -122,11 +136,13 @@
                 </div>
 
                 <div *ngIf="availableCvVariants.length"
-                    class="bg-gray-50 dark:bg-slate-800/40 rounded-xl p-4 border border-gray-100 dark:border-slate-700">
+                    class="bg-background-light dark:bg-surface-muted/30 rounded-2xl p-4 border border-slate-200 dark:border-surface-muted/60">
 
-                    <label class="text-xs font-semibold text-gray-600 dark:text-slate-300">CV Variant</label>
+                    <label
+                        class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">CV
+                        Variant</label>
                     <select [(ngModel)]="formModel.cvVariantId" name="cvVariantId"
-                        class="mt-2 w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 dark:text-white">
+                        class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all">
                         <option [ngValue]="null">No specific variant</option>
                         <option *ngFor="let cv of availableCvVariants" [ngValue]="cv.id">{{ cv.name }}</option>
                     </select>
@@ -134,17 +150,19 @@
                 </div>
 
                 <div
-                    class="bg-gray-50 dark:bg-slate-800/40 rounded-xl p-4 border border-gray-100 dark:border-slate-700 space-y-3">
+                    class="bg-background-light dark:bg-surface-muted/30 rounded-2xl p-4 border border-slate-200 dark:border-surface-muted/60 space-y-3">
 
                     <div class="flex justify-between items-center">
-                        <h3 class="text-xs font-bold text-gray-700 dark:text-slate-200">Bullet Points Engine</h3>
+                        <h3
+                            class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-700 dark:text-slate-200">
+                            Bullet Points Engine</h3>
 
-                        <div class="flex gap-1 flex-wrap justify-end max-w-[60%]">
+                        <div class="flex gap-1.5 flex-wrap justify-end max-w-[60%]">
                             <span *ngFor="let id of formModel.skillIds"
-                                class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900">
+                                class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900 font-medium">
                                 {{ getSkillName(id) }}
                                 <button type="button" (click)="toggleSkillSelection(id)"
-                                    class="text-blue-400 hover:text-blue-700 leading-none ml-0.5">✕</button>
+                                    class="text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-200 leading-none">✕</button>
                             </span>
                         </div>
                     </div>
@@ -152,27 +170,28 @@
                     <div *ngIf="selectedCategoryId === null" class="flex flex-wrap gap-2">
                         <button *ngFor="let cat of availableCategories" type="button"
                             (click)="selectedCategoryId = cat.id"
-                            class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-950 text-gray-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800 hover:border-blue-300 transition">
+                            class="text-xs px-3.5 py-2 rounded-xl border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-background-dark text-slate-700 dark:text-slate-300 hover:border-primary hover:text-primary transition-all shadow-sm">
                             {{ cat.name }}
                         </button>
                     </div>
 
-                    <div *ngIf="selectedCategoryId !== null" class="space-y-2">
-                        <div class="flex justify-between items-center text-[11px] text-gray-500">
+                    <div *ngIf="selectedCategoryId !== null" class="space-y-2.5">
+                        <div class="flex justify-between items-center text-xs text-slate-500">
                             <button type="button" (click)="clearCategorySelection()"
-                                class="px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition text-xs">
+                                class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-surface-muted hover:bg-slate-200 dark:hover:bg-surface-muted/80 transition-all text-xs font-medium text-slate-700 dark:text-slate-200">
                                 ← Back
                             </button>
-                            <span class="text-gray-400 dark:text-slate-500">{{ filteredSkills.length }} skills</span>
+                            <span class="text-slate-400 dark:text-slate-500 font-mono text-[11px]">{{
+                                filteredSkills.length }} skills</span>
                         </div>
 
-                        <div class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                        <div class="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1">
                             <button *ngFor="let skill of filteredSkills" type="button"
                                 (click)="toggleSkillSelection(skill.id)"
-                                class="text-xs px-3 py-1 rounded-full border transition"
+                                class="text-xs px-3 py-1.5 rounded-xl border transition-all"
                                 [ngClass]="formModel.skillIds.includes(skill.id)
-                              ? 'bg-blue-600 text-white border-blue-600'
-                              : 'bg-white dark:bg-slate-950 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800'">
+                              ? 'bg-primary text-white border-primary shadow-sm'
+                              : 'bg-surface-light dark:bg-background-dark text-slate-700 dark:text-slate-300 border-slate-200 dark:border-surface-muted hover:border-primary/50'">
                                 {{ skill.name }}
                             </button>
                         </div>
@@ -181,12 +200,13 @@
                 </div>
 
                 <div
-                    class="bg-gray-50 dark:bg-slate-800/40 rounded-xl p-4 border border-gray-100 dark:border-slate-700">
-                    <label class="text-xs font-semibold text-gray-600 dark:text-slate-300">Notes</label>
+                    class="bg-background-light dark:bg-surface-muted/30 rounded-2xl p-4 border border-slate-200 dark:border-surface-muted/60">
+                    <label
+                        class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">Notes</label>
                     <textarea [(ngModel)]="formModel.notes" name="notes" rows="3" maxlength="500"
-                        class="mt-2 w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 dark:text-white resize-none"
+                        class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 resize-none shadow-sm transition-all"
                         placeholder="Extra context — achievements, tone, specific tech…"></textarea>
-                    <p class="text-right text-[10px] text-gray-400 dark:text-slate-500 mt-1">
+                    <p class="text-right text-[11px] font-mono text-slate-400 dark:text-slate-500 mt-1">
                         {{ formModel.notes?.length || 0 }} / 500
                     </p>
                 </div>
@@ -197,18 +217,20 @@
                 <div class="sticky top-4 space-y-3">
 
                     <div
-                        class="bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+                        class="bg-surface-light dark:bg-surface-dark border border-slate-200 dark:border-surface-muted rounded-2xl shadow-sm overflow-hidden">
 
                         <div
-                            class="px-4 py-3 border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/60 flex items-center justify-between">
+                            class="px-4 py-3.5 border-b border-slate-200 dark:border-surface-muted bg-background-light/50 dark:bg-surface-muted/20 flex items-center justify-between">
                             <div>
-                                <h4 class="text-xs font-bold text-gray-700 dark:text-slate-200">Live Email Preview</h4>
-                                <p class="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5">Updates as you fill the
+                                <h4
+                                    class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 dark:text-slate-200">
+                                    Live Email Preview</h4>
+                                <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Updates as you fill the
                                     form</p>
                             </div>
 
                             <button *ngIf="hasPreviewContent()" type="button" (click)="copyEmailToClipboard()"
-                                class="text-[10px] px-2 py-1 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 transition">
+                                class="text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-background-dark text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all font-medium shadow-sm">
                                 {{ copied ? '✓ Copied' : '⎘ Copy' }}
                             </button>
                         </div>
@@ -216,43 +238,46 @@
                         <div *ngIf="!hasPreviewContent()"
                             class="flex flex-col items-center justify-center py-16 px-6 text-center">
                             <div
-                                class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-900 flex items-center justify-center mb-3 text-gray-300 dark:text-slate-600 text-lg">
+                                class="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-surface-muted flex items-center justify-center mb-3 text-slate-400 dark:text-slate-500 text-base">
                                 ✉
                             </div>
-                            <p class="text-xs font-medium text-gray-400 dark:text-slate-500">No preview yet</p>
-                            <p class="text-[11px] text-gray-300 dark:text-slate-600 mt-1">Select a template and fill in
-                                the details</p>
+                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">No preview yet</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Select a template and fill in the
+                                details</p>
                         </div>
 
                         <div *ngIf="hasPreviewContent()"
-                            class="p-4 space-y-3 text-[12px] leading-relaxed text-gray-700 dark:text-slate-300">
+                            class="p-4 space-y-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
 
-                            <div *ngIf="formModel.recipientEmail" class="flex items-baseline gap-2 text-[11px] pb-1">
-                                <span class="text-[10px] uppercase tracking-wider text-gray-400 w-5 shrink-0">To</span>
-                                <span class="text-gray-600 dark:text-slate-300 truncate">{{ formModel.recipientEmail
-                                    }}</span>
+                            <div *ngIf="formModel.recipientEmail" class="flex items-baseline gap-2 text-xs pb-1">
+                                <span
+                                    class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 w-5 shrink-0">To</span>
+                                <span class="text-slate-600 dark:text-slate-300 truncate font-mono">{{
+                                    formModel.recipientEmail }}</span>
                             </div>
 
-                            <div class="pb-2 border-b border-gray-100 dark:border-slate-800">
-                                <div class="text-[10px] uppercase tracking-wide text-gray-400 mb-1">Subject</div>
-                                <div class="font-semibold text-gray-900 dark:text-white"
+                            <div class="pb-2 border-b border-slate-100 dark:border-surface-muted/60">
+                                <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                                    Subject</div>
+                                <div class="font-semibold text-slate-900 dark:text-white"
                                     [innerHTML]="getRenderedSubjectHtml()">
                                 </div>
                             </div>
 
-                            <div class="whitespace-pre-wrap font-sans max-h-[28rem] overflow-y-auto text-[12px] leading-relaxed"
+                            <div class="whitespace-pre-wrap font-sans max-h-[28rem] overflow-y-auto text-xs leading-relaxed text-slate-700 dark:text-slate-300"
                                 [innerHTML]="getRenderedEmailBodyHtml()"></div>
 
                         </div>
                     </div>
 
                     <div *ngIf="hasPreviewContent()"
-                        class="flex gap-3 text-[10px] text-gray-400 dark:text-slate-500 px-1">
-                        <span><span class="font-semibold text-gray-600 dark:text-slate-300">{{ getWordCount() }}</span>
+                        class="flex gap-3 text-xs font-mono text-slate-400 dark:text-slate-500 px-1">
+                        <span><span class="font-semibold text-slate-600 dark:text-slate-300">{{ getWordCount() }}</span>
                             words</span>
                         <span>·</span>
-                        <span><span class="font-semibold text-gray-600 dark:text-slate-300">{{ formModel.skillIds.length
-                                }}</span> skill{{ formModel.skillIds.length !== 1 ? 's' : '' }}</span>
+                        <span><span class="font-semibold text-slate-600 dark:text-slate-300">{{
+                                formModel.skillIds.length }}</span> skill{{ formModel.skillIds.length !== 1 ? 's' : ''
+                            }}</span>
                     </div>
 
                 </div>
@@ -261,16 +286,18 @@
         </div>
 
         <div
-            class="px-6 py-4 border-t border-gray-200 dark:border-slate-800 flex justify-end gap-3 bg-white dark:bg-slate-900">
+            class="px-6 py-4 border-t border-slate-200 dark:border-surface-muted flex justify-end gap-3 bg-background-light/50 dark:bg-surface-muted/20">
 
             <button type="button" (click)="closeModal()"
-                class="px-4 py-2 rounded-lg text-sm bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 transition">
+                class="px-4 py-2.5 rounded-xl text-sm bg-surface-light dark:bg-background-dark hover:bg-slate-100 dark:hover:bg-surface-muted/80 border border-slate-200 dark:border-surface-muted text-slate-700 dark:text-slate-200 transition-all font-medium shadow-sm">
                 Cancel
             </button>
 
             <button type="button" (click)="onSubmit()" [disabled]="isLoading || (submitAttemptedOnce && !isFormValid())"
                 [attr.title]="submitAttemptedOnce && !isFormValid() ? 'Fix the highlighted fields to continue' : null"
-                class="px-5 py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition">
+                class="px-5 py-2.5 rounded-xl text-sm bg-primary hover:opacity-90 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all font-medium flex items-center gap-2">
+                <span *ngIf="isLoading"
+                    class="inline-block animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></span>
                 {{ isLoading ? 'Compiling…' : 'Compile Email' }}
             </button>
 

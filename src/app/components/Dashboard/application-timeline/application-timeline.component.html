@@ -1,8 +1,10 @@
-<div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-5">
-    <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
-        <label class="text-sm font-medium text-zinc-600 dark:text-zinc-300 whitespace-nowrap">Application</label>
+<div
+    class="bg-surface-light dark:bg-surface rounded-2xl border border-slate-200 dark:border-surface-muted p-5 sm:p-6 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+        <label
+            class="text-xs uppercase tracking-[0.18em] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Application</label>
         <select
-            class="text-sm border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 bg-zinc-50 dark:bg-zinc-800 flex-1 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            class="text-sm border border-slate-200 dark:border-surface-muted rounded-xl px-3.5 py-2.5 bg-background-light dark:bg-background text-slate-800 dark:text-slate-100 flex-1 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
             [ngModel]="selectedApplicationId" (ngModelChange)="onSelect($event)"
             [disabled]="loadingApplications || !applications.length">
             <option [ngValue]="null" disabled>
@@ -15,31 +17,49 @@
         </select>
     </div>
 
-    <p *ngIf="loadingTimeline" class="text-sm text-zinc-400 italic text-center py-8">Loading timeline…</p>
+    <div *ngIf="loadingTimeline"
+        class="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500">
+        <div class="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent mb-2"></div>
+        <p class="text-sm italic">Loading timeline…</p>
+    </div>
 
-    <p *ngIf="!loadingTimeline && selectedApplicationId && !timeline.length"
-        class="text-sm text-zinc-400 italic text-center py-8">
-        No events recorded for this application yet.
-    </p>
+    <div *ngIf="!loadingTimeline && selectedApplicationId && !timeline.length"
+        class="rounded-xl border border-dashed border-slate-200 dark:border-surface-muted p-8 text-center">
+        <p class="text-sm font-medium text-slate-700 dark:text-slate-200">No events recorded yet.</p>
+        <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">This application doesn't have any history items
+            logged.</p>
+    </div>
 
-    <p *ngIf="!loadingTimeline && !selectedApplicationId" class="text-sm text-zinc-400 italic text-center py-8">
-        Select an application to see how it evolved over time.
-    </p>
+    <div *ngIf="!loadingTimeline && !selectedApplicationId"
+        class="rounded-xl border border-dashed border-slate-200 dark:border-surface-muted p-8 text-center">
+        <p class="text-sm font-medium text-slate-700 dark:text-slate-200">No application selected.</p>
+        <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">Select an application above to see how it evolved
+            over time.</p>
+    </div>
 
     <ol *ngIf="!loadingTimeline && timeline.length"
-        class="relative border-l border-zinc-200 dark:border-zinc-800 ml-2 space-y-6">
-        <li *ngFor="let event of timeline; trackBy: trackByEventId" class="ml-5">
-            <span class="absolute -translate-x-1/2 w-2.5 h-2.5 rounded-full mt-1.5 ring-4 ring-white dark:ring-zinc-900"
-                [class]="colorClass(event.status)"></span>
-            <div class="flex flex-wrap items-baseline gap-x-2">
-                <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ label(event.status) }}</p>
-                <p class="text-xs text-zinc-400 dark:text-zinc-500 font-mono tabular-nums">{{ event.occurredAt | date:
-                    'MMM d, y, h:mm a' }}</p>
-                <p *ngIf="event.daysSincePrevious !== null" class="text-xs text-zinc-400 dark:text-zinc-500">
-                    (+{{ event.daysSincePrevious }}d)
-                </p>
+        class="relative border-l border-slate-200 dark:border-surface-muted ml-3 space-y-6 pl-6 pt-2">
+        <li *ngFor="let event of timeline; trackBy: trackByEventId" class="relative group">
+            <span
+                class="absolute -left-[31px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-surface-light dark:bg-surface ring-4 ring-surface-light dark:ring-surface">
+                <span class="h-2.5 w-2.5 rounded-full" [class]="colorClass(event.status)"></span>
+            </span>
+            <div
+                class="rounded-xl border border-slate-100 dark:border-surface-muted/60 bg-background-light/50 dark:bg-surface-muted/20 p-3.5 transition-all hover:border-primary/40 dark:hover:border-primary/50">
+                <div class="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 mb-1">
+                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-50">{{ label(event.status) }}</p>
+                    <div class="flex items-center gap-2">
+                        <span *ngIf="event.daysSincePrevious !== null"
+                            class="rounded-md bg-indigo-50 dark:bg-indigo-950/50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-300">
+                            +{{ event.daysSincePrevious }}d
+                        </span>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 font-mono tabular-nums">{{ event.occurredAt
+                            | date: 'MMM d, y, h:mm a' }}</p>
+                    </div>
+                </div>
+                <p *ngIf="event.note" class="text-xs text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">{{
+                    event.note }}</p>
             </div>
-            <p *ngIf="event.note" class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{{ event.note }}</p>
         </li>
     </ol>
 </div>
