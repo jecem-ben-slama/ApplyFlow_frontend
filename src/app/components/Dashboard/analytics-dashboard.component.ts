@@ -34,7 +34,6 @@ import {
 } from 'src/app/services/analytics.service';
 import {
   ApplicationStatus,
-  DateRange,
   FunnelStage,
   RejectionStage,
   StatsService,
@@ -42,24 +41,18 @@ import {
   TimelineEvent,
 } from 'src/app/services/stats.service';
 
-type RangePreset = '7' | '30' | '90' | 'custom';
+import {
+  RangePreset,
+  formatShortDate,
+  getSelectedRange,
+  getPreviousRange,
+  buildSyntheticPreviousSummary,
+  synthesizePreviousValue,
+  synthesizePreviousRate,
+  makeMetricDelta,
+  buildTrendSeries,
+} from './analytics.utils';
 
-interface MetricDelta {
-  current: number;
-  previous: number;
-  deltaText: string;
-  deltaPositive: boolean;
-}
-
-interface TrendPoint {
-  label: string;
-  value: number;
-  height: number;
-}
-
-// Full lifecycle order for the Kanban board — includes COMPILED (pre-send)
-// and the terminal/outcome statuses, unlike FUNNEL_STATUSES which only
-// covers the "in flight toward an offer" stages.
 const STATUS_ORDER: ApplicationStatus[] = [
   'COMPILED',
   'SENT',
@@ -143,7 +136,7 @@ export class AnalyticsDashboardComponent implements OnInit {
     if (!from || !to) {
       return 'Custom range';
     }
-    return `${this.formatShortDate(from)} – ${this.formatShortDate(to)}`;
+    return `${formatShortDate(from)} – ${formatShortDate(to)}`;
   });
 
   isEmptyOverview = computed(() => {
@@ -200,43 +193,42 @@ export class AnalyticsDashboardComponent implements OnInit {
     const current = this.summary();
     if (!current) {
       return {
-        totalApplications: this.makeMetricDelta(0, 0),
-        sentCount: this.makeMetricDelta(0, 0),
-        responseRate: this.makeMetricDelta(0, 0),
-        avgResponseDays: this.makeMetricDelta(0, 0),
-        activeCount: this.makeMetricDelta(0, 0),
-        interviewToOfferRate: this.makeMetricDelta(0, 0),
+        totalApplications: makeMetricDelta(0, 0),
+        sentCount: makeMetricDelta(0, 0),
+        responseRate: makeMetricDelta(0, 0),
+        avgResponseDays: makeMetricDelta(0, 0),
+        activeCount: makeMetricDelta(0, 0),
+        interviewToOfferRate: makeMetricDelta(0, 0),
       };
     }
 
     const previous = this.previousSummary();
 
     return {
-      totalApplications: this.makeMetricDelta(
+      totalApplications: makeMetricDelta(
         current.totalApplications,
         previous?.totalApplications ??
-          this.synthesizePreviousValue(current.totalApplications)
+          synthesizePreviousValue(current.totalApplications)
       ),
-      sentCount: this.makeMetricDelta(
+      sentCount: makeMetricDelta(
         current.sentCount,
-        previous?.sentCount ?? this.synthesizePreviousValue(current.sentCount)
+        previous?.sentCount ?? synthesizePreviousValue(current.sentCount)
       ),
-      responseRate: this.makeMetricDelta(
+      responseRate: makeMetricDelta(
         current.responseRate * 100,
         (previous?.responseRate ??
-          this.synthesizePreviousRate(current.responseRate)) * 100
+          synthesizePreviousRate(current.responseRate)) * 100
       ),
-      avgResponseDays: this.makeMetricDelta(
+      avgResponseDays: makeMetricDelta(
         current.avgResponseDays ?? 0,
         previous?.avgResponseDays ??
-          this.synthesizePreviousValue(current.avgResponseDays ?? 0)
+          synthesizePreviousValue(current.avgResponseDays ?? 0)
       ),
-      activeCount: this.makeMetricDelta(
+      activeCount: makeMetricDelta(
         current.activeCount,
-        previous?.activeCount ??
-          this.synthesizePreviousValue(current.activeCount)
+        previous?.activeCount ?? synthesizePreviousValue(current.activeCount)
       ),
-      interviewToOfferRate: this.makeMetricDelta(
+      interviewToOfferRate: makeMetricDelta(
         current.interviewToOfferRate == null
           ? 0
           : current.interviewToOfferRate * 100,
@@ -247,10 +239,18 @@ export class AnalyticsDashboardComponent implements OnInit {
     };
   });
 
-  applicationsTrend = computed(() => this.buildTrendSeries('applications'));
-  responseRateTrend = computed(() => this.buildTrendSeries('responseRate'));
-  interviewTrend = computed(() => this.buildTrendSeries('interviewToOffer'));
-  rejectionTrend = computed(() => this.buildTrendSeries('rejections'));
+  applicationsTrend = computed(() =>
+    buildTrendSeries('applications', this.summary(), this.selectedPreset())
+  );
+  responseRateTrend = computed(() =>
+    buildTrendSeries('responseRate', this.summary(), this.selectedPreset())
+  );
+  interviewTrend = computed(() =>
+    buildTrendSeries('interviewToOffer', this.summary(), this.selectedPreset())
+  );
+  rejectionTrend = computed(() =>
+    buildTrendSeries('rejections', this.summary(), this.selectedPreset())
+  );
 
   outcomeCounts = computed<Partial<Record<ApplicationStatus, number>>>(() => {
     const counts: Partial<Record<ApplicationStatus, number>> = {};
@@ -286,7 +286,11 @@ export class AnalyticsDashboardComponent implements OnInit {
   }
 
   private refreshDashboard(): void {
-    const range = this.getSelectedRange();
+    const range = getSelectedRange(
+      this.selectedPreset(),
+      this.customFrom(),
+      this.customTo()
+    );
     this.loading.set(true);
     this.loadError.set(false);
 
@@ -313,10 +317,10 @@ export class AnalyticsDashboardComponent implements OnInit {
           job,
           template,
         }) => {
-          const previousRange = this.getPreviousRange(range);
+          const previousRange = getPreviousRange(range);
           this.summary.set(summary);
           this.previousSummary.set(
-            this.buildSyntheticPreviousSummary(summary, previousRange)
+            buildSyntheticPreviousSummary(summary, previousRange)
           );
           this.funnelStages.set(this.buildDisplayStages(funnel));
           this.rejectionStages.set(rejectionStages);
@@ -357,6 +361,13 @@ export class AnalyticsDashboardComponent implements OnInit {
       this.applicationTimeline.set([]);
       return;
     }
+
+    setTimeout(() => {
+      document.getElementById('timeline-section')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 50);
 
     this.loadingTimeline.set(true);
     this.statsService
@@ -445,202 +456,5 @@ export class AnalyticsDashboardComponent implements OnInit {
       const days = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
       return { ...event, daysSincePrevious: days };
     });
-  }
-
-  private getSelectedRange(): DateRange {
-    const preset = this.selectedPreset();
-    if (preset !== 'custom') {
-      const days = Number(preset);
-      const to = new Date();
-      const from = new Date();
-      from.setDate(to.getDate() - days + 1);
-      return {
-        from: this.toDateInputValue(from),
-        to: this.toDateInputValue(to),
-      };
-    }
-
-    const from = this.customFrom();
-    const to = this.customTo();
-
-    return {
-      from: from || undefined,
-      to: to || undefined,
-    };
-  }
-
-  private getPreviousRange(range: DateRange): DateRange {
-    if (!range.from || !range.to) {
-      return {};
-    }
-
-    const currentFrom = new Date(`${range.from}T00:00:00`);
-    const currentTo = new Date(`${range.to}T00:00:00`);
-    const diffDays = Math.max(
-      1,
-      Math.round((currentTo.getTime() - currentFrom.getTime()) / 86400000) + 1
-    );
-
-    const previousTo = new Date(currentFrom);
-    previousTo.setDate(previousTo.getDate() - 1);
-    const previousFrom = new Date(previousTo);
-    previousFrom.setDate(previousFrom.getDate() - diffDays + 1);
-
-    return {
-      from: this.toDateInputValue(previousFrom),
-      to: this.toDateInputValue(previousTo),
-    };
-  }
-
-  private buildSyntheticPreviousSummary(
-    summary: StatsSummary,
-    previousRange: DateRange
-  ): StatsSummary {
-    const baseFactor = previousRange.from && previousRange.to ? 0.82 : 0.75;
-    const responseRate = this.clamp(
-      (summary.responseRate ?? 0) * baseFactor,
-      0,
-      1
-    );
-
-    return {
-      totalApplications: this.synthesizePreviousValue(
-        summary.totalApplications
-      ),
-      sentCount: this.synthesizePreviousValue(summary.sentCount),
-      responseRate,
-      avgResponseDays:
-        summary.avgResponseDays == null
-          ? null
-          : Math.max(
-              0.5,
-              summary.avgResponseDays *
-                (1.12 + (summary.totalApplications > 0 ? 0.08 : 0))
-            ),
-      activeCount: this.synthesizePreviousValue(summary.activeCount),
-      terminalCount: this.synthesizePreviousValue(summary.terminalCount),
-      neverViewedCount: this.synthesizePreviousValue(summary.neverViewedCount),
-      neverViewedRate: this.clamp(summary.neverViewedRate * baseFactor, 0, 1),
-      interviewedCount: this.synthesizePreviousValue(summary.interviewedCount),
-      offerCount: this.synthesizePreviousValue(summary.offerCount),
-      interviewToOfferRate:
-        summary.interviewToOfferRate == null
-          ? null
-          : this.clamp(summary.interviewToOfferRate * baseFactor, 0, 1),
-    };
-  }
-
-  private makeMetricDelta(
-    currentValue: number,
-    previousValue: number
-  ): MetricDelta {
-    const current = Number.isFinite(currentValue) ? currentValue : 0;
-    const previous = Number.isFinite(previousValue) ? previousValue : 0;
-    const delta =
-      previous === 0
-        ? current > 0
-          ? 100
-          : 0
-        : ((current - previous) / previous) * 100;
-    const deltaText = `${delta >= 0 ? '+' : ''}${Math.abs(delta).toFixed(0)}%`;
-
-    return {
-      current,
-      previous,
-      deltaText,
-      deltaPositive: delta >= 0,
-    };
-  }
-
-  private buildTrendSeries(
-    kind: 'applications' | 'responseRate' | 'interviewToOffer' | 'rejections'
-  ): TrendPoint[] {
-    const summary = this.summary();
-    const points = this.getTrendPointCount();
-    const values = Array.from({ length: points }, (_, index) => {
-      const phase = index / Math.max(points - 1, 1);
-      if (kind === 'applications') {
-        const base = summary?.totalApplications ?? 24;
-        return Math.max(
-          2,
-          Math.round(base * (0.45 + phase * 0.75 + (index % 2) * 0.08))
-        );
-      }
-
-      if (kind === 'responseRate') {
-        const base = (summary?.responseRate ?? 0.26) * 100;
-        return Math.max(
-          5,
-          Math.min(95, Number((base + (index - points / 2) * 7).toFixed(0)))
-        );
-      }
-
-      if (kind === 'interviewToOffer') {
-        const base = (summary?.interviewToOfferRate ?? 0.18) * 100;
-        return Math.max(
-          3,
-          Math.min(75, Number((base + (index - points / 2) * 6).toFixed(0)))
-        );
-      }
-
-      const base = summary?.terminalCount ?? 10;
-      return Math.max(1, Math.round(base * (0.45 + phase * 0.75)));
-    });
-
-    const maxValue = Math.max(...values, 1);
-    return values.map((value, index) => ({
-      label: this.getTrendLabel(index, points),
-      value,
-      height: Math.max(12, (value / maxValue) * 100),
-    }));
-  }
-
-  private getTrendPointCount(): number {
-    const preset = this.selectedPreset();
-    if (preset === 'custom') {
-      return 6;
-    }
-    return preset === '7' ? 5 : preset === '30' ? 6 : 7;
-  }
-
-  private getTrendLabel(index: number, total: number): string {
-    const preset = this.selectedPreset();
-    const totalDays =
-      preset === '7' ? 7 : preset === '30' ? 30 : preset === '90' ? 90 : 30;
-    const step = Math.max(1, Math.round(totalDays / total));
-    const offset = totalDays - (total - index) * step;
-    return `${Math.max(1, offset)}d`;
-  }
-
-  private synthesizePreviousValue(current: number): number {
-    if (!Number.isFinite(current) || current <= 0) {
-      return 0;
-    }
-    return Math.max(0, Math.round(current * 0.78));
-  }
-
-  private synthesizePreviousRate(currentRate: number): number {
-    return this.clamp(currentRate * 0.84, 0, 1);
-  }
-
-  private clamp(value: number, min: number, max: number): number {
-    return Math.min(Math.max(value, min), max);
-  }
-
-  private formatShortDate(value: string): string {
-    if (!value) {
-      return '—';
-    }
-    const date = new Date(`${value}T00:00:00`);
-    return date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-    });
-  }
-
-  private toDateInputValue(date: Date): string {
-    const month = `${date.getMonth() + 1}`.padStart(2, '0');
-    const day = `${date.getDate()}`.padStart(2, '0');
-    return `${date.getFullYear()}-${month}-${day}`;
   }
 }

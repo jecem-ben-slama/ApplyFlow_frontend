@@ -1,0 +1,13 @@
+<nav class="space-y-1">
+    <a *ngFor="let item of items" [routerLink]="item.path" routerLinkActive #rla="routerLinkActive"
+        [attr.aria-current]="rla.isActive ? 'page' : null" [routerLinkActiveOptions]="{ exact: !!item.exact }"
+        (click)="onNavigate()"
+        class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-xs font-medium no-underline group"
+        [ngClass]="rla.isActive
+            ? 'bg-primary/10 text-primary dark:bg-primary/15 font-semibold shadow-xs'
+            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark/50 hover:text-slate-900 dark:hover:text-slate-200'"
+        [class.justify-center]="collapsed">
+        <mat-icon class="scale-95 shrink-0 transition-transform group-hover:scale-105">{{ item.icon }}</mat-icon>
+        <span *ngIf="!collapsed" class="truncate">{{ item.label }}</span>
+    </a>
+</nav>

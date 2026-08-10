@@ -6,11 +6,13 @@ import { CvPopupComponent } from '../cv-popup/cv-popup.component';
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
 import { PaginationComponent } from '../../common/pagination/pagination.component';
 import { CvFiltersBarComponent } from '../cv-filters-bar/cv-filters-bar.component';
-import { CvTableComponent } from '../cv-table/cv-table.component';
+import { CvTableComponent, CvSortableColumn } from '../cv-table/cv-table.component';
 import { CvFeedbackComponent } from '../cv-feedback/cv-feedback.component';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
+import { ToastService } from '../../common/toast/toast.service';
+import { ToastContainerComponent } from '../../common/toast/toast-container.component';
 
 @Component({
   selector: 'app-cv-variants',
@@ -23,6 +25,7 @@ import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
     CvFiltersBarComponent,
     CvTableComponent,
     CvFeedbackComponent,
+    ToastContainerComponent,
     SkeletonComponent,
   ],
   templateUrl: './cv-variants.component.html',
@@ -37,9 +40,16 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
   sortBy = 'id';
   direction: 'asc' | 'desc' = 'asc';
 
-  isLoading = false;
+  // Only the very first load shows the full skeleton. Every later load
+  // (search, filter, sort, page change) keeps the table mounted and just
+  // dims it, so the list doesn't blink out from under the person.
+  private hasLoadedOnce = false;
+  isListLoading = false;
+  isRefetching = false;
+  isSubmitting = false;
+  isDeleting = false;
+
   errorMessage = '';
-  successMessage = '';
 
   isModalOpen = false;
   isEditing = false;
@@ -59,7 +69,10 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
-  constructor(private cvService: CvVariantsService) {}
+  constructor(
+    private cvService: CvVariantsService,
+    private toastService: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.searchSubject
@@ -77,8 +90,30 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  get hasActiveFilters(): boolean {
+    return !!this.selectedLanguage || !!this.searchQuery.trim();
+  }
+
+  get resultsLabel(): string {
+    const page = this.cvPage;
+    if (!page) return '';
+
+    const count = page.content?.length ?? 0;
+    if (count === 0) return '';
+
+    const totalPages = page.totalPages ?? 0;
+    const pageInfo =
+      totalPages > 1 ? ` · page ${this.currentPage + 1} of ${totalPages}` : '';
+
+    return `${count} result${count === 1 ? '' : 's'}${pageInfo}`;
+  }
+
   loadCvVariants(): void {
-    this.isLoading = true;
+    if (!this.hasLoadedOnce) {
+      this.isListLoading = true;
+    } else {
+      this.isRefetching = true;
+    }
     this.errorMessage = '';
 
     this.cvService
@@ -93,13 +128,16 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (page) => {
           this.cvPage = page;
-          this.isLoading = false;
+          this.hasLoadedOnce = true;
+          this.isListLoading = false;
+          this.isRefetching = false;
         },
         error: (err) => {
           this.errorMessage =
             err.error?.message ??
             'Failed to populate CV directory pipeline profiles.';
-          this.isLoading = false;
+          this.isListLoading = false;
+          this.isRefetching = false;
         },
       });
   }
@@ -115,6 +153,17 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
     this.loadCvVariants();
   }
 
+  onSortChange(column: CvSortableColumn): void {
+    if (this.sortBy === column) {
+      this.direction = this.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortBy = column;
+      this.direction = 'asc';
+    }
+    this.currentPage = 0;
+    this.loadCvVariants();
+  }
+
   onPageChange(page: number): void {
     this.currentPage = page;
     this.loadCvVariants();
@@ -124,6 +173,17 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
     this.searchQuery = '';
     this.currentPage = 0;
     this.loadCvVariants();
+  }
+
+  clearAllFilters(): void {
+    this.selectedLanguage = '';
+    this.searchQuery = '';
+    this.currentPage = 0;
+    this.loadCvVariants();
+  }
+
+  dismissError(): void {
+    this.errorMessage = '';
   }
 
   openCreateModal(): void {
@@ -150,7 +210,7 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
   }
 
   onSubmit(): void {
-    this.isLoading = true;
+    this.isSubmitting = true;
     const request$ =
       this.isEditing && this.currentFormId
         ? this.cvService.updateCvVariant(this.currentFormId, this.formModel)
@@ -158,26 +218,29 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
 
     request$.subscribe({
       next: () => {
-        this.showFeedback(
+        this.toastService.success(
           this.isEditing
-            ? 'CV Profile adjusted.'
-            : 'CV Profile cataloged successfully.'
+            ? 'CV profile adjusted.'
+            : 'CV profile cataloged successfully.'
         );
+        this.isSubmitting = false;
         this.closeModal();
         this.loadCvVariants();
       },
       error: (err) => {
-        this.errorMessage =
+        this.toastService.error(
           err.error?.message ??
-          'Transaction error on model mutation processing.';
-        this.isLoading = false;
+            'Transaction error on model mutation processing.'
+        );
+        this.isSubmitting = false;
       },
     });
   }
 
-  onDelete(id: number | undefined): void {
-    if (!id) return;
-    this.deleteTargetId = id;
+  onDelete(cv: CvVariantDto): void {
+    if (!cv.id) return;
+    this.deleteTargetId = cv.id;
+    this.deleteMessage = `Are you sure you want to permanently delete "${cv.name}"? This cannot be undone.`;
     this.showDeleteModal = true;
   }
 
@@ -185,17 +248,19 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
     const id = this.deleteTargetId;
     if (!id) return;
     this.showDeleteModal = false;
-    this.isLoading = true;
+    this.isDeleting = true;
 
     this.cvService.deleteCvVariant(id).subscribe({
       next: () => {
-        this.showFeedback('CV track sequence removed.');
+        this.toastService.success('CV track sequence removed.');
+        this.isDeleting = false;
         this.loadCvVariants();
       },
       error: (err) => {
-        this.errorMessage =
-          err.error?.message ?? 'Failed to discard record parameters.';
-        this.isLoading = false;
+        this.toastService.error(
+          err.error?.message ?? 'Failed to discard record parameters.'
+        );
+        this.isDeleting = false;
       },
     });
   }
@@ -203,10 +268,7 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
   onCancelDelete(): void {
     this.showDeleteModal = false;
     this.deleteTargetId = undefined;
-  }
-
-  private showFeedback(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => (this.successMessage = ''), 4000);
+    this.deleteMessage =
+      'Are you sure you want to delete this track profile record permanently?';
   }
 }

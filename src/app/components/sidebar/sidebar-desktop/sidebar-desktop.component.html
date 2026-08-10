@@ -1,0 +1,81 @@
+<aside
+    [class]="'hidden md:flex transition-all duration-200 ease-in-out h-screen border-r border-slate-200/80 dark:border-surface-muted bg-background-light dark:bg-background-dark flex-col justify-between sticky top-0 text-slate-700 dark:text-slate-200 overflow-hidden shadow-sm ' + (collapsed ? 'w-16' : 'w-64')">
+
+    <div class="space-y-6">
+        <!-- Logo & Collapse Button -->
+        <div class="flex items-center justify-between px-3.5 pt-4">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center font-black text-white text-base shadow-md shadow-primary/25 shrink-0">
+                    A
+                </div>
+                <span [class]="'text-sm font-bold text-slate-900 dark:text-white tracking-wide whitespace-nowrap transition-all duration-200 ' + (collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100')">
+                    ApplyFlow
+                </span>
+            </div>
+
+            <button *ngIf="!collapsed" (click)="toggleCollapse()"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-dark rounded-xl p-1.5 transition-all shrink-0"
+                aria-label="Collapse sidebar">
+                <mat-icon class="scale-90">chevron_left</mat-icon>
+            </button>
+        </div>
+
+        <div *ngIf="collapsed" class="flex justify-center px-2">
+            <button (click)="toggleCollapse()"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-dark rounded-xl p-1.5 transition-all"
+                aria-label="Expand sidebar">
+                <mat-icon class="scale-90">chevron_right</mat-icon>
+            </button>
+        </div>
+
+        <div class="px-3">
+            <app-sidebar-nav [collapsed]="collapsed"></app-sidebar-nav>
+        </div>
+    </div>
+
+    <!-- User / Settings Footer -->
+    <div class="pt-3 border-t border-slate-200/80 dark:border-surface-muted mx-3 mb-3">
+        <div [class]="'flex items-center gap-2 p-1.5 ' + (collapsed ? 'justify-center flex-col' : '')">
+
+            <img *ngIf="userProfilePic" [src]="userProfilePic" alt="Profile picture" (error)="photoError.emit()"
+                class="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-xs" />
+
+            <div *ngIf="!userProfilePic"
+                class="w-8 h-8 rounded-full bg-gradient-to-tr from-accent-light to-accent flex items-center justify-center font-bold text-white text-[10px] shrink-0 shadow-xs">
+                {{ userName.substring(0, 2) | uppercase }}
+            </div>
+
+            <span *ngIf="!collapsed"
+                class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate flex-1 leading-none">
+                {{ userName }}
+            </span>
+
+            <!-- Gear / Settings -->
+            <div class="relative">
+                <button (click)="toggleGearMenu($event)"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-dark rounded-xl p-1.5 transition-all"
+                    aria-label="Theme settings">
+                    <mat-icon class="scale-95">settings</mat-icon>
+                </button>
+
+                <div *ngIf="isGearOpen"
+                    class="absolute bottom-10 right-0 bg-surface-light dark:bg-surface-dark border border-slate-200 dark:border-surface-muted rounded-2xl shadow-xl p-2 z-50 min-w-[240px] animate-fade-in"
+                    (click)="$event.stopPropagation()">
+
+                    <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Preferences
+                    </div>
+
+                    <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
+                </div>
+            </div>
+
+            <!-- Logout -->
+            <button (click)="logout.emit()"
+                class="text-slate-400 hover:text-danger dark:hover:text-danger-textDark hover:bg-danger-bgLight dark:hover:bg-danger-bgDark/30 rounded-xl p-1.5 transition-all"
+                aria-label="Sign out">
+                <mat-icon class="scale-95">logout</mat-icon>
+            </button>
+        </div>
+    </div>
+</aside>

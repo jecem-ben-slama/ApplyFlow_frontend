@@ -1,17 +1,19 @@
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-6 shadow-sm">
+<div
+    class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-2xl p-4 md:p-6 shadow-sm space-y-5">
 
+    <!-- Filter & Search Bar Header -->
     <app-template-filter [selectedLanguage]="selectedLanguage" [totalElements]="totalElements"
         [currentCount]="templates.length" [searchTerm]="searchTerm" (filterChange)="filterChange.emit($event)"
         (searchChange)="searchChange.emit($event)">
     </app-template-filter>
 
-    <!-- TABLE VIEW -->
+    <!-- TABLE VIEW (Desktop) -->
     <div
-        class="hidden md:block overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
+        class="hidden md:block overflow-x-auto rounded-2xl border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-background shadow-sm">
         <table class="w-full text-left border-collapse min-w-[800px]">
             <thead>
                 <tr
-                    class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold uppercase text-slate-600 dark:text-slate-400 tracking-wider bg-slate-50/80 dark:bg-slate-900/40">
+                    class="border-b border-slate-100 dark:border-surface-muted text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider bg-slate-50/80 dark:bg-surface-muted/30">
                     <th class="py-4 px-5">Template Name</th>
                     <th class="py-4 px-5 w-24">Lang</th>
                     <th class="py-4 px-5 w-1/2">Email Subject</th>
@@ -19,18 +21,21 @@
                 </tr>
             </thead>
 
-            <tbody class="text-xs divide-y divide-slate-100 dark:divide-slate-800/60">
+            <tbody class="text-xs divide-y divide-slate-100 dark:divide-surface-muted/60">
                 <tr *ngFor="let tmpl of templates"
-                    class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
-                    [ngClass]="{ 'bg-indigo-500/5 dark:bg-indigo-950/10': editingId === tmpl.id }">
+                    class="hover:bg-slate-50/60 dark:hover:bg-surface-muted/30 transition-colors group"
+                    [ngClass]="{ 'bg-primary/5 dark:bg-primary/15': editingId === tmpl.id }">
 
-                    <td class="py-4 px-5 font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                    <td
+                        class="py-4 px-5 font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap flex items-center gap-2">
+                        <span class="h-2 w-2 rounded-full shrink-0"
+                            [ngClass]="editingId === tmpl.id ? 'bg-primary animate-pulse' : 'bg-slate-300 dark:bg-slate-600'"></span>
                         {{ tmpl.name }}
                     </td>
 
                     <td class="py-4 px-5 whitespace-nowrap">
                         <span
-                            class="inline-block text-[10px] font-semibold px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-800/50 dark:text-slate-300 dark:border-slate-700">
+                            class="inline-block text-[10px] font-semibold px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 dark:bg-surface-muted/50 dark:text-slate-300 dark:border-surface-muted uppercase tracking-wider">
                             {{ tmpl.language }}
                         </span>
                     </td>
@@ -41,91 +46,112 @@
                     </td>
 
                     <td class="py-4 px-5 text-right whitespace-nowrap">
-                        <div class="inline-flex items-center gap-1.5">
-                            <button (click)="edit.emit(tmpl)" title="Edit"
-                                class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60">
-                                <mat-icon class="text-sm !w-4 !h-4">edit</mat-icon>
+                        <div
+                            class="inline-flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                            <button (click)="edit.emit(tmpl)" title="Edit Template"
+                                class="text-slate-400 hover:text-primary dark:hover:text-primary-light transition-all p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-surface-muted/60 inline-flex items-center justify-center">
+                                <mat-icon class="text-base leading-none">edit</mat-icon>
                             </button>
 
-                            <button (click)="delete.emit(tmpl.id)" title="Delete"
-                                class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60">
-                                <mat-icon class="text-sm !w-4 !h-4">delete</mat-icon>
+                            <button (click)="delete.emit(tmpl.id)" title="Delete Template"
+                                class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center justify-center">
+                                <mat-icon class="text-base leading-none">delete</mat-icon>
                             </button>
                         </div>
                     </td>
-
                 </tr>
             </tbody>
         </table>
     </div>
 
-    <!-- MOBILE VIEW -->
+    <!-- MOBILE VIEW Cards -->
     <div class="block md:hidden space-y-3">
+        <div *ngFor="let tmpl of templates"
+            class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-2xl overflow-hidden shadow-sm transition-all duration-200"
+            [ngClass]="{ 'ring-2 ring-primary/40 border-primary bg-primary/5 dark:bg-primary/10': editingId === tmpl.id }">
 
-    <div *ngFor="let tmpl of templates"
-        class="bg-slate-50/30 dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800/80 rounded-xl overflow-hidden shadow-sm transition-all duration-200"
-        [ngClass]="{ 'border-indigo-500/50': editingId === tmpl.id }">
+            <!-- Clickable Header Row -->
+            <div role="button" tabindex="0" (click)="tmpl.isExpanded = !tmpl.isExpanded"
+                (keydown.enter)="tmpl.isExpanded = !tmpl.isExpanded"
+                (keydown.space)="tmpl.isExpanded = !tmpl.isExpanded"
+                class="w-full flex items-center justify-between p-4 gap-3 bg-slate-50/50 dark:bg-surface-muted/10 active:bg-slate-100 dark:active:bg-surface-muted/30 transition cursor-pointer">
 
-            <!-- HEADER -->
-            <div
-                class="flex items-center justify-between p-4 gap-3 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/50">
-
-                <div class="min-w-0 flex-1 flex flex-col gap-1">
-                    <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100 break-words">
+                <div class="min-w-0 flex-1 flex flex-col gap-1.5">
+                    <h4
+                        class="text-sm font-bold text-slate-900 dark:text-slate-100 break-words flex items-center gap-2">
+                        <span class="h-1.5 w-1.5 rounded-full shrink-0"
+                            [ngClass]="editingId === tmpl.id ? 'bg-primary animate-pulse' : 'bg-slate-300 dark:bg-slate-600'"></span>
                         {{ tmpl.name }}
                     </h4>
-
                     <span
-                        class="text-[9px] font-bold px-2.5 py-0.5 rounded-md bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 uppercase tracking-wider w-fit">
+                        class="text-[9px] font-bold px-2.5 py-0.5 rounded-md bg-slate-100 border border-slate-200 dark:bg-surface-muted dark:text-slate-300 dark:border-surface-muted uppercase tracking-wider w-fit">
                         {{ tmpl.language }}
                     </span>
                 </div>
 
-                <div class="flex items-center gap-1.5 shrink-0">
-
-                    <button (click)="edit.emit(tmpl)"
-                        class="text-slate-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
-                        <mat-icon class="!w-4 !h-4">edit</mat-icon>
-                    </button>
-
-                    <button (click)="delete.emit(tmpl.id)"
-                        class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
-                        <mat-icon class="!w-4 !h-4">delete</mat-icon>
-                    </button>
-
-                    <button (click)="tmpl.isExpanded = !tmpl.isExpanded"
-                        class="text-slate-400 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-transform duration-200"
-                        [class.rotate-180]="tmpl.isExpanded">
-                        <mat-icon class="!w-4 !h-4">expand_more</mat-icon>
-                    </button>
-
+                <div class="flex items-center gap-1.5 shrink-0 text-slate-400 py-1 px-2">
+                    <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                        {{ tmpl.isExpanded ? 'Less' : 'Details' }}
+                    </span>
+                    <mat-icon class="text-base leading-none transition-transform duration-200"
+                        [class.rotate-180]="tmpl.isExpanded">expand_more</mat-icon>
                 </div>
             </div>
 
-            <!-- EXPANDED -->
+            <!-- Expanded Details & Action Footer -->
             <div *ngIf="tmpl.isExpanded"
-                class="p-4 bg-slate-50/40 dark:bg-slate-900/30 space-y-3 border-t border-slate-100 dark:border-slate-800/30">
+                class="p-4 bg-background-light dark:bg-surface border-t border-slate-100 dark:border-surface-muted/50 space-y-4 animate-fade-in text-xs">
 
+                <!-- Subject View -->
                 <div>
                     <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                         Subject Frame
                     </span>
-
-                    <p class="text-xs text-slate-600 dark:text-slate-400 break-words leading-relaxed bg-white dark:bg-slate-950 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/40"
-                        [title]="tmpl.subjectTemplate">
+                    <p
+                        class="text-slate-700 dark:text-slate-300 break-words leading-relaxed bg-slate-50 dark:bg-surface-muted/30 p-3 rounded-xl border border-slate-200/60 dark:border-surface-muted">
                         {{ tmpl.subjectTemplate }}
                     </p>
                 </div>
 
+                <!-- Body Template View -->
+                <div>
+                    <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        Body Template Content
+                    </span>
+                    <pre
+                        class="font-sans whitespace-pre-wrap text-slate-700 dark:text-slate-300 break-words leading-relaxed bg-slate-50 dark:bg-surface-muted/30 p-3 rounded-xl border border-slate-200/60 dark:border-surface-muted max-h-60 overflow-y-auto">{{ tmpl.bodyTemplate }}</pre>
+                </div>
+
+                <!-- Action Buttons Footer -->
+                <div
+                    class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-surface-muted/40">
+                    <button type="button" (click)="edit.emit(tmpl)"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-surface-muted hover:bg-primary/10 hover:text-primary transition">
+                        <mat-icon class="text-base leading-none">edit</mat-icon>
+                        Edit Template
+                    </button>
+
+                    <button type="button" (click)="delete.emit(tmpl.id)"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition">
+                        <mat-icon class="text-base leading-none">delete</mat-icon>
+                        Delete
+                    </button>
+                </div>
             </div>
         </div>
-        
     </div>
 
     <!-- EMPTY STATE -->
     <div *ngIf="templates.length === 0 && !loading"
-        class="py-12 text-center text-slate-400 dark:text-slate-600 font-medium text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl mt-4">
-        No messaging structures configured in this user workspace segment.
+        class="py-16 px-4 text-center border border-dashed border-slate-200 dark:border-surface-muted rounded-2xl bg-slate-50/50 dark:bg-surface-muted/10">
+        <div
+            class="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 text-lg font-bold">
+            📝
+        </div>
+        <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">No messaging structures found</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+            No templates configured matching your search or filter choices in this workspace segment.
+        </p>
     </div>
 
     <!-- PAGINATION -->

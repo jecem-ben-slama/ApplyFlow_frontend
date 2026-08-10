@@ -1,9 +1,9 @@
-<div *ngIf="isModalOpen"
+<div *ngIf="isModalOpen" (click)="onBackdropClick($event)"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md transition-all duration-300">
     <div
-        class="w-full max-w-2xl rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] dark:shadow-slate-950/50 relative overflow-hidden">
+        class="w-full max-w-2xl rounded-[2.5rem] border border-slate-200/60 dark:border-surface-muted bg-surface-light dark:bg-surface p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] dark:shadow-slate-950/50 relative overflow-hidden">
 
-        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-500">
+        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary via-accent to-primary">
         </div>
 
         <div class="flex items-start justify-between gap-4 mb-8">
@@ -15,8 +15,8 @@
                     Configure locale-aware profile targets to correctly route your job applications.
                 </p>
             </div>
-            <button type="button" (click)="onCancel()"
-                class="rounded-2xl p-2.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-all">
+            <button type="button" (click)="onCancel()" [disabled]="isLoading"
+                class="rounded-2xl p-2.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 <mat-icon class="block">close</mat-icon>
             </button>
         </div>
@@ -30,10 +30,10 @@
                     </label>
                     <input type="text" [(ngModel)]="formModel.name" name="name" required maxlength="80"
                         #nameField="ngModel" placeholder="e.g. FullStack Senior Variant"
-                        class="w-full rounded-2xl border bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:bg-white dark:focus:bg-slate-900 transition-all duration-300"
-                        [ngClass]="nameField.invalid && (nameField.touched || cvForm.submitted) ? 'border-rose-400 dark:border-rose-500' : 'border-slate-200 dark:border-slate-800'" />
+                        class="w-full rounded-2xl border bg-surface-light dark:bg-background px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 shadow-sm"
+                        [ngClass]="nameField.invalid && (nameField.touched || cvForm.submitted) ? 'border-rose-400 dark:border-rose-500' : 'border-slate-200 dark:border-surface-muted'" />
                     <div *ngIf="nameField.invalid && (nameField.touched || cvForm.submitted)">
-                        <p class="text-rose-600 text-xs mt-1.5 ml-1 flex items-center gap-1">
+                        <p class="text-danger text-xs mt-1.5 ml-1 flex items-center gap-1 font-medium">
                             <mat-icon class="!text-sm !w-4 !h-4">error_outline</mat-icon>
                             Display name is required.
                         </p>
@@ -48,7 +48,7 @@
                         </label>
                         <div class="relative">
                             <select [(ngModel)]="formModel.language" name="language" required
-                                class="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:bg-white dark:focus:bg-slate-900 transition-all duration-300 appearance-none">
+                                class="w-full rounded-2xl border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-background px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 appearance-none shadow-sm">
                                 <option value="en">English (EN)</option>
                                 <option value="fr">French (FR)</option>
                             </select>
@@ -70,13 +70,13 @@
                             </label>
 
                             <button type="button" (click)="showDriveHelp = !showDriveHelp" (blur)="onDriveHelpBlur()"
-                                class="w-4 h-4 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold hover:bg-indigo-500 hover:text-white transition-colors"
+                                class="w-4 h-4 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold hover:bg-primary hover:text-white transition-colors"
                                 aria-label="How to get a Google Drive share link">
                                 ?
                             </button>
 
                             <div *ngIf="showDriveHelp"
-                                class="absolute z-10 top-6 left-0 w-72 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-xl text-xs text-slate-600 dark:text-slate-300 normal-case tracking-normal font-medium leading-relaxed">
+                                class="absolute z-10 top-6 left-0 w-72 rounded-2xl border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-surface p-4 shadow-xl text-xs text-slate-600 dark:text-slate-300 normal-case tracking-normal font-medium leading-relaxed">
                                 <p class="font-bold text-slate-800 dark:text-slate-100 mb-1.5">
                                     How to get your Drive link
                                 </p>
@@ -92,20 +92,14 @@
                         <input type="url" [(ngModel)]="formModel.fileUrl" name="fileUrl" required
                             #fileUrlField="ngModel" [pattern]="driveUrlPattern"
                             placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
-                            class="w-full rounded-2xl border bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:bg-white dark:focus:bg-slate-900 transition-all duration-300"
-                            [ngClass]="fileUrlField.invalid && (fileUrlField.touched || cvForm.submitted) ? 'border-rose-400 dark:border-rose-500' : 'border-slate-200 dark:border-slate-800'" />
+                            class="w-full rounded-2xl border bg-surface-light dark:bg-background px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300 shadow-sm"
+                            [ngClass]="fileUrlField.invalid && (fileUrlField.touched || cvForm.submitted) ? 'border-rose-400 dark:border-rose-500' : 'border-slate-200 dark:border-surface-muted'" />
 
                         <div *ngIf="fileUrlField.invalid && (fileUrlField.touched || cvForm.submitted)">
-                            <p class="text-rose-600 text-xs mt-1.5 ml-1 flex items-center gap-1">
+                            <p class="text-danger text-xs mt-1.5 ml-1 flex items-center gap-1 font-medium">
                                 <mat-icon class="!text-sm !w-4 !h-4">error_outline</mat-icon>
-                                <span *ngIf="fileUrlField.errors?.['required']">A CV link is required.</span>
-                            <span *ngIf="fileUrlField.hasError('pattern')">
-                                Invalid file URL format.
-                            </span>
-                            
-                            <span *ngIf="fileUrlField.hasError('required')">
-                                File URL is required.
-                            </span>
+                                <span *ngIf="fileUrlField.hasError('required')">File URL is required.</span>
+                                <span *ngIf="fileUrlField.hasError('pattern')">Invalid file URL format.</span>
                             </p>
                         </div>
                     </div>
@@ -113,19 +107,19 @@
             </div>
 
             <div *ngIf="errorMessage"
-                class="rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 px-4 py-3 flex items-start gap-2">
-                <mat-icon class="!text-base !w-5 !h-5 text-rose-500 mt-0.5">error_outline</mat-icon>
-                <p class="text-rose-700 dark:text-rose-400 text-sm">{{ errorMessage }}</p>
+                class="rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-danger-bgLight dark:bg-danger-bgDark px-4 py-3 flex items-start gap-2">
+                <mat-icon class="!text-base !w-5 !h-5 text-danger mt-0.5">error_outline</mat-icon>
+                <p class="text-danger-textLight dark:text-danger-textDark text-sm font-medium">{{ errorMessage }}</p>
             </div>
 
             <div
-                class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/60 mt-8">
+                class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-surface-muted mt-8">
                 <button type="button" (click)="onCancel()" [disabled]="isLoading"
-                    class="w-full sm:w-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all shadow-sm disabled:opacity-50">
+                    class="w-full sm:w-auto rounded-2xl border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-surface px-6 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all shadow-sm disabled:opacity-50">
                     Cancel
                 </button>
                 <button type="submit" [disabled]="isLoading"
-                    class="w-full sm:w-auto rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed px-6 py-3 text-sm font-semibold text-white transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98]">
+                    class="w-full sm:w-auto rounded-2xl bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 text-sm font-semibold text-white transition-all shadow-lg shadow-primary/10 active:scale-[0.98]">
                     <span *ngIf="isLoading" class="flex items-center justify-center gap-2">
                         <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, Subject } from 'rxjs';
-import { debounceTime,  } from 'rxjs/operators';
+import { debounceTime } from 'rxjs/operators';
 
 import { ApplicationsService } from '../../../services/applications.service';
 import { SkillsService } from '../../../services/skills.service';
@@ -30,6 +30,19 @@ import { MatIconModule } from '@angular/material/icon';
 import { CategoryService } from 'src/app/services/category.service';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 
+type SortableColumn = 'companyName' | 'jobTitle' | 'dateApplied' | 'status';
+
+interface Toast {
+  id: number;
+  type: 'success' | 'error';
+  message: string;
+}
+
+interface StatusOption {
+  value: string;
+  label: string;
+}
+
 @Component({
   selector: 'app-applications',
   standalone: true,
@@ -51,32 +64,75 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   appPage?: Page<ApplicationResponseDto>;
   currentPage = 0;
   pageSize = 10;
-  sortBy = 'dateApplied';
+  sortBy: SortableColumn = 'dateApplied';
   direction: 'asc' | 'desc' = 'desc';
   appTotalPages = 0;
 
   filterStatus = '';
   filterKeyword = '';
 
+  /** Controls the collapsible filter panel on mobile. Always visible on desktop. */
+  filtersOpen = false;
+
+  /** Used to render the mobile status pill chips in the filter bar. */
+  statusOptions: StatusOption[] = [
+    { value: '', label: 'All' },
+    { value: 'COMPILED', label: 'Compiled' },
+    { value: 'SENT', label: 'Sent' },
+    { value: 'INTERVIEWING', label: 'Interviewing' },
+    { value: 'REJECTED', label: 'Rejected' },
+  ];
+
   availableSkills: Skill[] = [];
   availableCategories: Category[] = [];
   availableCvVariants: CvVariantDto[] = [];
   availableTemplates: TemplateDto[] = [];
 
+  /** True only for full-page loads (initial load, page change, filter change). */
   isLoading = false;
+  /** True while any table refresh is happening — used for lighter, non-skeleton loading UI. */
+  isRefreshing = false;
   isSendingEmail = false;
   isModalOpen = false;
   errorMessage = '';
-  successMessage = '';
+
+  /** Row ids currently mid status-update, for the per-row spinner. */
+  pendingStatusIds = new Set<number>();
+  /** Row ids that hit a send error, keyed to the inline error text shown in that panel. */
+  sendErrors = new Map<number, string>();
+
+  toasts: Toast[] = [];
+  private toastCounter = 0;
 
   showDeleteModal = false;
-  deleteTargetId?: number;
+  deleteTargetIds: number[] = [];
   deleteMessage = 'Permanently purge this compiled tracking profile record?';
 
   expandedAppId: number | null = null;
 
   private searchSubject = new Subject<void>();
   private readonly DEBOUNCE_MS = 400;
+
+  /** Palette used to derive a consistent avatar color per company name on mobile cards. */
+  private readonly avatarPalette = [
+    'bg-indigo-500',
+    'bg-emerald-500',
+    'bg-amber-500',
+    'bg-rose-500',
+    'bg-sky-500',
+    'bg-violet-500',
+  ];
+
+  /** Color classes for the mobile status pill/select, keyed by status value. */
+  private readonly statusClassMap: Record<string, string> = {
+    COMPILED:
+      'bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+    SENT: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900',
+    INTERVIEWING:
+      'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
+    REJECTED:
+      'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900',
+  };
 
   constructor(
     private appService: ApplicationsService,
@@ -101,6 +157,17 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.searchSubject.complete();
   }
 
+  // ── Filters ────────────────────────────────────────────────────────────────
+
+  get hasActiveFilters(): boolean {
+    return !!this.filterStatus || !!this.filterKeyword.trim();
+  }
+
+  /** Number of active filters, shown as a badge on the mobile filter toggle. */
+  get activeFilterCount(): number {
+    return (this.filterKeyword.trim() ? 1 : 0) + (this.filterStatus ? 1 : 0);
+  }
+
   onFilterInput(): void {
     // If the search box is cleared, reload immediately
     if (!this.filterKeyword.trim()) {
@@ -113,6 +180,34 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     // Otherwise debounce while typing
     this.searchSubject.next();
   }
+
+  clearFilters(): void {
+    this.filterKeyword = '';
+    this.filterStatus = '';
+    this.currentPage = 0;
+    this.expandedAppId = null;
+    this.loadApplicationsPage();
+  }
+
+  // ── Sorting ────────────────────────────────────────────────────────────────
+
+  onSortChange(column: SortableColumn): void {
+    if (this.sortBy === column) {
+      this.direction = this.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortBy = column;
+      this.direction = 'asc';
+    }
+    this.currentPage = 0;
+    this.loadApplicationsPage();
+  }
+
+  sortIndicator(column: SortableColumn): string {
+    if (this.sortBy !== column) return '';
+    return this.direction === 'asc' ? '↑' : '↓';
+  }
+
+  // ── Data loading ───────────────────────────────────────────────────────────
 
   loadInitialWorkspaceData(): void {
     this.isLoading = true;
@@ -152,7 +247,15 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   loadApplicationsPage(): void {
-    this.isLoading = true;
+    // Only show the big skeleton on the very first load for a given view;
+    // subsequent refreshes (filter, sort, page) use a lighter inline indicator
+    // so the filter bar and layout don't jump around.
+    const isFirstLoad = !this.appPage;
+    if (isFirstLoad) {
+      this.isLoading = true;
+    } else {
+      this.isRefreshing = true;
+    }
 
     this.appService
       .getAllApplications(
@@ -170,11 +273,13 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
           this.currentPage = meta.number;
           this.appTotalPages = meta.totalPages;
           this.isLoading = false;
+          this.isRefreshing = false;
         },
         error: (err) => {
           this.errorMessage =
             err.error?.message || 'Could not fetch applications.';
           this.isLoading = false;
+          this.isRefreshing = false;
         },
       });
   }
@@ -193,17 +298,34 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.expandedAppId = this.expandedAppId === appId ? null : appId;
   }
 
+  /**
+   * Optimistically updates the row's status in place instead of reloading the
+   * whole page, so a quick status change doesn't cause a layout flicker or
+   * lose scroll position. Rolls back and shows a toast if the request fails.
+   */
   onUpdateStatus(id: number, status: string): void {
+    const app = this.appPage?.content.find((a) => a.id === id);
+    if (!app) return;
+
+    const previousStatus = app.status;
+    app.status = status;
+    this.pendingStatusIds.add(id);
+
     this.appService
       .patchApplicationStatusOrNotes(id, status, undefined)
       .subscribe({
         next: () => {
-          this.showFeedback(`Status updated to ${status}.`);
-          this.loadApplicationsPage();
+          this.pendingStatusIds.delete(id);
+          this.pushToast('success', `Status updated to ${status}.`);
         },
-        error: (err) =>
-          (this.errorMessage =
-            err.error?.message || 'Could not update status.'),
+        error: (err) => {
+          app.status = previousStatus;
+          this.pendingStatusIds.delete(id);
+          this.pushToast(
+            'error',
+            err.error?.message || 'Could not update status.'
+          );
+        },
       });
   }
 
@@ -214,19 +336,24 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         next: () => {
           const app = this.appPage?.content.find((a) => a.id === appId);
           if (app) app.notes = notes;
+          this.pushToast('success', 'Notes saved.');
         },
         error: (err) =>
-          (this.errorMessage = err.error?.message || 'Could not save notes.'),
+          this.pushToast(
+            'error',
+            err.error?.message || 'Could not save notes.'
+          ),
       });
   }
+
   onSendEmail(app: ApplicationResponseDto): void {
     if (!app.recipientEmail) {
-      this.errorMessage = 'Cannot send: recipient email is missing.';
+      this.sendErrors.set(app.id, 'Cannot send: recipient email is missing.');
       return;
     }
 
     this.isSendingEmail = true;
-    this.errorMessage = '';
+    this.sendErrors.delete(app.id);
 
     this.emailService
       .sendEmail({
@@ -238,55 +365,69 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (msg) => {
-          this.showFeedback(msg || 'Email sent!');
+          this.pushToast('success', msg || 'Email sent!');
           this.onUpdateStatus(app.id, 'SENT');
           this.isSendingEmail = false;
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Email delivery failed.';
+          const message = err.error?.message || 'Email delivery failed.';
+          this.sendErrors.set(app.id, message);
           this.isSendingEmail = false;
         },
       });
   }
 
+  sendErrorFor(appId: number): string {
+    return this.sendErrors.get(appId) || '';
+  }
+
   onCopyBody(text: string): void {
     navigator.clipboard
       .writeText(text)
-      .then(() => this.showFeedback('Copied to clipboard.'));
+      .then(() => this.pushToast('success', 'Copied to clipboard.'))
+      .catch(() => this.pushToast('error', 'Could not copy to clipboard.'));
   }
 
   // ── Delete ─────────────────────────────────────────────────────────────────
 
   onDelete(id: number): void {
-    this.deleteTargetId = id;
+    this.deleteTargetIds = [id];
+    this.deleteMessage =
+      'Permanently purge this compiled tracking profile record?';
     this.showDeleteModal = true;
   }
 
   onConfirmDelete(): void {
-    const id = this.deleteTargetId;
-
-    if (!id) return;
+    const ids = this.deleteTargetIds;
+    if (!ids.length) return;
 
     this.showDeleteModal = false;
 
-    this.appService.deleteApplication(id).subscribe({
-      next: () => {
-        this.showFeedback('Application deleted.');
+    const requests = ids.map((id) => this.appService.deleteApplication(id));
 
-        if (this.expandedAppId === id) {
+    forkJoin(requests).subscribe({
+      next: () => {
+        this.pushToast(
+          'success',
+          ids.length > 1
+            ? `${ids.length} applications deleted.`
+            : 'Application deleted.'
+        );
+
+        if (this.expandedAppId !== null && ids.includes(this.expandedAppId)) {
           this.expandedAppId = null;
         }
 
         this.loadApplicationsPage();
       },
       error: (err) =>
-        (this.errorMessage = err.error?.message || 'Could not delete.'),
+        this.pushToast('error', err.error?.message || 'Could not delete.'),
     });
   }
 
   onCancelDelete(): void {
     this.showDeleteModal = false;
-    this.deleteTargetId = undefined;
+    this.deleteTargetIds = [];
   }
 
   // ── Modal ──────────────────────────────────────────────────────────────────
@@ -308,7 +449,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
     this.appService.createApplication(payload).subscribe({
       next: (created) => {
-        this.showFeedback('Application created successfully!');
+        this.pushToast('success', 'Application created successfully!');
         this.isModalOpen = false;
         this.expandedAppId = created.id;
         this.loadApplicationsPage();
@@ -323,10 +464,45 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // ── Toasts ─────────────────────────────────────────────────────────────────
 
-  private showFeedback(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => (this.successMessage = ''), 4000);
+  private pushToast(type: Toast['type'], message: string): void {
+    const id = ++this.toastCounter;
+    this.toasts.push({ id, type, message });
+    setTimeout(() => this.dismissToast(id), 4000);
+  }
+
+  dismissToast(id: number): void {
+    this.toasts = this.toasts.filter((t) => t.id !== id);
+  }
+
+  // ── Mobile card helpers ──────────────────────────────────────────────────
+
+  /** Status pill/select color classes for the mobile card view. */
+  getStatusClasses(status: string): string {
+    return this.statusClassMap[status] ?? this.statusClassMap['COMPILED'];
+  }
+
+  /** Deterministic avatar background color derived from the company name. */
+  avatarColor(name: string): string {
+    const hash = (name || '')
+      .split('')
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return this.avatarPalette[hash % this.avatarPalette.length];
+  }
+
+  /** Human-friendly relative date used on mobile cards (e.g. "3d ago"). */
+  timeAgo(date: string | Date | null | undefined): string {
+    if (!date) return 'N/A';
+
+    const diffMs = Date.now() - new Date(date).getTime();
+    const days = Math.floor(diffMs / 86400000);
+
+    if (days <= 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 30) return `${days}d ago`;
+
+    const months = Math.floor(days / 30);
+    return months < 12 ? `${months}mo ago` : `${Math.floor(months / 12)}y ago`;
   }
 }

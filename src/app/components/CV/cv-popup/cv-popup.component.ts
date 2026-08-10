@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -34,6 +34,24 @@ export class CvPopupComponent implements OnInit {
   readonly driveUrlPattern = '^https:\\/\\/(drive|docs)\\.google\\.com\\/.+$';
 
   ngOnInit(): void {}
+
+  // Esc closes the modal, but never while a save is in flight — don't let the
+  // person lose an in-progress submission by accident.
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.isModalOpen && !this.isLoading) {
+      this.onCancel();
+    }
+  }
+
+  // Clicking the dimmed backdrop closes the modal; clicking anything inside
+  // the card itself won't bubble a matching target/currentTarget pair here.
+  onBackdropClick(event: MouseEvent): void {
+    if (this.isLoading) return;
+    if (event.target === event.currentTarget) {
+      this.onCancel();
+    }
+  }
 
   onCancel(): void {
     this.showDriveHelp = false;

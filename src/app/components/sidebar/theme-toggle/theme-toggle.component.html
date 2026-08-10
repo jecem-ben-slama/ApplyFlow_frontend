@@ -1,0 +1,16 @@
+<button type="button" (click)="toggle.emit()"
+    class="flex items-center justify-between w-full px-3.5 py-3 text-xs font-medium text-slate-700 dark:text-slate-200 bg-background-light dark:bg-surface-muted/30 hover:bg-slate-100 dark:hover:bg-surface-muted/60 rounded-xl transition-all cursor-pointer group">
+
+    <div class="flex items-center gap-3">
+        <mat-icon class="scale-95 text-slate-400 dark:text-slate-500 group-hover:text-primary transition-colors">
+            {{ isDark ? 'light_mode' : 'dark_mode' }}
+        </mat-icon>
+        <span>{{ isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode' }}</span>
+    </div>
+
+    <span class="relative inline-flex items-center w-9 h-5 rounded-full transition-colors duration-200 ease-in-out"
+        [class.bg-primary]="isDark" [class.bg-slate-300]="!isDark">
+        <span class="absolute left-0.5 top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out"
+            [class.translate-x-4]="isDark"></span>
+    </span>
+</button>

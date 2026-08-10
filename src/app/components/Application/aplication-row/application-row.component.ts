@@ -6,13 +6,16 @@ import { ApplicationResponseDto } from '../../../models';
 @Component({
   selector: '[app-application-row]',
   standalone: true,
-  imports: [CommonModule, FormsModule, ],
+  imports: [CommonModule, FormsModule],
   templateUrl: './application-row.component.html',
 })
 export class ApplicationRowComponent {
   @Input() app!: ApplicationResponseDto;
   @Input() isExpanded = false;
   @Input() isSendingEmail = false;
+  @Input() isSelected = false;
+  /** True while a status update for this row is in flight (optimistic-update spinner). */
+  @Input() isStatusPending = false;
 
   @Output() togglePanel = new EventEmitter<number>();
   @Output() statusChange = new EventEmitter<{ id: number; status: string }>();
@@ -20,4 +23,5 @@ export class ApplicationRowComponent {
   @Output() sendEmail = new EventEmitter<ApplicationResponseDto>();
   @Output() copyBody = new EventEmitter<string>();
   @Output() notesSaved = new EventEmitter<{ appId: number; notes: string }>();
+  @Output() selectToggle = new EventEmitter<number>();
 }

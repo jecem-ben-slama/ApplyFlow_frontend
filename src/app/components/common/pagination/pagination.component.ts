@@ -33,7 +33,7 @@ import { CommonModule } from '@angular/common';
               [disabled]="loading"
               [ngClass]="
                 p === currentPage
-                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  ? 'bg-primary text-white border-primary'
                   : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800'
               "
               class="w-7 h-7 rounded-md border text-[11px] font-mono font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"

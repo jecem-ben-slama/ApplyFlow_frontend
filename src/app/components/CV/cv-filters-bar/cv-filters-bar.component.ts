@@ -11,9 +11,12 @@ import { MatIconModule } from '@angular/material/icon';
 export class CvFiltersBarComponent {
   @Input() selectedLanguage = '';
   @Input() searchQuery = '';
+  @Input() resultsLabel = '';
+  @Input() hasActiveFilters = false;
 
   @Output() languageChange = new EventEmitter<string>();
   @Output() searchChange = new EventEmitter<string>();
   @Output() clearSearch = new EventEmitter<void>();
   @Output() addClick = new EventEmitter<void>();
+  @Output() clearAllFilters = new EventEmitter<void>();
 }

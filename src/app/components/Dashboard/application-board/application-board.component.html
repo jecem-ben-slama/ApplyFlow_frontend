@@ -1,27 +1,49 @@
-<p *ngIf="loading" class="text-sm text-zinc-400 italic text-center py-8">Loading board…</p>
+<div *ngIf="loading" class="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500">
+    <div class="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent mb-2"></div>
+    <p class="text-sm italic">Loading board…</p>
+</div>
 
-<div *ngIf="!loading" class="flex gap-3 overflow-x-auto pb-2">
+<div *ngIf="!loading" class="flex gap-3.5 overflow-x-auto pb-4 pt-1 px-1 snap-x snap-mandatory scrollbar-thin">
     <div *ngFor="let status of statusOrder"
-        class="min-w-[190px] bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 flex-shrink-0">
-        <div class="flex items-center gap-2 mb-3">
-            <span class="h-1.5 w-1.5 rounded-full" [class]="colorClass(status)"></span>
-            <span class="text-xs font-semibold text-zinc-700 dark:text-zinc-200 flex-1">{{ label(status) }}</span>
-            <span class="font-mono tabular-nums text-[11px] text-zinc-400">{{ column(status).length }}</span>
+        class="min-w-[85vw] sm:min-w-[260px] md:min-w-[280px] bg-surface-light dark:bg-surface rounded-2xl border border-slate-200 dark:border-surface-muted p-4 flex-shrink-0 shadow-sm snap-start flex flex-col">
+
+        <!-- Column Header -->
+        <div class="flex items-center gap-2 mb-3.5 px-1">
+            <span class="h-2 w-2 rounded-full shrink-0" [class]="colorClass(status)"></span>
+            <span
+                class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 dark:text-slate-200 flex-1 truncate">{{
+                label(status) }}</span>
+            <span
+                class="rounded-full bg-slate-100 dark:bg-surface-muted px-2 py-0.5 font-mono tabular-nums text-[10px] font-medium text-slate-500 dark:text-slate-400 shrink-0">
+                {{ column(status).length }}
+            </span>
         </div>
-        <div class="space-y-2">
+
+        <!-- Column Cards Container -->
+        <div class="space-y-2.5 flex-1">
             <div *ngFor="let app of columnCapped(status); trackBy: trackByApp"
-                class="relative bg-zinc-50 dark:bg-zinc-800/60 rounded-md pl-3 pr-2.5 py-2 border border-zinc-100 dark:border-zinc-800 overflow-hidden">
-                <span class="absolute left-0 top-0 bottom-0 w-0.5" [class]="colorClass(status)"></span>
-                <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{{ app.companyName || 'Unknown
-                    company' }}</p>
-                <p class="text-xs text-zinc-500 dark:text-zinc-400 truncate">{{ app.jobTitle || 'Unknown role' }}</p>
+                class="relative bg-background-light dark:bg-surface-muted/30 rounded-xl pl-3.5 pr-3 py-3 border border-slate-100 dark:border-surface-muted/60 overflow-hidden transition-all hover:border-primary/40 dark:hover:border-primary/50 active:scale-[0.99] cursor-pointer shadow-2xs">
+
+                <span class="absolute left-0 top-0 bottom-0 w-1" [class]="colorClass(status)"></span>
+
+                <p class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+                    {{ app.companyName || 'Unknown company' }}
+                </p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                    {{ app.jobTitle || 'Unknown role' }}
+                </p>
             </div>
-            <p *ngIf="column(status).length > cap" class="text-[11px] text-zinc-400 text-center pt-1">
-                +{{ column(status).length - cap }} more
+
+            <!-- More Counter -->
+            <p *ngIf="column(status).length > cap"
+                class="text-[11px] font-semibold text-primary dark:text-primary-light text-center py-2 bg-primary/5 dark:bg-primary/10 rounded-xl">
+                +{{ column(status).length - cap }} more items
             </p>
+
+            <!-- Empty State -->
             <p *ngIf="!column(status).length"
-                class="text-[11px] text-zinc-300 dark:text-zinc-600 italic text-center py-4">
-                Empty
+                class="text-xs text-slate-400 dark:text-slate-500 italic text-center py-8 border border-dashed border-slate-200 dark:border-surface-muted/60 rounded-xl">
+                No items in this stage
             </p>
         </div>
     </div>

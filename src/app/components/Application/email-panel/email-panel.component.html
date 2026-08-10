@@ -1,45 +1,57 @@
 <div
-  class="mt-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col md:grid md:grid-cols-[1fr_280px]">
+  class="mt-3 rounded-2xl border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-surface-dark shadow-sm overflow-hidden flex flex-col md:grid md:grid-cols-[1fr_280px]">
 
-  <div class="flex flex-col border-b md:border-b-0 md:border-r border-gray-200 dark:border-slate-700">
+  <div class="flex flex-col border-b md:border-b-0 md:border-r border-slate-200 dark:border-surface-muted">
     <div
-      class="bg-gray-50 dark:bg-slate-800/60 border-b border-gray-200 dark:border-slate-700 px-4 sm:px-5 py-4 space-y-2">
-      <p class="text-sm sm:text-base font-semibold text-gray-900 dark:text-slate-100 leading-snug">{{
+      class="bg-background-light dark:bg-surface-muted/30 border-b border-slate-200 dark:border-surface-muted px-4 sm:px-5 py-4 space-y-2">
+      <p class="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 leading-snug">{{
         app.generatedSubject }}</p>
-      <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-500 dark:text-slate-400 overflow-hidden">
+      <div class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 overflow-hidden">
         <span
-          class="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-[10px] sm:text-xs font-semibold shrink-0">
+          class="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-white text-[10px] sm:text-xs font-semibold shrink-0">
           {{ (app.companyName || 'AA').slice(0, 2).toUpperCase() }}
         </span>
         <span class="truncate">
-          <span class="font-medium text-gray-800 dark:text-slate-200">{{ app.companyName || 'Company' }}</span>
+          <span class="font-medium text-slate-800 dark:text-slate-200">{{ app.companyName || 'Company' }}</span>
           &lt;{{ app.recipientEmail || 'N/A' }}&gt;
         </span>
       </div>
     </div>
 
     <div
-      class="px-4 sm:px-5 py-4 text-xs sm:text-sm text-gray-800 dark:text-slate-300 whitespace-pre-wrap leading-relaxed flex-1 overflow-y-auto max-h-[350px] md:max-h-none">
+      class="px-4 sm:px-5 py-4 text-xs sm:text-sm text-slate-800 dark:text-slate-300 whitespace-pre-wrap leading-relaxed flex-1 overflow-y-auto max-h-[350px] md:max-h-none">
       {{ app.generatedBody }}
     </div>
 
-    <div class="border-t border-gray-100 dark:border-slate-700/60 px-4 sm:px-5 py-3 flex gap-2 flex-wrap">
-      <button
-        class="flex-1 sm:flex-none justify-center text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-200 font-medium text-[11px] sm:text-xs bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-950 px-3 py-2 rounded-md transition flex items-center gap-1.5 disabled:opacity-50"
-        [disabled]="isSending || !app.recipientEmail" (click)="sendEmail.emit(app)">
+    <div *ngIf="sendError" role="alert"
+      class="mx-4 sm:mx-5 mb-3 px-3 py-2 rounded-xl bg-danger-bgLight dark:bg-danger-bgDark border border-rose-200 dark:border-rose-900 text-danger-textLight dark:text-danger-textDark text-[11px]">
+      {{ sendError }}
+    </div>
+
+    <div class="border-t border-slate-100 dark:border-surface-muted/60 px-4 sm:px-5 py-3 flex gap-2 flex-wrap">
+      <button type="button"
+        class="flex-1 sm:flex-none justify-center font-medium text-[11px] sm:text-xs px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+        [ngClass]="confirmingSend
+          ? 'text-warning-textLight dark:text-warning-textDark bg-amber-100 dark:bg-amber-950/50 hover:bg-amber-200 dark:hover:bg-amber-950'
+          : 'text-primary dark:text-primary-light bg-primary/10 dark:bg-indigo-950/40 hover:bg-primary/20 dark:hover:bg-indigo-950'"
+        [disabled]="isSending || !app.recipientEmail"
+        [attr.title]="!app.recipientEmail ? 'No recipient email on file' : null" (click)="onSendClick()">
         <span *ngIf="isSending"
-          class="inline-block animate-spin rounded-full h-3 w-3 border-2 border-blue-600 dark:border-blue-400 border-t-transparent"></span>
-        {{ isSending ? 'Dispatching...' : 'Send Now' }}
+          class="inline-block animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent"></span>
+        {{ isSending ? 'Dispatching…' : (confirmingSend ? 'Confirm send?' : 'Send Now') }}
       </button>
-      <button
-        class="flex-1 sm:flex-none justify-center text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-slate-100 font-medium text-[11px] sm:text-xs bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 px-3 py-2 rounded-md transition"
-        (click)="copyBody.emit(app.generatedBody)">
-        Copy
+      <button type="button"
+        class="flex-1 sm:flex-none justify-center font-medium text-[11px] sm:text-xs px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5"
+        [ngClass]="copied
+          ? 'text-success-textLight dark:text-success-textDark bg-success-bgLight dark:bg-success-bgDark'
+          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 bg-background-light dark:bg-surface-muted hover:bg-slate-200 dark:hover:bg-surface-muted/80'"
+        (click)="onCopyClick()">
+        {{ copied ? '✓ Copied' : 'Copy' }}
       </button>
     </div>
   </div>
 
-  <div class="bg-gray-50/50 dark:bg-slate-800/30 md:bg-transparent md:dark:bg-transparent">
+  <div class="bg-background-light/50 dark:bg-surface-muted/20 md:bg-transparent md:dark:bg-transparent">
     <app-notes-panel [app]="app" (notesSaved)="notesSaved.emit($event)">
     </app-notes-panel>
   </div>
