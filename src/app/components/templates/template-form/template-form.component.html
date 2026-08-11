@@ -223,29 +223,30 @@
                 </div>
             </div>
 
-            <div
-                class="flex flex-col sm:flex-row justify-end items-center gap-3 pt-2 border-t border-slate-200 dark:border-surface-muted">
-                <button type="button" *ngIf="isEditing" (click)="cancel.emit()" [disabled]="loading"
-                    class="border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-background hover:bg-slate-100 dark:hover:bg-surface-muted text-slate-700 dark:text-slate-200 text-xs font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
-                    Cancel
-                </button>
-                <button type="submit" [disabled]="loading || (templateForm.submitted && templateForm.invalid)"
-                    [attr.aria-busy]="loading"
-                    class="bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition-all w-full sm:w-auto shadow-md shadow-primary/25 inline-flex items-center justify-center gap-2 min-w-[140px]">
-                    <svg *ngIf="loading" class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                        viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                        </circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
-                        </path>
-                    </svg>
-                    <span>
-                        {{ loading
-                        ? (isEditing ? 'Updating…' : 'Saving…')
-                        : (isEditing ? 'Update Template' : 'Save Template') }}
-                    </span>
-                </button>
-            </div>
+        <div
+            class="flex flex-col sm:flex-row justify-end items-center gap-3 pt-2 border-t border-slate-200 dark:border-surface-muted">
+            <!-- Removed *ngIf="isEditing" so Cancel shows for both Create and Edit states -->
+            <button type="button" (click)="cancel.emit()" [disabled]="loading"
+                class="border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-background hover:bg-slate-100 dark:hover:bg-surface-muted text-slate-700 dark:text-slate-200 text-xs font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
+                Cancel
+            </button>
+            <button type="submit" [disabled]="loading || (templateForm.submitted && templateForm.invalid)"
+                [attr.aria-busy]="loading"
+                class="bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition-all w-full sm:w-auto shadow-md shadow-primary/25 inline-flex items-center justify-center gap-2 min-w-[140px]">
+                <svg *ngIf="loading" class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                    </circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                    </path>
+                </svg>
+                <span>
+                    {{ loading
+                    ? (isEditing ? 'Updating…' : 'Saving…')
+                    : (isEditing ? 'Update Template' : 'Save Template') }}
+                </span>
+            </button>
+        </div>
         </form>
     </div>
 </div>

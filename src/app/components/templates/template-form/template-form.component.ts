@@ -100,6 +100,7 @@ export class TemplateFormComponent {
     if (form.invalid || this.loading) {
       return;
     }
+    this.isFormVisible = false;
     this.formSubmit.emit(this.templateData);
   }
 

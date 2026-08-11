@@ -1,6 +1,6 @@
 <div
     class="p-4 sm:p-6 md:p-8 space-y-6 text-slate-800 dark:text-slate-100 max-w-full mx-auto w-full transition-colors duration-200">
-
+    <app-toast-container></app-toast-container>
     <!-- ─── HEADER ROW ─── -->
     <div class="border-b border-slate-200 dark:border-surface-muted pb-4">
         <h1 class="text-xl md:text-2xl font-bold tracking-tight
@@ -26,7 +26,6 @@
         <ng-container *ngIf="loading && (!templates || templates.length === 0); else loadedContent">
             <div
                 class="bg-surface-light dark:bg-surface-dark border border-slate-200 dark:border-surface-muted rounded-2xl p-6 shadow-sm space-y-4 animate-fade-in">
-                <!-- Smart Skeleton fallback matching list view style -->
                 <app-skeleton type="list" [itemsCount]="5"></app-skeleton>
             </div>
         </ng-container>
@@ -37,7 +36,8 @@
                 [totalPages]="totalPages" [loading]="loading" [selectedLanguage]="selectedLanguage"
                 [searchTerm]="searchTerm" [editingId]="editingTemplateId"
                 (filterChange)="onLanguageFilterChange($event)" (searchChange)="updateSearchTerm($event)"
-                (pageChange)="onPageChange($event)" (edit)="onEditClick($event)" (delete)="onDeleteTemplate($event)">
+                (pageChange)="onPageChange($event)" (edit)="onEditClick($event)" (delete)="onDeleteTemplate($event)"
+                (clearFilters)="onClearFilters()" (createFirst)="scrollToForm()">
             </app-template-list>
         </ng-template>
 

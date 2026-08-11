@@ -33,4 +33,17 @@ export class TemplateListComponent {
   @Output() pageChange = new EventEmitter<number>();
   @Output() edit = new EventEmitter<TemplateComponent>();
   @Output() delete = new EventEmitter<number | undefined>();
+  @Output() clearFilters = new EventEmitter<void>();
+  @Output() createFirst = new EventEmitter<void>();
+
+  trackByTemplateId(
+    index: number,
+    tmpl: TemplateComponent
+  ): number | undefined {
+    return tmpl.id;
+  }
+
+  toggleExpand(tmpl: TemplateComponent): void {
+    tmpl.isExpanded = !tmpl.isExpanded;
+  }
 }

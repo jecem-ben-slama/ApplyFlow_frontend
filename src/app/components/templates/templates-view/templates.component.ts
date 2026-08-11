@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { trigger, style, transition, animate } from '@angular/animations';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { getPageMeta, Page, TemplateDto } from 'src/app/models';
 import { TemplateService } from 'src/app/services/template.service';
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
@@ -10,6 +12,8 @@ import {
   TemplateData,
 } from '../template-form/template-form.component';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
+import { ToastService } from '../../common/toast/toast.service';
+import { ToastContainerComponent } from '../../common/toast/toast-container.component';
 
 export interface TemplateComponent extends TemplateDto {
   isExpanded?: boolean;
@@ -24,6 +28,7 @@ export interface TemplateComponent extends TemplateDto {
     TemplateListComponent,
     TemplateFormComponent,
     SkeletonComponent,
+    ToastContainerComponent,
   ],
   templateUrl: './templates.component.html',
   animations: [
@@ -45,7 +50,7 @@ export interface TemplateComponent extends TemplateDto {
     ]),
   ],
 })
-export class TemplatesComponent implements OnInit {
+export class TemplatesComponent implements OnInit, OnDestroy {
   templates: TemplateComponent[] = [];
   loading = false;
   errorMessage = '';
@@ -61,7 +66,10 @@ export class TemplatesComponent implements OnInit {
   totalElements = 0;
   selectedLanguage: string | undefined = undefined;
   searchTerm = '';
-  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  // RxJS Search Stream to prevent erratic layout flickering & double-firing
+  private searchSubject = new Subject<string>();
+  private searchSubscription!: Subscription;
 
   newTemplate: TemplateData = {
     name: '',
@@ -74,11 +82,30 @@ export class TemplatesComponent implements OnInit {
   deleteTargetId?: number;
   deleteMessage = 'Are you sure you want to drop this layout parsing template?';
 
-  constructor(private templateService: TemplateService) {}
+  constructor(
+    private templateService: TemplateService,
+    private toastService: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.adjustFormVisibilityForViewport();
+
+    // Setup stable search stream with RxJS debounce
+    this.searchSubscription = this.searchSubject
+      .pipe(debounceTime(350), distinctUntilChanged())
+      .subscribe((term) => {
+        this.searchTerm = term;
+        this.currentPage = 0;
+        this.loadTemplates(true); // Pass true for background loading to prevent UI flickering / focus loss
+      });
+
     this.loadTemplates();
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchSubscription) {
+      this.searchSubscription.unsubscribe();
+    }
   }
 
   adjustFormVisibilityForViewport(): void {
@@ -87,8 +114,11 @@ export class TemplatesComponent implements OnInit {
     }
   }
 
-  loadTemplates(): void {
-    this.loading = true;
+  loadTemplates(isBackground: boolean = false): void {
+    if (!isBackground) {
+      this.loading = true;
+    }
+
     this.templateService
       .getAllTemplates(
         this.currentPage,
@@ -113,6 +143,9 @@ export class TemplatesComponent implements OnInit {
         error: (err) => {
           console.error('Error fetching workspace templates profile:', err);
           this.loading = false;
+          this.toastService.error(
+            'Failed to load templates. Please try again.'
+          );
         },
       });
   }
@@ -121,21 +154,27 @@ export class TemplatesComponent implements OnInit {
     this.isFormVisible = !this.isFormVisible;
   }
 
-  updateSearchTerm(term: string): void {
-    this.searchTerm = term;
-    this.onSearchChange();
+  scrollToForm(): void {
+    this.isFormVisible = true;
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
-  onSearchChange(): void {
-    if (this.searchDebounce) clearTimeout(this.searchDebounce);
-    this.searchDebounce = setTimeout(() => {
-      this.currentPage = 0;
-      this.loadTemplates();
-    }, 350);
+  updateSearchTerm(term: string): void {
+    this.searchTerm = term; // Update value instantly for UI responsiveness
+    this.searchSubject.next(term); // Push into debounced stream
   }
 
   onLanguageFilterChange(lang: string): void {
     this.selectedLanguage = lang === 'ALL' ? undefined : lang;
+    this.currentPage = 0;
+    this.loadTemplates();
+  }
+
+  onClearFilters(): void {
+    this.searchTerm = '';
+    this.selectedLanguage = undefined;
     this.currentPage = 0;
     this.loadTemplates();
   }
@@ -150,7 +189,9 @@ export class TemplatesComponent implements OnInit {
       subjectTemplate: template.subjectTemplate,
       bodyTemplate: template.bodyTemplate,
     };
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   onCancelEdit(): void {
@@ -161,16 +202,13 @@ export class TemplatesComponent implements OnInit {
       subjectTemplate: '',
       bodyTemplate: '',
     };
+    this.isFormVisible = false;
   }
 
   onSubmitTemplate(data: TemplateData): void {
     this.loading = true;
     this.errorMessage = '';
 
-    // Form-level required-field validation is already enforced in
-    // TemplateFormComponent (NgForm), so we don't need to re-check
-    // trimmed emptiness here — but we keep this as a defensive backstop
-    // in case the component is ever driven programmatically.
     if (
       !data.name?.trim() ||
       !data.subjectTemplate?.trim() ||
@@ -178,6 +216,7 @@ export class TemplatesComponent implements OnInit {
     ) {
       this.errorMessage = 'Please fill in all required fields.';
       this.loading = false;
+      this.toastService.error(this.errorMessage);
       return;
     }
 
@@ -190,14 +229,18 @@ export class TemplatesComponent implements OnInit {
           next: () => {
             this.onCancelEdit();
             this.loadTemplates();
+            this.toastService.success('Template updated successfully.');
           },
           error: (err) => {
             console.error(
               'Failed to patch targeted template entry context:',
               err
             );
-            this.errorMessage = 'Failed to update template. Please try again.';
             this.loading = false;
+            this.toastService.error(
+              err.error?.message ??
+                'Failed to update template. Please try again.'
+            );
           },
         });
     } else {
@@ -205,14 +248,11 @@ export class TemplatesComponent implements OnInit {
         next: () => {
           this.onCancelEdit();
           this.loadTemplates();
+          this.toastService.success('Template created successfully.');
         },
         error: (err) => {
-          console.error(
-            'Failed to append custom profile template record template entry:',
-            err
-          );
-          this.errorMessage = 'Failed to create template. Please try again.';
           this.loading = false;
+          this.toastService.error(err.error.message);
         },
       });
     }
@@ -231,12 +271,15 @@ export class TemplatesComponent implements OnInit {
     if (this.editingTemplateId === id) this.onCancelEdit();
 
     this.templateService.deleteTemplate(id).subscribe({
-      next: () => this.loadTemplates(),
-      error: (err) =>
-        console.error(
-          'Failed to clear layout template profile key configuration:',
-          err
-        ),
+      next: () => {
+        this.loadTemplates();
+        this.toastService.success('Template deleted successfully.');
+      },
+      error: (err) => {
+        this.toastService.error(
+          err.error?.message ?? 'Failed to delete template. Please try again.'
+        );
+      },
     });
   }
 
