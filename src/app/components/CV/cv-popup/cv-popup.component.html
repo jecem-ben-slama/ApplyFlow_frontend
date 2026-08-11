@@ -9,10 +9,10 @@
         <div class="flex items-start justify-between gap-4 mb-8">
             <div>
                 <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-                    {{ isEditing ? 'Edit CV Tracking Parameters' : 'Register New CV Track' }}
+                    {{ isEditing ? 'Edit CV ' : 'Register New CV' }}
                 </h2>
                 <p class="text-slate-500 dark:text-slate-400 text-xs mt-1.5 font-medium">
-                    Configure locale-aware profile targets to correctly route your job applications.
+                    Configure profile targeted CVs to correctly route your job applications.
                 </p>
             </div>
             <button type="button" (click)="onCancel()" [disabled]="isLoading"
@@ -26,7 +26,7 @@
                 <div class="group">
                     <label
                         class="block text-[10px] font-extrabold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 mb-2.5 ml-1">
-                        Display Track Name
+                        Name
                     </label>
                     <input type="text" [(ngModel)]="formModel.name" name="name" required maxlength="80"
                         #nameField="ngModel" placeholder="e.g. FullStack Senior Variant"
@@ -35,7 +35,7 @@
                     <div *ngIf="nameField.invalid && (nameField.touched || cvForm.submitted)">
                         <p class="text-danger text-xs mt-1.5 ml-1 flex items-center gap-1 font-medium">
                             <mat-icon class="!text-sm !w-4 !h-4">error_outline</mat-icon>
-                            Display name is required.
+                            name is required.
                         </p>
                     </div>
                 </div>
@@ -44,7 +44,7 @@
                     <div>
                         <label
                             class="block text-[10px] font-extrabold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 mb-2.5 ml-1">
-                            Locale Language Segment
+                            Language
                         </label>
                         <div class="relative">
                             <select [(ngModel)]="formModel.language" name="language" required
@@ -66,7 +66,7 @@
                         <div class="flex items-center gap-1.5 mb-2.5 ml-1 relative">
                             <label
                                 class="text-[10px] font-extrabold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
-                                Destination URL
+                                URL
                             </label>
 
                             <button type="button" (click)="showDriveHelp = !showDriveHelp" (blur)="onDriveHelpBlur()"
