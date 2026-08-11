@@ -1,14 +1,16 @@
 <aside
-    [class]="'hidden md:flex transition-all duration-200 ease-in-out h-screen border-r border-slate-200/80 dark:border-surface-muted bg-background-light dark:bg-background-dark flex-col justify-between sticky top-0 text-slate-700 dark:text-slate-200 overflow-hidden shadow-sm ' + (collapsed ? 'w-16' : 'w-64')">
+    [class]="'hidden md:flex shrink-0 transition-all duration-200 ease-in-out h-screen border-r border-slate-200/80 dark:border-surface-muted bg-background-light dark:bg-background-dark flex-col justify-between sticky top-0 text-slate-700 dark:text-slate-200 overflow-hidden shadow-sm ' + (collapsed ? 'w-16' : 'w-64')">
 
     <div class="space-y-6">
         <!-- Logo & Collapse Button -->
         <div class="flex items-center justify-between px-3.5 pt-4">
             <div class="flex items-center gap-3 min-w-0">
-                <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center font-black text-white text-base shadow-md shadow-primary/25 shrink-0">
+                <div
+                    class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center font-black text-white text-base shadow-md shadow-primary/25 shrink-0">
                     A
                 </div>
-                <span [class]="'text-sm font-bold text-slate-900 dark:text-white tracking-wide whitespace-nowrap transition-all duration-200 ' + (collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100')">
+                <span
+                    [class]="'text-sm font-bold text-slate-900 dark:text-white tracking-wide whitespace-nowrap transition-all duration-200 ' + (collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100')">
                     ApplyFlow
                 </span>
             </div>

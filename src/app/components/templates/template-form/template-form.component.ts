@@ -5,10 +5,14 @@ import {
   EventEmitter,
   ViewChild,
   ElementRef,
+  OnInit,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 export interface TemplateData {
   name: string;
@@ -30,7 +34,7 @@ interface PlaceholderToken {
   imports: [CommonModule, FormsModule, MatIconModule],
   templateUrl: './template-form.component.html',
 })
-export class TemplateFormComponent {
+export class TemplateFormComponent implements OnInit, OnDestroy {
   @Input() isFormVisible = false;
   @Input() isEditing = false;
   @Input() loading = false;
@@ -47,21 +51,11 @@ export class TemplateFormComponent {
   readonly subjectMaxLength = 150;
   readonly bodyMaxLength = 5000;
   readonly bodyMinLength = 10;
-
-  // Must match exactly what ApplicationService.createAndCompileApplication replaces.
-  // {{skills_block}} is auto-appended by the backend if omitted, so it's optional —
-  // the rest are recommended so the compiled output isn't missing context.
   readonly placeholders: PlaceholderToken[] = [
     {
       token: '{{position}}',
       label: 'Position',
       hint: 'Replaced with the job title',
-      example: 'Software Engineer',
-    },
-    {
-      token: '{{role}}',
-      label: 'Role',
-      hint: 'Same as Position — an alias for the job title',
       example: 'Software Engineer',
     },
     {
@@ -84,12 +78,32 @@ export class TemplateFormComponent {
   @Output() toggle = new EventEmitter<void>();
   @Output() formSubmit = new EventEmitter<TemplateData>();
   @Output() cancel = new EventEmitter<void>();
+  @Output() draftSave = new EventEmitter<TemplateData>();
 
   @ViewChild('subjectInput') subjectInputRef?: ElementRef<HTMLInputElement>;
   @ViewChild('bodyInput') bodyInputRef?: ElementRef<HTMLTextAreaElement>;
 
   private readonly knownTokens = this.placeholders.map((p) => p.token);
   private readonly placeholderPattern = /\{\{\s*[\w]+\s*\}\}/g;
+
+  private draftTrigger = new Subject<void>();
+  private draftSub?: Subscription;
+
+  ngOnInit(): void {
+    this.draftSub = this.draftTrigger.pipe(debounceTime(600)).subscribe(() => {
+      if (!this.isEditing) {
+        this.draftSave.emit({ ...this.templateData });
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.draftSub?.unsubscribe();
+  }
+
+  notifyDraft(): void {
+    this.draftTrigger.next();
+  }
 
   togglePlaceholderInfo(): void {
     this.showPlaceholderInfo = !this.showPlaceholderInfo;
@@ -126,6 +140,8 @@ export class TemplateFormComponent {
     } else {
       this.templateData.bodyTemplate = newValue;
     }
+
+    this.notifyDraft();
 
     const newCursorPos = start + token.length;
     setTimeout(() => {

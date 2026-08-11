@@ -85,7 +85,7 @@
                         class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                         Template Name <span class="text-rose-500">*</span>
                     </label>
-                    <input type="text" id="templateName" name="name" [(ngModel)]="templateData.name"
+                    <input type="text" id="templateName" name="name" [(ngModel)]="templateData.name" (ngModelChange)="notifyDraft()" 
                         #nameField="ngModel" required [maxlength]="nameMaxLength" [disabled]="loading"
                         placeholder="e.g., Follow-up Standard"
                         [attr.aria-invalid]="nameField.invalid && nameField.touched"
@@ -109,7 +109,7 @@
                         class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                         Template Language <span class="text-rose-500">*</span>
                     </label>
-                    <select id="templateLanguage" name="language" [(ngModel)]="templateData.language"
+                    <select id="templateLanguage" name="language" [(ngModel)]="templateData.language" (ngModelChange)="notifyDraft()" 
                         #languageField="ngModel" required [disabled]="loading"
                         class="w-full bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-2xl px-4 py-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed">
                         <option value="" disabled>Select a language</option>
@@ -141,7 +141,7 @@
                     </div>
                 </div>
                 <input type="text" id="templateSubject" name="subjectTemplate" #subjectInput
-                    [(ngModel)]="templateData.subjectTemplate" #subjectField="ngModel" required
+                    [(ngModel)]="templateData.subjectTemplate" (ngModelChange)="notifyDraft()"  #subjectField="ngModel" required
                     [maxlength]="subjectMaxLength" [disabled]="loading" [placeholder]="subjectPlaceholder"
                     aria-describedby="templateSubject-error templateSubject-count"
                     [attr.aria-invalid]="subjectField.invalid && subjectField.touched" [ngClass]="{
@@ -166,7 +166,7 @@
                         </p>
                     </div>
                     <span id="templateSubject-count" class="text-[11px] text-slate-400 ml-auto shrink-0 font-medium">
-                        {{ templateData.subjectTemplate || 0 }}/{{ subjectMaxLength }}
+                        {{ templateData.subjectTemplate.length || 0 }}/{{ subjectMaxLength }}
                     </span>
                 </div>
             </div>
@@ -186,7 +186,7 @@
                         </button>
                     </div>
                 </div>
-                <textarea id="templateBody" name="bodyTemplate" #bodyInput [(ngModel)]="templateData.bodyTemplate"
+                <textarea id="templateBody" name="bodyTemplate" (ngModelChange)="notifyDraft()"  #bodyInput [(ngModel)]="templateData.bodyTemplate"
                     #bodyField="ngModel" required [minlength]="bodyMinLength" [maxlength]="bodyMaxLength"
                     [disabled]="loading" placeholder="Write message body layout context here..." rows="6"
                     aria-describedby="templateBody-error templateBody-count"
@@ -218,7 +218,7 @@
                         </p>
                     </div>
                     <span id="templateBody-count" class="text-[11px] text-slate-400 ml-auto shrink-0 font-medium">
-                        {{ templateData.bodyTemplate || 0 }}/{{ bodyMaxLength }}
+                        {{ templateData.bodyTemplate.length || 0 }}/{{ bodyMaxLength }}
                     </span>
                 </div>
             </div>

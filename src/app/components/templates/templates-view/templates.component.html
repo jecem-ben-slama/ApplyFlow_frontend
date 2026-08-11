@@ -1,5 +1,5 @@
 <div
-    class="p-4 sm:p-6 md:p-8 space-y-6 text-slate-800 dark:text-slate-100 max-w-full mx-auto w-full transition-colors duration-200">
+    class="p-4 sm:p-6 md:p-8 space-y-6 text-slate-800 dark:text-slate-100 max-w-full mx-auto w-full min-w-0 transition-colors duration-200">
     <app-toast-container></app-toast-container>
     <!-- ─── HEADER ROW ─── -->
     <div class="border-b border-slate-200 dark:border-surface-muted pb-4">
@@ -14,12 +14,13 @@
         </p>
     </div>
 
-    <div class="grid gap-6">
+    <div class="grid grid-cols-1 gap-6 min-w-0">
 
         <!-- Template Form -->
         <app-template-form [isFormVisible]="isFormVisible" [isEditing]="editingTemplateId !== null" [loading]="loading"
             [errorMessage]="errorMessage" [templateData]="newTemplate" [subjectPlaceholder]="subjectPlaceholder"
             (toggle)="onToggleForm()" (formSubmit)="onSubmitTemplate($event)" (cancel)="onCancelEdit()">
+            (draftSave)="onDraftSave($event)">
         </app-template-form>
 
         <!-- Template List or Skeleton View -->
@@ -34,10 +35,11 @@
             <!-- Template List -->
             <app-template-list [templates]="templates" [totalElements]="totalElements" [currentPage]="currentPage"
                 [totalPages]="totalPages" [loading]="loading" [selectedLanguage]="selectedLanguage"
-                [searchTerm]="searchTerm" [editingId]="editingTemplateId"
+                [searchTerm]="searchTerm" [editingId]="editingTemplateId" [templateStats]="templateStats"
                 (filterChange)="onLanguageFilterChange($event)" (searchChange)="updateSearchTerm($event)"
                 (pageChange)="onPageChange($event)" (edit)="onEditClick($event)" (delete)="onDeleteTemplate($event)"
                 (clearFilters)="onClearFilters()" (createFirst)="scrollToForm()">
+
             </app-template-list>
         </ng-template>
 

@@ -14,6 +14,8 @@ import {
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 import { ToastService } from '../../common/toast/toast.service';
 import { ToastContainerComponent } from '../../common/toast/toast-container.component';
+import { StatMetricDto } from 'src/app/models/statsmetric.model';
+import { AnalyticsService } from 'src/app/services/analytics.service';
 
 export interface TemplateComponent extends TemplateDto {
   isExpanded?: boolean;
@@ -67,6 +69,9 @@ export class TemplatesComponent implements OnInit, OnDestroy {
   selectedLanguage: string | undefined = undefined;
   searchTerm = '';
 
+  // Template performance stats, keyed by template name (StatMetricDto.categoryName)
+  templateStats: { [categoryName: string]: StatMetricDto } = {};
+
   // RxJS Search Stream to prevent erratic layout flickering & double-firing
   private searchSubject = new Subject<string>();
   private searchSubscription!: Subscription;
@@ -82,13 +87,18 @@ export class TemplatesComponent implements OnInit, OnDestroy {
   deleteTargetId?: number;
   deleteMessage = 'Are you sure you want to drop this layout parsing template?';
 
+  // ── Draft persistence ──
+  private readonly DRAFT_KEY = 'applyflow_template_draft';
+
   constructor(
     private templateService: TemplateService,
+    private analyticsService: AnalyticsService,
     private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
     this.adjustFormVisibilityForViewport();
+    this.restoreDraftIfAny();
 
     // Setup stable search stream with RxJS debounce
     this.searchSubscription = this.searchSubject
@@ -100,6 +110,7 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       });
 
     this.loadTemplates();
+    this.loadTemplateStats();
   }
 
   ngOnDestroy(): void {
@@ -113,6 +124,47 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       this.isFormVisible = false;
     }
   }
+
+  // ── Draft persistence ──
+
+  private restoreDraftIfAny(): void {
+    if (typeof window === 'undefined') return;
+
+    const saved = localStorage.getItem(this.DRAFT_KEY);
+    if (!saved) return;
+
+    try {
+      const draft = JSON.parse(saved) as TemplateData;
+      const hasContent =
+        draft?.name?.trim() ||
+        draft?.subjectTemplate?.trim() ||
+        draft?.bodyTemplate?.trim();
+
+      if (hasContent) {
+        this.newTemplate = { ...this.newTemplate, ...draft };
+        this.isFormVisible = true;
+        this.toastService.success('Restored your unsaved draft.');
+      } else {
+        localStorage.removeItem(this.DRAFT_KEY);
+      }
+    } catch {
+      localStorage.removeItem(this.DRAFT_KEY);
+    }
+  }
+
+  onDraftSave(data: TemplateData): void {
+    // Only persist drafts for new (non-edit) templates
+    if (this.editingTemplateId !== null) return;
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(this.DRAFT_KEY, JSON.stringify(data));
+  }
+
+  private clearDraft(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(this.DRAFT_KEY);
+  }
+
+  // ── Existing methods ──
 
   loadTemplates(isBackground: boolean = false): void {
     if (!isBackground) {
@@ -148,6 +200,20 @@ export class TemplatesComponent implements OnInit, OnDestroy {
           );
         },
       });
+  }
+
+  loadTemplateStats(): void {
+    this.analyticsService.getTemplateStats().subscribe({
+      next: (stats: StatMetricDto[]) => {
+        const map: { [categoryName: string]: StatMetricDto } = {};
+        stats.forEach((s) => (map[s.categoryName] = s));
+        this.templateStats = map;
+      },
+      error: (err) => {
+        console.error('Error fetching template performance stats:', err);
+        // Non-blocking: leave templateStats empty so the column just shows "No data"
+      },
+    });
   }
 
   onToggleForm(): void {
@@ -203,6 +269,7 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       bodyTemplate: '',
     };
     this.isFormVisible = false;
+    this.clearDraft();
   }
 
   onSubmitTemplate(data: TemplateData): void {
@@ -246,6 +313,7 @@ export class TemplatesComponent implements OnInit, OnDestroy {
     } else {
       this.templateService.createTemplate(data).subscribe({
         next: () => {
+          this.clearDraft();
           this.onCancelEdit();
           this.loadTemplates();
           this.toastService.success('Template created successfully.');
