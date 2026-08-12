@@ -29,14 +29,12 @@ import { EmailPanelComponent } from '../email-panel/email-panel.component';
 import { MatIconModule } from '@angular/material/icon';
 import { CategoryService } from 'src/app/services/category.service';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
+import { ToastContainerComponent } from '../../common/toast/toast-container.component';
+import { ToastService } from '../../common/toast/toast.service';
 
 type SortableColumn = 'companyName' | 'jobTitle' | 'dateApplied' | 'status';
 
-interface Toast {
-  id: number;
-  type: 'success' | 'error';
-  message: string;
-}
+
 
 interface StatusOption {
   value: string;
@@ -56,6 +54,7 @@ interface StatusOption {
     ApplicationRowComponent,
     EmailPanelComponent,
     SkeletonComponent,
+    ToastContainerComponent,
   ],
   templateUrl: './applications.component.html',
   styleUrls: ['./applications.component.css'],
@@ -100,10 +99,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   pendingStatusIds = new Set<number>();
   /** Row ids that hit a send error, keyed to the inline error text shown in that panel. */
   sendErrors = new Map<number, string>();
-
-  toasts: Toast[] = [];
-  private toastCounter = 0;
-
   showDeleteModal = false;
   deleteTargetIds: number[] = [];
   deleteMessage = 'Permanently purge this compiled tracking profile record?';
@@ -140,7 +135,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     private categoriesService: CategoryService,
     private cvService: CvVariantsService,
     private templateService: TemplateService,
-    private emailService: EmailService
+    private emailService: EmailService,
+    private toastService: ToastService,
   ) {}
 
   ngOnInit(): void {
@@ -278,6 +274,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.errorMessage =
             err.error?.message || 'Could not fetch applications.';
+          this.toastService.error(this.errorMessage);
           this.isLoading = false;
           this.isRefreshing = false;
         },
@@ -316,13 +313,12 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.pendingStatusIds.delete(id);
-          this.pushToast('success', `Status updated to ${status}.`);
+          this.toastService.success(`Status updated to ${status}.`);
         },
         error: (err) => {
           app.status = previousStatus;
           this.pendingStatusIds.delete(id);
-          this.pushToast(
-            'error',
+          this.toastService.error(
             err.error?.message || 'Could not update status.'
           );
         },
@@ -336,10 +332,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         next: () => {
           const app = this.appPage?.content.find((a) => a.id === appId);
           if (app) app.notes = notes;
-          this.pushToast('success', 'Notes saved.');
+          this.toastService.success('Notes saved.');
         },
         error: (err) =>
-          this.pushToast(
+          this.toastService.error(
             'error',
             err.error?.message || 'Could not save notes.'
           ),
@@ -365,7 +361,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (msg) => {
-          this.pushToast('success', msg || 'Email sent!');
+          this.toastService.success( msg || 'Email sent!');
           this.onUpdateStatus(app.id, 'SENT');
           this.isSendingEmail = false;
         },
@@ -384,8 +380,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   onCopyBody(text: string): void {
     navigator.clipboard
       .writeText(text)
-      .then(() => this.pushToast('success', 'Copied to clipboard.'))
-      .catch(() => this.pushToast('error', 'Could not copy to clipboard.'));
+      .then(() => this.toastService.success( 'Copied to clipboard.'))
+      .catch(() => this.toastService.error('Could not copy to clipboard.'));
   }
 
   // ── Delete ─────────────────────────────────────────────────────────────────
@@ -393,7 +389,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   onDelete(id: number): void {
     this.deleteTargetIds = [id];
     this.deleteMessage =
-      'Permanently purge this compiled tracking profile record?';
+      'Permanently delete this application  it cannot be undone';
     this.showDeleteModal = true;
   }
 
@@ -407,8 +403,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
     forkJoin(requests).subscribe({
       next: () => {
-        this.pushToast(
-          'success',
+        this.toastService.success(
+          
           ids.length > 1
             ? `${ids.length} applications deleted.`
             : 'Application deleted.'
@@ -421,7 +417,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         this.loadApplicationsPage();
       },
       error: (err) =>
-        this.pushToast('error', err.error?.message || 'Could not delete.'),
+        this.toastService.error('error', err.error?.message || 'Could not delete.'),
     });
   }
 
@@ -449,7 +445,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
     this.appService.createApplication(payload).subscribe({
       next: (created) => {
-        this.pushToast('success', 'Application created successfully!');
+        this.toastService.success( 'Application created successfully!');
         this.isModalOpen = false;
         this.expandedAppId = created.id;
         this.loadApplicationsPage();
@@ -464,17 +460,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Toasts ─────────────────────────────────────────────────────────────────
-
-  private pushToast(type: Toast['type'], message: string): void {
-    const id = ++this.toastCounter;
-    this.toasts.push({ id, type, message });
-    setTimeout(() => this.dismissToast(id), 4000);
-  }
-
-  dismissToast(id: number): void {
-    this.toasts = this.toasts.filter((t) => t.id !== id);
-  }
 
   // ── Mobile card helpers ──────────────────────────────────────────────────
 

@@ -15,10 +15,14 @@
 </td>
 
 <td class="px-3 sm:px-6 py-4">
-  <span
-    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 uppercase tracking-wider border border-indigo-200 dark:border-indigo-900">
-    {{ app.language }}
-  </span>
+  
+<span
+  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium uppercase tracking-wider border shadow-sm transition-colors duration-150"
+  [ngClass]="(app.language.toLowerCase() === 'fr' || app.language.toLowerCase() === 'french')
+    ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+    : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
+  {{ app.language }}
+</span>
 </td>
 
 <td class="px-3 sm:px-6 py-4">
@@ -55,12 +59,12 @@
   <button (click)="togglePanel.emit(app.id)" [attr.aria-expanded]="isExpanded"
     [attr.aria-label]="(isExpanded ? 'Hide' : 'Show') + ' email for ' + app.companyName"
     [class]="isExpanded
-        ? 'text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-950/60 hover:bg-indigo-200 dark:hover:bg-indigo-900/60 font-medium text-[11px] sm:text-xs px-2.5 py-1.5 rounded-xl transition-all'
-        : 'text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-200 font-medium text-[11px] sm:text-xs bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/60 px-2.5 py-1.5 rounded-xl transition-all'">
+        ? 'text-indigo-700 dark:text-white bg-indigo-100 dark:bg-indigo-950/60 hover:bg-indigo-200 dark:hover:bg-indigo-900/60 font-medium text-[11px] sm:text-xs px-2.5 py-1.5 rounded-xl transition-all'
+        : 'text-indigo-600 dark:text-white hover:text-indigo-900 dark:hover:text-indigo-200 font-medium text-[11px] sm:text-xs bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/60 px-2.5 py-1.5 rounded-xl transition-all'">
     {{ isExpanded ? '▲ Hide' : '▼ Email' }}
   </button>
   <button
-    class="text-danger-textLight dark:text-danger-textDark hover:opacity-80 font-medium text-[11px] sm:text-xs bg-danger-bgLight dark:bg-danger-bgDark hover:opacity-90 px-2.5 py-1.5 rounded-xl transition-all border border-rose-200/50 dark:border-rose-900/40"
+    class="text-danger-textLight dark:text-white hover:opacity-80 font-medium text-[11px] sm:text-xs bg-danger-bgLight dark:bg-danger-bgDark hover:opacity-90 px-2.5 py-1.5 rounded-xl transition-all border border-rose-200/50 dark:border-rose-900/40"
     [attr.aria-label]="'Delete application for ' + app.companyName" (click)="deleteApp.emit(app.id)">
     Delete
   </button>

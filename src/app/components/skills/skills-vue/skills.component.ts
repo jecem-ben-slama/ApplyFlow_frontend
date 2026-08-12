@@ -11,6 +11,8 @@ import { CategoryPopupComponent } from '../category-popup/category-popup.compone
 import { SkillTableComponent } from '../skill-table/skill-table.component';
 import { SkillFormComponent } from '../skills-form/skill-form.component';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
+import { ToastContainerComponent } from '../../common/toast/toast-container.component';
+import { ToastService } from '../../common/toast/toast.service';
 
 // Sub-components
 
@@ -27,6 +29,7 @@ import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
     CategoryPopupComponent,
     SkeletonComponent,
     MatIconModule,
+    ToastContainerComponent,
   ],
   templateUrl: './skills.component.html',
 })
@@ -74,7 +77,8 @@ export class SkillsComponent implements OnInit {
 
   constructor(
     private skillsService: SkillsService,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -98,10 +102,11 @@ export class SkillsComponent implements OnInit {
     this.categoryService.getAllCategories().subscribe({
       next: (cats) => (this.categories = cats),
       error: (err) => {
-        console.error('Failed to load categories:', err);
-        this.errorMessage =
+        this.errorMessage =err.error.message ||
           'Could not load categories. Please refresh the page.';
+        this.toastService.error(this.errorMessage);
       },
+
     });
   }
 
@@ -127,8 +132,8 @@ export class SkillsComponent implements OnInit {
           this.initialLoading = false;
         },
         error: (err) => {
-          console.error('Error fetching skills:', err);
-          this.errorMessage = 'Could not load skills. Please try again.';
+          this.errorMessage = err.error.message ||'Could not load skills. Please try again.';
+          this.toastService.error(this.errorMessage),
           this.loading = false;
           this.isSearching = false;
           this.initialLoading = false;
@@ -149,11 +154,13 @@ export class SkillsComponent implements OnInit {
         next: () => {
           this.resetForm();
           this.loadSkills();
+          this.isFormExpanded=false;
+          this.toastService.success("Skill updated successfully")
         },
         error: (err) => {
-          console.error('Failed to update skill:', err);
           this.errorMessage =
             err.error?.message || 'Failed to update skill. Please try again.';
+          this.toastService.error(this.errorMessage);
           this.loading = false;
         },
       });
@@ -161,6 +168,8 @@ export class SkillsComponent implements OnInit {
       this.skillsService.createSkill(formData).subscribe({
         next: () => {
           this.resetForm();
+          this.isFormExpanded=false;
+          this.toastService.success('Skill added successfully');
           this.skillsService
             .getAllSkills(
               0,
@@ -172,13 +181,15 @@ export class SkillsComponent implements OnInit {
             .subscribe((peek) => {
               this.currentPage = Math.max(0, getPageMeta(peek).totalPages - 1);
               this.loadSkills();
+              this.isFormExpanded=false;
             });
         },
         error: (err) => {
-          console.error('Failed to create skill:', err);
           this.errorMessage =
             err.error?.message || 'Failed to create skill. Please try again.';
           this.loading = false;
+          this.toastService.error(this.errorMessage);
+
         },
       });
     }
@@ -234,7 +245,7 @@ export class SkillsComponent implements OnInit {
   }): void {
     this.deleteTargetId = data.category.id;
     this.deleteTargetType = 'category';
-    this.deleteMessage = `Are you sure you want to delete "${data.category.name}"? Skills associated will be untagged.`;
+    this.deleteMessage = `Are you sure you want to delete "${data.category.name}"?`;
     this.showDeleteModal = true;
   }
 
@@ -252,12 +263,15 @@ export class SkillsComponent implements OnInit {
       next: () => {
         this.loadCategories();
         this.closeCategoryModal();
+        this.editingCategory
+        ? this.toastService.success('Category updated successfully')
+        : this.toastService.success('Category added successfully');
       },
       error: (err) => {
-        console.error('Failed to save category:', err);
         this.categoryPopupError =
           err.error?.message || 'Could not save category.';
         this.categoryPopupLoading = false;
+        this.toastService.error(this.categoryPopupError);
       },
     });
   }
@@ -331,11 +345,12 @@ export class SkillsComponent implements OnInit {
             this.currentPage--;
           this.loadSkills();
           this.loading = false;
+          this.toastService.success('Skill deleted successfully');
         },
         error: (err) => {
-          console.error('Failed to delete skill:', err);
           this.errorMessage =
             err.error?.message || 'Failed to delete skill. Please try again.';
+            this.toastService.error(this.errorMessage);
           this.loading = false;
         },
       });
@@ -347,12 +362,13 @@ export class SkillsComponent implements OnInit {
           this.loadCategories();
           this.loadSkills();
           this.loading = false;
+          this.toastService.success('Category deleted successfully');
         },
         error: (err) => {
-          console.error('Failed to delete category:', err);
           this.errorMessage =
             err.error?.message ||
             'Failed to delete category. Please try again.';
+            this.toastService.error(this.errorMessage);
           this.loading = false;
         },
       });
