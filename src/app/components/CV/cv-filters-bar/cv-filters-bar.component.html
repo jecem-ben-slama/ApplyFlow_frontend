@@ -33,7 +33,9 @@
             <mat-icon class="text-base">close</mat-icon>
         </button>
     </div>
-
+    <div *ngIf="resultsLabel || hasActiveFilters" class="flex items-center justify-between gap-3 text-xs">
+        <span class="text-slate-500 dark:text-slate-400 font-medium">{{ resultsLabel }}</span>
+    </div>
   
 
 </div>

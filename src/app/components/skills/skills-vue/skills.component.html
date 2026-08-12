@@ -6,7 +6,8 @@
         class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 dark:border-surface-muted pb-6">
         <div>
             <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Manage Your Skills</h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Add, update, and organize skills and bullet points used in your email.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Add, update, and organize skills and bullet
+                points used in your email.</p>
         </div>
 
         <div aria-live="polite"
@@ -91,16 +92,16 @@
 
         <!-- Shell stays mounted for every load after the first — filter/search changes just refresh the results -->
         <ng-container *ngIf="!initialLoading">
-            <app-skill-form [categories]="categories" [editingSkillId]="editingSkillId"
-                [isFormExpanded]="isFormExpanded" [initialData]="newSkillData" [loading]="loading"
-                (save)="onSaveSkill($event)" (cancel)="resetForm()">
-            </app-skill-form>
-            <!-- space between cards -->
-            <div class="h-1"></div>
             <app-category-list [categories]="categories" [selectedFilterCategoryId]="selectedFilterCategoryId"
                 (filterChange)="onFilterChange($event)" (addCategory)="openAddCategoryModal()"
                 (editCategory)="onEditCategoryClicked($event)" (deleteCategory)="onDeleteCategoryClicked($event)">
             </app-category-list>
+            <!-- space between cards -->
+            <div class="h-1"></div>
+            <app-skill-form #skillForm [categories]="categories" [editingSkillId]="editingSkillId"
+                [isFormExpanded]="isFormExpanded" [initialData]="newSkillData" [loading]="loading"
+                (save)="onSaveSkill($event)" (cancel)="resetForm()">
+            </app-skill-form>
 
             <!-- Results region: dims briefly while a filter/search/page change is in flight, but never unmounts -->
             <div [class.opacity-50]="loading" [class.pointer-events-none]="loading"
@@ -130,10 +131,9 @@
                 </app-skeleton>
 
                 <app-skill-table *ngIf="skills.length > 0" [skills]="skills" [loading]="loading"
-                    [totalPages]="totalPages" [currentPage]="currentPage" [searchTerm]="searchTerm"
-                    [selectedFilterCategoryId]="selectedFilterCategoryId" (searchChange)="onSearchChange($event)"
-                    (pageChange)="onPageChange($event)" (editSkill)="onEditSkillClicked($event)"
-                    (deleteSkill)="onDeleteSkillClicked($event)">
+                    [totalPages]="totalPages" [currentPage]="currentPage"
+                    [selectedFilterCategoryId]="selectedFilterCategoryId" (pageChange)="onPageChange($event)"
+                    (editSkill)="onEditSkillClicked($event)" (deleteSkill)="onDeleteSkillClicked($event)">
                 </app-skill-table>
             </div>
         </ng-container>

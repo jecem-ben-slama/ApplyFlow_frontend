@@ -7,7 +7,8 @@
             <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                 Filter by Category
             </span>
-            <button type="button" (click)="toggleManage()"
+            <button type="button" (click)="toggleManage()" [attr.aria-expanded]="isManageOpen"
+                [attr.aria-label]="isManageOpen ? 'Hide category management' : 'Manage categories'"
                 class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors">
                 Manage
                 <mat-icon
