@@ -12,6 +12,7 @@ import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 import { ToastService } from '../../common/toast/toast.service';
 import { ToastContainerComponent } from '../../common/toast/toast-container.component';
+import { MatIconModule } from "@angular/material/icon";
 
 @Component({
   selector: 'app-cv-variants',
@@ -25,7 +26,8 @@ import { ToastContainerComponent } from '../../common/toast/toast-container.comp
     CvTableComponent,
     ToastContainerComponent,
     SkeletonComponent,
-  ],
+    MatIconModule
+],
   templateUrl: './cv-variants.component.html',
 })
 export class CvVariantsComponent implements OnInit, OnDestroy {

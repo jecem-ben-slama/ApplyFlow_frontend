@@ -74,12 +74,18 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   filtersOpen = false;
 
   /** Used to render the mobile status pill chips in the filter bar. */
-  statusOptions: StatusOption[] = [
-    { value: '', label: 'All' },
-    { value: 'COMPILED', label: 'Compiled' },
-    { value: 'SENT', label: 'Sent' },
-    { value: 'INTERVIEWING', label: 'Interviewing' },
-    { value: 'REJECTED', label: 'Rejected' },
+  statusOptions = [
+    { label: 'All', value: '' },
+    { label: 'Compiled', value: 'COMPILED' },
+    { label: 'Sent', value: 'SENT' },
+    { label: 'Viewed', value: 'VIEWED' },
+    { label: 'Responded', value: 'RESPONDED' },
+    { label: 'Interview Scheduled', value: 'INTERVIEW_SCHEDULED' },
+    { label: 'Interviewing', value: 'INTERVIEWING' },
+    { label: 'Offer', value: 'OFFER' },
+    { label: 'Rejected', value: 'REJECTED' },
+    { label: 'Ghosted', value: 'GHOSTED' },
+    { label: 'Withdrawn', value: 'WITHDRAWN' },
   ];
 
   availableSkills: Skill[] = [];
@@ -120,14 +126,32 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   /** Color classes for the mobile status pill/select, keyed by status value. */
   private readonly statusClassMap: Record<string, string> = {
-    COMPILED:
-      'bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-    SENT: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900',
-    INTERVIEWING:
-      'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
-    REJECTED:
-      'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900',
-  };
+  // Neutral / Initial states
+  COMPILED:
+    'bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+  SENT: 
+    'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900',
+  VIEWED: 
+    'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900',
+
+  // Positive progress / Response / Interview states
+  RESPONDED: 
+    'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-900',
+  INTERVIEW_SCHEDULED: 
+    'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
+  INTERVIEWING:
+    'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
+  OFFER: 
+    'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900',
+
+  // Terminal / Negative states ("Bad terminal")
+  REJECTED:
+    'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900',
+  GHOSTED: 
+    'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700',
+  WITHDRAWN: 
+    'bg-stone-100 dark:bg-stone-800/50 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-700',
+};
 
   constructor(
     private appService: ApplicationsService,
@@ -136,7 +160,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     private cvService: CvVariantsService,
     private templateService: TemplateService,
     private emailService: EmailService,
-    private toastService: ToastService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -361,7 +385,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (msg) => {
-          this.toastService.success( msg || 'Email sent!');
+          this.toastService.success(msg || 'Email sent!');
           this.onUpdateStatus(app.id, 'SENT');
           this.isSendingEmail = false;
         },
@@ -380,7 +404,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   onCopyBody(text: string): void {
     navigator.clipboard
       .writeText(text)
-      .then(() => this.toastService.success( 'Copied to clipboard.'))
+      .then(() => this.toastService.success('Copied to clipboard.'))
       .catch(() => this.toastService.error('Could not copy to clipboard.'));
   }
 
@@ -404,7 +428,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     forkJoin(requests).subscribe({
       next: () => {
         this.toastService.success(
-          
           ids.length > 1
             ? `${ids.length} applications deleted.`
             : 'Application deleted.'
@@ -417,7 +440,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         this.loadApplicationsPage();
       },
       error: (err) =>
-        this.toastService.error('error', err.error?.message || 'Could not delete.'),
+        this.toastService.error(
+          'error',
+          err.error?.message || 'Could not delete.'
+        ),
     });
   }
 
@@ -445,7 +471,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
     this.appService.createApplication(payload).subscribe({
       next: (created) => {
-        this.toastService.success( 'Application created successfully!');
+        this.toastService.success('Application created successfully!');
         this.isModalOpen = false;
         this.expandedAppId = created.id;
         this.loadApplicationsPage();
@@ -459,7 +485,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       },
     });
   }
-
 
   // ── Mobile card helpers ──────────────────────────────────────────────────
 

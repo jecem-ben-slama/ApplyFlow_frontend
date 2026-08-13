@@ -108,23 +108,23 @@
                 class="transition-opacity duration-150">
 
                 <!-- Empty state -->
-                <div *ngIf="skills.length === 0 && !loading"
-                    class="flex flex-col items-center justify-center py-16 px-6 text-center bg-surface-light dark:bg-surface border border-dashed border-slate-200 dark:border-surface-muted rounded-3xl shadow-sm">
-                    <div
-                        class="w-12 h-12 rounded-2xl bg-background-light dark:bg-surface-muted/40 flex items-center justify-center mb-4 shadow-sm">
-                        <mat-icon class="!w-6 !h-6 text-2xl text-slate-300 dark:text-slate-600">search_off</mat-icon>
-                    </div>
-                    <p class="font-bold text-slate-700 dark:text-slate-200">No skills found</p>
-                    <p class="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed">
-                        {{ searchTerm || selectedFilterCategoryId
-                        ? 'Try adjusting your search or filter.'
-                        : 'Add your first skill using the form above.' }}
-                    </p>
-                    <button type="button" (click)="clearAllFilters()"
-                        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline underline-offset-4 ml-1 font-semibold">
-                        Clear all
-                    </button>
+            <div *ngIf="skills.length === 0 && !loading"
+                class="flex flex-col items-center justify-center py-16 px-6 text-center bg-surface-light dark:bg-surface border border-dashed border-slate-200 dark:border-surface-muted rounded-3xl shadow-sm">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-background-light dark:bg-surface-muted/40 flex items-center justify-center mb-4 shadow-sm">
+                    <mat-icon class="!w-6 !h-6 text-2xl text-slate-300 dark:text-slate-600">search_off</mat-icon>
                 </div>
+                <p class="font-bold text-slate-700 dark:text-slate-200">No skills found</p>
+                <p class="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed">
+                    {{ searchTerm || selectedFilterCategoryId
+                    ? 'Try adjusting your search or filter.'
+                    : 'Add your first skill using the form above.' }}
+                </p>
+                <button *ngIf="searchTerm || selectedFilterCategoryId" type="button" (click)="clearAllFilters()"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline underline-offset-4 ml-1 font-semibold">
+                    Clear all
+                </button>
+            </div>
 
                 <!-- Lightweight table skeleton while a filter/search/page change loads, without touching the rest of the page -->
                 <app-skeleton *ngIf="skills.length === 0 && loading" type="table" [itemsCount]="5" class="block">

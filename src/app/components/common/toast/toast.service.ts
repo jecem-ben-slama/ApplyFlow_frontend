@@ -7,6 +7,7 @@ export interface Toast {
   id: number;
   type: ToastType;
   message: string;
+  duration?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -20,7 +21,13 @@ export class ToastService {
 
   show(type: ToastType, message: string, durationMs = 4000): number {
     const id = this.nextId++;
-    let next = [...this.toastsSubject.value, { id, type, message }];
+    const toast: Toast = {
+      id,
+      type,
+      message,
+      duration: durationMs > 0 ? durationMs : undefined,
+    };
+    let next = [...this.toastsSubject.value, toast];
 
     // Cap the stack — drop the oldest overflow toasts (and their timers)
     if (next.length > this.maxToasts) {
