@@ -29,7 +29,6 @@ export interface TemplateComponent extends TemplateDto {
     DeletePopupComponent,
     TemplateListComponent,
     TemplateFormComponent,
-    SkeletonComponent,
     ToastContainerComponent,
   ],
   templateUrl: './templates.component.html',

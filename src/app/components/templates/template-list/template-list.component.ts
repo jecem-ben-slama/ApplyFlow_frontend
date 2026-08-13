@@ -6,6 +6,7 @@ import { TemplateFilterComponent } from '../template-filter/template-filter.comp
 import { PaginationComponent } from '../../common/pagination/pagination.component';
 import { TemplateComponent } from '../templates-view/templates.component';
 import { StatMetricDto } from 'src/app/models/statsmetric.model';
+import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 
 @Component({
   selector: 'app-template-list',
@@ -16,6 +17,7 @@ import { StatMetricDto } from 'src/app/models/statsmetric.model';
     MatIconModule,
     PaginationComponent,
     TemplateFilterComponent,
+    SkeletonComponent
   ],
   templateUrl: './template-list.component.html',
 })

@@ -1,12 +1,6 @@
 <div
     class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-3xl p-4 md:p-6 shadow-sm space-y-6">
 
-    <div *ngIf="loading" class="py-16 text-center text-slate-500 dark:text-slate-400 font-medium">
-        <div class="flex flex-col items-center gap-2">
-            <mat-icon class="animate-spin text-primary">refresh</mat-icon>
-            <span>Loading skills...</span>
-        </div>
-    </div>
 
     <div *ngIf="!loading"
         class="hidden md:block overflow-x-auto border border-slate-200 dark:border-surface-muted rounded-2xl bg-surface-light dark:bg-background shadow-sm">

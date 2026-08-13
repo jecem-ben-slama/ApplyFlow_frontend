@@ -101,19 +101,22 @@ export class SkillsComponent implements OnInit {
   }
 
   loadCategories(): void {
-    this.categoryService.getAllCategories().subscribe({
-      next: (cats) => (this.categories = cats),
-      error: (err) => {
-        this.errorMessage =
-          err.error.message ||
-          'Could not load categories. Please refresh the page.';
-        this.toastService.error(this.errorMessage);
-      },
-    });
+    this.categoryService
+      .getAllCategories()
+      .subscribe({
+        next: (cats) => (this.categories = cats),
+        error: (err) => {
+          this.errorMessage =
+            err.error.message ||
+            'Could not load categories. Please refresh the page.';
+          this.toastService.error(this.errorMessage);
+        },
+      });
   }
 
   loadSkills(): void {
     this.loading = true;
+    this.skills=[];
     this.skillsService
       .getAllSkills(
         this.currentPage,

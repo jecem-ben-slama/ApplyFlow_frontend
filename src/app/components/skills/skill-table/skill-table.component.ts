@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Skill } from '../../../models';
 import { PaginationComponent } from '../../common/pagination/pagination.component';
+import { SkeletonComponent } from "../../common/skeleton/skeleton.components";
 
 @Component({
   selector: 'app-skill-table',
   standalone: true,
-  imports: [CommonModule, MatIconModule, PaginationComponent],
+  imports: [CommonModule, MatIconModule, PaginationComponent, SkeletonComponent],
   templateUrl: './skill-table.component.html',
 })
 export class SkillTableComponent {

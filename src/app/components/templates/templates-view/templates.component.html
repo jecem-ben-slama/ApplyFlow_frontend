@@ -1,3 +1,4 @@
+<!-- templates.component.html -->
 <div
     class="p-4 sm:p-6 md:p-8 space-y-6 text-slate-800 dark:text-slate-100 max-w-full mx-auto w-full min-w-0 transition-colors duration-200">
     <app-toast-container></app-toast-container>
@@ -19,29 +20,20 @@
         <!-- Template Form -->
         <app-template-form [isFormVisible]="isFormVisible" [isEditing]="editingTemplateId !== null" [loading]="loading"
             [errorMessage]="errorMessage" [templateData]="newTemplate" [subjectPlaceholder]="subjectPlaceholder"
-            (toggle)="onToggleForm()" (formSubmit)="onSubmitTemplate($event)" (cancel)="onCancelEdit()">
+            (toggle)="onToggleForm()" (formSubmit)="onSubmitTemplate($event)" (cancel)="onCancelEdit()"
             (draftSave)="onDraftSave($event)">
         </app-template-form>
 
-        <!-- Template List or Skeleton View -->
-        <ng-container *ngIf="loading && (!templates || templates.length === 0); else loadedContent">
-            <div
-                class="bg-surface-light dark:bg-surface-dark border border-slate-200 dark:border-surface-muted rounded-2xl p-6 shadow-sm space-y-4 animate-fade-in">
-                <app-skeleton type="list" [itemsCount]="5"></app-skeleton>
-            </div>
-        </ng-container>
-
-        <ng-template #loadedContent>
-            <!-- Template List -->
-            <app-template-list [templates]="templates" [totalElements]="totalElements" [currentPage]="currentPage"
-                [totalPages]="totalPages" [loading]="loading" [selectedLanguage]="selectedLanguage"
-                [searchTerm]="searchTerm" [editingId]="editingTemplateId" [templateStats]="templateStats"
-                (filterChange)="onLanguageFilterChange($event)" (searchChange)="updateSearchTerm($event)"
-                (pageChange)="onPageChange($event)" (edit)="onEditClick($event)" (delete)="onDeleteTemplate($event)"
-                (clearFilters)="onClearFilters()" (createFirst)="scrollToForm()">
-
-            </app-template-list>
-        </ng-template>
+        <!-- Template List: always mounted — it now owns its own skeleton
+             state internally, so its filter bar stays visible and usable
+             through every load, not just the first one. -->
+        <app-template-list [templates]="templates" [totalElements]="totalElements" [currentPage]="currentPage"
+            [totalPages]="totalPages" [loading]="loading" [selectedLanguage]="selectedLanguage"
+            [searchTerm]="searchTerm" [editingId]="editingTemplateId" [templateStats]="templateStats"
+            (filterChange)="onLanguageFilterChange($event)" (searchChange)="updateSearchTerm($event)"
+            (pageChange)="onPageChange($event)" (edit)="onEditClick($event)" (delete)="onDeleteTemplate($event)"
+            (clearFilters)="onClearFilters()" (createFirst)="scrollToForm()">
+        </app-template-list>
 
         <!-- Delete Modal -->
         <app-delete-popup [isModalOpen]="showDeleteModal" [title]="'Confirm Deletion'" [message]="deleteMessage"

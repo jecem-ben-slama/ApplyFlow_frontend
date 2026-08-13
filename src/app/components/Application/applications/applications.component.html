@@ -1,18 +1,7 @@
+<!-- applications.component.html -->
 <div class="p-4 sm:p-8 max-w-7xl mx-auto space-y-8">
 
     <app-toast-container></app-toast-container>
-    <!-- Toasts -->
-   <!--  <div class="fixed top-4 right-4 z-[60] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm" aria-live="polite">
-        <div *ngFor="let toast of toasts" role="status"
-            class="rounded-2xl px-4 py-3.5 shadow-xl border text-sm flex items-start justify-between gap-3 backdrop-blur-md animate-fade-in transition-all"
-            [ngClass]="toast.type === 'success'
-                ? 'bg-success-bgLight/90 dark:bg-emerald-950/90 border-emerald-200 dark:border-emerald-900 text-success-textLight dark:text-emerald-200'
-                : 'bg-danger-bgLight/90 dark:bg-red-950/90 border-rose-200 dark:border-rose-900 text-danger-textLight dark:text-rose-200'">
-            <span class="flex-1 font-medium leading-relaxed">{{ toast.message }}</span>
-            <button type="button" (click)="dismissToast(toast.id)" aria-label="Dismiss notification"
-                class="shrink-0 opacity-60 hover:opacity-100 transition leading-none p-1">✕</button>
-        </div>
-    </div> -->
 
     <!-- Header & Action Row -->
     <div
@@ -127,8 +116,8 @@
         {{ errorMessage }}
     </div>
 
-    <!-- Data area -->
-    <ng-container *ngIf="isLoading">
+   
+    <ng-container *ngIf="isLoading || isRefreshing">
         <div
             class="rounded-2xl border border-slate-200 dark:border-surface-muted bg-surface-light/70 dark:bg-surface-dark/40 p-4 sm:p-6 shadow-sm">
             <div class="space-y-4">
@@ -138,24 +127,9 @@
         </div>
     </ng-container>
 
-    <ng-container *ngIf="!isLoading">
+    <ng-container *ngIf="!isLoading && !isRefreshing">
 
         <div class="relative">
-            <!-- Lightweight overlay -->
-            <div *ngIf="isRefreshing"
-                class="absolute inset-0 bg-surface-light/60 dark:bg-surface-dark/60 backdrop-blur-[2px] z-10 flex items-start justify-center pt-12 rounded-2xl">
-                <span
-                    class="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-surface-light dark:bg-surface-dark px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-surface-muted">
-                    <svg class="animate-spin h-3.5 w-3.5 text-primary" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                        </circle>
-                        <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                        </path>
-                    </svg>
-                    Updating…
-                </span>
-            </div>
 
             <!-- Table for desktop -->
             <div *ngIf="appPage?.content?.length"
@@ -347,7 +321,7 @@
             </div>
         </div>
 
-        <app-pagination [currentPage]="currentPage" [totalPages]="appTotalPages" [loading]="isLoading"
+        <app-pagination [currentPage]="currentPage" [totalPages]="appTotalPages" [loading]="false"
             (pageChange)="onPageChange($event)">
         </app-pagination>
 
