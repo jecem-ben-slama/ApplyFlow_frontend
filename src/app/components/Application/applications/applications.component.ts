@@ -34,9 +34,12 @@ import { ToastService } from '../../common/toast/toast.service';
 
 type SortableColumn = 'companyName' | 'jobTitle' | 'dateApplied' | 'status';
 
-
-
 interface StatusOption {
+  value: string;
+  label: string;
+}
+
+interface LanguageOption {
   value: string;
   label: string;
 }
@@ -69,6 +72,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   filterStatus = '';
   filterKeyword = '';
+  filterLanguage = '';
+
+  /** Tab control state */
+  activeTab: 'all' | 'compiled' = 'all';
 
   /** Controls the collapsible filter panel on mobile. Always visible on desktop. */
   filtersOpen = false;
@@ -76,7 +83,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   /** Used to render the mobile status pill chips in the filter bar. */
   statusOptions = [
     { label: 'All', value: '' },
-    { label: 'Compiled', value: 'COMPILED' },
     { label: 'Sent', value: 'SENT' },
     { label: 'Viewed', value: 'VIEWED' },
     { label: 'Responded', value: 'RESPONDED' },
@@ -88,22 +94,25 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     { label: 'Withdrawn', value: 'WITHDRAWN' },
   ];
 
+  /** Used to render both the desktop select and the mobile language pill chips. */
+  languageOptions: LanguageOption[] = [
+    { label: 'All', value: '' },
+    { label: 'English', value: 'EN' },
+    { label: 'French', value: 'FR' },
+  ];
+
   availableSkills: Skill[] = [];
   availableCategories: Category[] = [];
   availableCvVariants: CvVariantDto[] = [];
   availableTemplates: TemplateDto[] = [];
 
-  /** True only for full-page loads (initial load, page change, filter change). */
   isLoading = false;
-  /** True while any table refresh is happening — used for lighter, non-skeleton loading UI. */
   isRefreshing = false;
   isSendingEmail = false;
   isModalOpen = false;
   errorMessage = '';
 
-  /** Row ids currently mid status-update, for the per-row spinner. */
   pendingStatusIds = new Set<number>();
-  /** Row ids that hit a send error, keyed to the inline error text shown in that panel. */
   sendErrors = new Map<number, string>();
   showDeleteModal = false;
   deleteTargetIds: number[] = [];
@@ -114,7 +123,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<void>();
   private readonly DEBOUNCE_MS = 400;
 
-  /** Palette used to derive a consistent avatar color per company name on mobile cards. */
   private readonly avatarPalette = [
     'bg-indigo-500',
     'bg-emerald-500',
@@ -124,34 +132,27 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     'bg-violet-500',
   ];
 
-  /** Color classes for the mobile status pill/select, keyed by status value. */
   private readonly statusClassMap: Record<string, string> = {
-  // Neutral / Initial states
-  COMPILED:
-    'bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-  SENT: 
-    'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900',
-  VIEWED: 
-    'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900',
-
-  // Positive progress / Response / Interview states
-  RESPONDED: 
-    'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-900',
-  INTERVIEW_SCHEDULED: 
-    'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
-  INTERVIEWING:
-    'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
-  OFFER: 
-    'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900',
-
-  // Terminal / Negative states ("Bad terminal")
-  REJECTED:
-    'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900',
-  GHOSTED: 
-    'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700',
-  WITHDRAWN: 
-    'bg-stone-100 dark:bg-stone-800/50 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-700',
-};
+    COMPILED:
+      'bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+    SENT: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900',
+    VIEWED:
+      'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900',
+    RESPONDED:
+      'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-900',
+    INTERVIEW_SCHEDULED:
+      'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
+    INTERVIEWING:
+      'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
+    OFFER:
+      'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900',
+    REJECTED:
+      'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900',
+    GHOSTED:
+      'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700',
+    WITHDRAWN:
+      'bg-stone-100 dark:bg-stone-800/50 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-700',
+  };
 
   constructor(
     private appService: ApplicationsService,
@@ -177,33 +178,49 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.searchSubject.complete();
   }
 
+  // ── Tabs ───────────────────────────────────────────────────────────────────
+
+  switchTab(tab: 'all' | 'compiled'): void {
+    if (this.activeTab === tab) return;
+    this.activeTab = tab;
+    this.currentPage = 0;
+    this.expandedAppId = null;
+    this.filterStatus = ''; // Reset status filter when switching tabs
+    this.loadApplicationsPage();
+  }
+
   // ── Filters ────────────────────────────────────────────────────────────────
 
   get hasActiveFilters(): boolean {
-    return !!this.filterStatus || !!this.filterKeyword.trim();
+    return (
+      !!this.filterStatus ||
+      !!this.filterKeyword.trim() ||
+      !!this.filterLanguage
+    );
   }
 
-  /** Number of active filters, shown as a badge on the mobile filter toggle. */
   get activeFilterCount(): number {
-    return (this.filterKeyword.trim() ? 1 : 0) + (this.filterStatus ? 1 : 0);
+    return (
+      (this.filterKeyword.trim() ? 1 : 0) +
+      (this.filterStatus ? 1 : 0) +
+      (this.filterLanguage ? 1 : 0)
+    );
   }
 
   onFilterInput(): void {
-    // If the search box is cleared, reload immediately
     if (!this.filterKeyword.trim()) {
       this.currentPage = 0;
       this.expandedAppId = null;
       this.loadApplicationsPage();
       return;
     }
-
-    // Otherwise debounce while typing
     this.searchSubject.next();
   }
 
   clearFilters(): void {
     this.filterKeyword = '';
     this.filterStatus = '';
+    this.filterLanguage = '';
     this.currentPage = 0;
     this.expandedAppId = null;
     this.loadApplicationsPage();
@@ -223,8 +240,12 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   sortIndicator(column: SortableColumn): string {
-    if (this.sortBy !== column) return '';
+    if (this.sortBy !== column) return '↕';
     return this.direction === 'asc' ? '↑' : '↓';
+  }
+
+  isActiveSort(column: SortableColumn): boolean {
+    return this.sortBy === column;
   }
 
   // ── Data loading ───────────────────────────────────────────────────────────
@@ -233,14 +254,20 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = '';
 
+    const effectiveStatus =
+      this.activeTab === 'compiled'
+        ? 'COMPILED'
+        : this.filterStatus || undefined;
+
     forkJoin({
       applications: this.appService.getAllApplications(
         this.currentPage,
         this.pageSize,
         this.sortBy,
         this.direction,
-        this.filterStatus || undefined,
-        this.filterKeyword || undefined
+        effectiveStatus,
+        this.filterKeyword || undefined,
+        this.filterLanguage || undefined
       ),
       skills: this.skillsService.getAllSkills(0, 100),
       categories: this.categoriesService.getAllCategories(),
@@ -248,8 +275,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       templates: this.templateService.getAllTemplates(0, 100),
     }).subscribe({
       next: (result) => {
-        this.appPage = result.applications;
-        const meta = getPageMeta(result.applications);
+        this.appPage = this.postProcessApplications(result.applications);
+        const meta = getPageMeta(this.appPage);
         this.currentPage = meta.number;
         this.appTotalPages = meta.totalPages;
         this.availableSkills = result.skills.content;
@@ -267,9 +294,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   loadApplicationsPage(): void {
-    // Only show the big skeleton on the very first load for a given view;
-    // subsequent refreshes (filter, sort, page) use a lighter inline indicator
-    // so the filter bar and layout don't jump around.
     const isFirstLoad = !this.appPage;
     if (isFirstLoad) {
       this.isLoading = true;
@@ -277,19 +301,25 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       this.isRefreshing = true;
     }
 
+    const effectiveStatus =
+      this.activeTab === 'compiled'
+        ? 'COMPILED'
+        : this.filterStatus || undefined;
+
     this.appService
       .getAllApplications(
         this.currentPage,
         this.pageSize,
         this.sortBy,
         this.direction,
-        this.filterStatus || undefined,
-        this.filterKeyword || undefined
+        effectiveStatus,
+        this.filterKeyword || undefined,
+        this.filterLanguage || undefined
       )
       .subscribe({
         next: (page) => {
-          this.appPage = page;
-          const meta = getPageMeta(page);
+          this.appPage = this.postProcessApplications(page);
+          const meta = getPageMeta(this.appPage);
           this.currentPage = meta.number;
           this.appTotalPages = meta.totalPages;
           this.isLoading = false;
@@ -303,6 +333,23 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
           this.isRefreshing = false;
         },
       });
+  }
+
+  /** Ensures that if we are on the 'all' tab, 'COMPILED' records are filtered out locally just in case backend returns them. */
+  private postProcessApplications(
+    page: Page<ApplicationResponseDto>
+  ): Page<ApplicationResponseDto> {
+    if (this.activeTab === 'all') {
+      const filteredContent = page.content.filter(
+        (app) => app.status !== 'COMPILED'
+      );
+      return {
+        ...page,
+        content: filteredContent,
+        totalElements: page.totalElements,
+      };
+    }
+    return page;
   }
 
   // ── Pagination ─────────────────────────────────────────────────────────────
@@ -319,11 +366,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.expandedAppId = this.expandedAppId === appId ? null : appId;
   }
 
-  /**
-   * Optimistically updates the row's status in place instead of reloading the
-   * whole page, so a quick status change doesn't cause a layout flicker or
-   * lose scroll position. Rolls back and shows a toast if the request fails.
-   */
   onUpdateStatus(id: number, status: string): void {
     const app = this.appPage?.content.find((a) => a.id === id);
     if (!app) return;
@@ -338,6 +380,12 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         next: () => {
           this.pendingStatusIds.delete(id);
           this.toastService.success(`Status updated to ${status}.`);
+          if (
+            (status === 'COMPILED' && this.activeTab === 'all') ||
+            (previousStatus === 'COMPILED' && this.activeTab === 'compiled')
+          ) {
+            this.loadApplicationsPage();
+          }
         },
         error: (err) => {
           app.status = previousStatus;
@@ -360,7 +408,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         },
         error: (err) =>
           this.toastService.error(
-            'error',
             err.error?.message || 'Could not save notes.'
           ),
       });
@@ -413,7 +460,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   onDelete(id: number): void {
     this.deleteTargetIds = [id];
     this.deleteMessage =
-      'Permanently delete this application  it cannot be undone';
+      'Permanently delete this application — it cannot be undone';
     this.showDeleteModal = true;
   }
 
@@ -440,10 +487,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         this.loadApplicationsPage();
       },
       error: (err) =>
-        this.toastService.error(
-          'error',
-          err.error?.message || 'Could not delete.'
-        ),
+        this.toastService.error(err.error?.message || 'Could not delete.'),
     });
   }
 
@@ -473,6 +517,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       next: (created) => {
         this.toastService.success('Application created successfully!');
         this.isModalOpen = false;
+        this.activeTab = 'compiled';
         this.expandedAppId = created.id;
         this.loadApplicationsPage();
         this.isLoading = false;
@@ -488,12 +533,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   // ── Mobile card helpers ──────────────────────────────────────────────────
 
-  /** Status pill/select color classes for the mobile card view. */
   getStatusClasses(status: string): string {
     return this.statusClassMap[status] ?? this.statusClassMap['COMPILED'];
   }
 
-  /** Deterministic avatar background color derived from the company name. */
   avatarColor(name: string): string {
     const hash = (name || '')
       .split('')
@@ -501,7 +544,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     return this.avatarPalette[hash % this.avatarPalette.length];
   }
 
-  /** Human-friendly relative date used on mobile cards (e.g. "3d ago"). */
   timeAgo(date: string | Date | null | undefined): string {
     if (!date) return 'N/A';
 
@@ -514,5 +556,14 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
     const months = Math.floor(days / 30);
     return months < 12 ? `${months}mo ago` : `${Math.floor(months / 12)}y ago`;
+  }
+
+  /** Resolves a CV variant name from the already-loaded list, avoiding an extra fetch per row/card. */
+  getCvVariantName(cvVariantId: number | string | null | undefined): string {
+    if (!cvVariantId) return '';
+    const variant = this.availableCvVariants.find(
+      (v) => v.id === Number(cvVariantId)
+    );
+    return variant?.name ? variant.name : `CV Variant #${cvVariantId}`;
   }
 }

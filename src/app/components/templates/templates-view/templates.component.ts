@@ -6,7 +6,10 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { getPageMeta, Page, TemplateDto } from 'src/app/models';
 import { TemplateService } from 'src/app/services/template.service';
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
-import { TemplateListComponent } from '../template-list/template-list.component';
+import {
+  TemplateListComponent,
+  TemplateSortColumn,
+} from '../template-list/template-list.component';
 import {
   TemplateFormComponent,
   TemplateData,
@@ -67,6 +70,11 @@ export class TemplatesComponent implements OnInit, OnDestroy {
   totalElements = 0;
   selectedLanguage: string | undefined = undefined;
   searchTerm = '';
+
+  // Sort state, owned here and passed down to app-template-list — same
+  // pattern as currentPage/selectedLanguage above.
+  sortBy: TemplateSortColumn = 'name';
+  direction: 'asc' | 'desc' = 'asc';
 
   // Template performance stats, keyed by template name (StatMetricDto.categoryName)
   templateStats: { [categoryName: string]: StatMetricDto } = {};
@@ -174,8 +182,8 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       .getAllTemplates(
         this.currentPage,
         this.pageSize,
-        'id',
-        'asc',
+        this.sortBy,
+        this.direction,
         this.selectedLanguage,
         this.searchTerm || undefined
       )
@@ -240,6 +248,17 @@ export class TemplatesComponent implements OnInit, OnDestroy {
   onClearFilters(): void {
     this.searchTerm = '';
     this.selectedLanguage = undefined;
+    this.currentPage = 0;
+    this.loadTemplates();
+  }
+
+  onSortChange(column: TemplateSortColumn): void {
+    if (this.sortBy === column) {
+      this.direction = this.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortBy = column;
+      this.direction = 'asc';
+    }
     this.currentPage = 0;
     this.loadTemplates();
   }

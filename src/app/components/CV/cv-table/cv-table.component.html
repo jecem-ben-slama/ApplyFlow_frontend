@@ -10,18 +10,28 @@
                         <button type="button" (click)="onSortClick('name')"
                             class="inline-flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
                             Name
-                            <mat-icon *ngIf="sortBy === 'name'" class="!text-sm !w-3.5 !h-3.5">
+                            <mat-icon *ngIf="sortBy === 'name'; else nameUnsorted"
+                                class="!text-sm !w-3.5 !h-3.5 text-primary">
                                 {{ direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
                             </mat-icon>
+                            <ng-template #nameUnsorted>
+                                <mat-icon
+                                    class="!text-sm !w-3.5 !h-3.5 text-slate-300 dark:text-slate-600">unfold_more</mat-icon>
+                            </ng-template>
                         </button>
                     </th>
                     <th class="py-3.5 px-5 w-32">
                         <button type="button" (click)="onSortClick('language')"
                             class="inline-flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
                             Language
-                            <mat-icon *ngIf="sortBy === 'language'" class="!text-sm !w-3.5 !h-3.5">
+                            <mat-icon *ngIf="sortBy === 'language'; else langUnsorted"
+                                class="!text-sm !w-3.5 !h-3.5 text-primary">
                                 {{ direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
                             </mat-icon>
+                            <ng-template #langUnsorted>
+                                <mat-icon
+                                    class="!text-sm !w-3.5 !h-3.5 text-slate-300 dark:text-slate-600">unfold_more</mat-icon>
+                            </ng-template>
                         </button>
                     </th>
                     <th class="py-3.5 px-5">File URL</th>
@@ -34,8 +44,11 @@
                     <td class="py-4 px-5 text-slate-900 dark:text-slate-100 font-semibold">{{ cv.name }}</td>
                     <td class="py-4 px-5">
                         <span
-                            class="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900">
-                            {{ cv.language | uppercase }}
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium uppercase tracking-wider border shadow-sm transition-colors duration-150"
+                            [ngClass]="(cv.language.toLowerCase() === 'fr' || cv.language.toLowerCase() === 'french')
+                        ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                        : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
+                            {{ cv.language }}
                         </span>
                     </td>
                     <td class="py-4 px-5 text-slate-600 dark:text-slate-400 max-w-xs">

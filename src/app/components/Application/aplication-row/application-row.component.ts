@@ -1,7 +1,8 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApplicationResponseDto } from '../../../models';
+import { CvVariantsService } from 'src/app/services/cv-variants.service';
 
 @Component({
   selector: '[app-application-row]',
@@ -24,6 +25,37 @@ export class ApplicationRowComponent {
   @Output() copyBody = new EventEmitter<string>();
   @Output() notesSaved = new EventEmitter<{ appId: number; notes: string }>();
   @Output() selectToggle = new EventEmitter<number>();
+
+  private cvVariantService = inject(CvVariantsService);
+
+  resolvedVariantName: string | null = null;
+  isLoadingVariant = false;
+
+  fetchVariantName(): void {
+    if (
+      this.resolvedVariantName ||
+      this.isLoadingVariant ||
+      !this.app.cvVariantId
+    ) {
+      return;
+    }
+
+    this.isLoadingVariant = true;
+
+    this.cvVariantService.getCvVariantById(this.app.cvVariantId).subscribe({
+      next: (variant) => {
+        // Change 'variant.name' to whatever property holds the name in your CvVariantDto (e.g. variant.title, variant.fileName)
+        this.resolvedVariantName =
+          variant.name ?? 'CV Variant #' + this.app.cvVariantId;
+        this.isLoadingVariant = false;
+      },
+      error: () => {
+        this.resolvedVariantName = 'CV Variant #' + this.app.cvVariantId;
+        this.isLoadingVariant = false;
+      },
+    });
+  }
+
   private readonly statusClassMap: Record<string, string> = {
     // Neutral / Initial states
     COMPILED:

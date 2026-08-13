@@ -32,7 +32,10 @@
             [searchTerm]="searchTerm" [editingId]="editingTemplateId" [templateStats]="templateStats"
             (filterChange)="onLanguageFilterChange($event)" (searchChange)="updateSearchTerm($event)"
             (pageChange)="onPageChange($event)" (edit)="onEditClick($event)" (delete)="onDeleteTemplate($event)"
-            (clearFilters)="onClearFilters()" (createFirst)="scrollToForm()">
+            (clearFilters)="onClearFilters()" (createFirst)="scrollToForm()"
+             [sortBy]="sortBy"
+  [direction]="direction"
+  (sortChange)="onSortChange($event)">
         </app-template-list>
 
         <!-- Delete Modal -->
