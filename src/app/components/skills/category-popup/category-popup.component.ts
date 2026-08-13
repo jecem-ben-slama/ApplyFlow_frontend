@@ -1,4 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  Output,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -47,7 +53,15 @@ export class CategoryPopupComponent {
   internalName = '';
   internalError = '';
 
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.isModalOpen && !this.isLoading) {
+      this.onCancel();
+    }
+  }
+
   onCancel(): void {
+    if (this.isLoading) return;
     this.close.emit();
   }
 

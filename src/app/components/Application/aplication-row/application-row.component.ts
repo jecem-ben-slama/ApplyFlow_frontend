@@ -24,4 +24,34 @@ export class ApplicationRowComponent {
   @Output() copyBody = new EventEmitter<string>();
   @Output() notesSaved = new EventEmitter<{ appId: number; notes: string }>();
   @Output() selectToggle = new EventEmitter<number>();
+  private readonly statusClassMap: Record<string, string> = {
+    // Neutral / Initial states
+    COMPILED:
+      'bg-gray-100 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600',
+    SENT: 'bg-cyan-100 dark:bg-cyan-950/50 text-white-700 dark:text-white-300 border-cyan-300 dark:border-cyan-800',
+    VIEWED:
+      'bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-800',
+
+    // Positive progress / Response / Interview states
+    RESPONDED:
+      'bg-lime-50 dark:bg-lime-950/50 text-lime-700 dark:text-lime-300 border-lime-300 dark:border-lime-800',
+    INTERVIEW_SCHEDULED:
+      'bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-800',
+    INTERVIEWING:
+      'bg-yellow-50 dark:bg-yellow-950/50 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-800',
+    OFFER:
+      'bg-green-50 dark:bg-green-950/50 text-green-700 dark:text-green-300 border-green-300 dark:border-green-800',
+
+    // Terminal / Negative states
+    REJECTED:
+      'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-300 dark:border-red-800',
+    GHOSTED:
+      'bg-neutral-100 dark:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-600',
+    WITHDRAWN:
+      'bg-fuchsia-50 dark:bg-fuchsia-950/50 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-300 dark:border-fuchsia-800',
+  };
+
+  getStatusClasses(status: string): string {
+    return this.statusClassMap[status] ?? this.statusClassMap['COMPILED'];
+  }
 }

@@ -1,12 +1,13 @@
 <div class="p-6 md:p-8 space-y-8 text-slate-900 dark:text-slate-100 max-w-7xl mx-auto w-full">
+    <app-toast-container></app-toast-container>
 
     <!-- Page header -->
     <div
         class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 dark:border-surface-muted pb-6">
         <div>
             <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Manage Your Skills</h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Add, update, and organize skills and
-                translations.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Add, update, and organize skills and bullet
+                points used in your email.</p>
         </div>
 
         <div aria-live="polite"
@@ -20,20 +21,6 @@
                 categories</span>
         </div>
     </div>
-
-    <!-- Error banner -->
-    <div *ngIf="errorMessage" role="alert"
-        class="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-danger-bgLight dark:bg-danger-bgDark px-4 py-3 text-sm text-danger-textLight dark:text-danger-textDark shadow-sm">
-        <div class="flex items-center gap-2.5">
-            <mat-icon class="!w-4.5 !h-4.5 text-base">error_outline</mat-icon>
-            <span>{{ errorMessage }}</span>
-        </div>
-        <button type="button" (click)="dismissError()" aria-label="Dismiss error"
-            class="inline-flex items-center justify-center rounded-xl p-1.5 text-rose-400 hover:opacity-80 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors">
-            <mat-icon class="!w-4 !h-4 text-sm">close</mat-icon>
-        </button>
-    </div>
-
     <!-- Search bar -->
     <div class="space-y-3">
         <div class="relative">
@@ -105,45 +92,48 @@
 
         <!-- Shell stays mounted for every load after the first — filter/search changes just refresh the results -->
         <ng-container *ngIf="!initialLoading">
-            <app-skill-form [categories]="categories" [editingSkillId]="editingSkillId"
-                [isFormExpanded]="isFormExpanded" [initialData]="newSkillData" [loading]="loading"
-                (save)="onSaveSkill($event)" (cancel)="resetForm()">
-            </app-skill-form>
-            <!-- space between cards -->
-            <div class="h-1"></div>
             <app-category-list [categories]="categories" [selectedFilterCategoryId]="selectedFilterCategoryId"
                 (filterChange)="onFilterChange($event)" (addCategory)="openAddCategoryModal()"
                 (editCategory)="onEditCategoryClicked($event)" (deleteCategory)="onDeleteCategoryClicked($event)">
             </app-category-list>
+            <!-- space between cards -->
+            <div class="h-1"></div>
+            <app-skill-form #skillForm [categories]="categories" [editingSkillId]="editingSkillId"
+                [isFormExpanded]="isFormExpanded" [initialData]="newSkillData" [loading]="loading"
+                (save)="onSaveSkill($event)" (cancel)="resetForm()">
+            </app-skill-form>
 
             <!-- Results region: dims briefly while a filter/search/page change is in flight, but never unmounts -->
             <div [class.opacity-50]="loading" [class.pointer-events-none]="loading"
                 class="transition-opacity duration-150">
 
                 <!-- Empty state -->
-                <div *ngIf="skills.length === 0 && !loading"
-                    class="flex flex-col items-center justify-center py-16 px-6 text-center bg-surface-light dark:bg-surface border border-dashed border-slate-200 dark:border-surface-muted rounded-3xl shadow-sm">
-                    <div
-                        class="w-12 h-12 rounded-2xl bg-background-light dark:bg-surface-muted/40 flex items-center justify-center mb-4 shadow-sm">
-                        <mat-icon class="!w-6 !h-6 text-2xl text-slate-300 dark:text-slate-600">search_off</mat-icon>
-                    </div>
-                    <p class="font-bold text-slate-700 dark:text-slate-200">No skills found</p>
-                    <p class="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed">
-                        {{ searchTerm || selectedFilterCategoryId
-                        ? 'Try adjusting your search or filter.'
-                        : 'Add your first skill using the form above.' }}
-                    </p>
+            <div *ngIf="skills.length === 0 && !loading"
+                class="flex flex-col items-center justify-center py-16 px-6 text-center bg-surface-light dark:bg-surface border border-dashed border-slate-200 dark:border-surface-muted rounded-3xl shadow-sm">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-background-light dark:bg-surface-muted/40 flex items-center justify-center mb-4 shadow-sm">
+                    <mat-icon class="!w-6 !h-6 text-2xl text-slate-300 dark:text-slate-600">search_off</mat-icon>
                 </div>
+                <p class="font-bold text-slate-700 dark:text-slate-200">No skills found</p>
+                <p class="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed">
+                    {{ searchTerm || selectedFilterCategoryId
+                    ? 'Try adjusting your search or filter.'
+                    : 'Add your first skill using the form above.' }}
+                </p>
+                <button *ngIf="searchTerm || selectedFilterCategoryId" type="button" (click)="clearAllFilters()"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline underline-offset-4 ml-1 font-semibold">
+                    Clear all
+                </button>
+            </div>
 
                 <!-- Lightweight table skeleton while a filter/search/page change loads, without touching the rest of the page -->
                 <app-skeleton *ngIf="skills.length === 0 && loading" type="table" [itemsCount]="5" class="block">
                 </app-skeleton>
 
                 <app-skill-table *ngIf="skills.length > 0" [skills]="skills" [loading]="loading"
-                    [totalPages]="totalPages" [currentPage]="currentPage" [searchTerm]="searchTerm"
-                    [selectedFilterCategoryId]="selectedFilterCategoryId" (searchChange)="onSearchChange($event)"
-                    (pageChange)="onPageChange($event)" (editSkill)="onEditSkillClicked($event)"
-                    (deleteSkill)="onDeleteSkillClicked($event)">
+                    [totalPages]="totalPages" [currentPage]="currentPage"
+                    [selectedFilterCategoryId]="selectedFilterCategoryId" (pageChange)="onPageChange($event)"
+                    (editSkill)="onEditSkillClicked($event)" (deleteSkill)="onDeleteSkillClicked($event)">
                 </app-skill-table>
             </div>
         </ng-container>

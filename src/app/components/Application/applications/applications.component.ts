@@ -29,14 +29,12 @@ import { EmailPanelComponent } from '../email-panel/email-panel.component';
 import { MatIconModule } from '@angular/material/icon';
 import { CategoryService } from 'src/app/services/category.service';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
+import { ToastContainerComponent } from '../../common/toast/toast-container.component';
+import { ToastService } from '../../common/toast/toast.service';
 
 type SortableColumn = 'companyName' | 'jobTitle' | 'dateApplied' | 'status';
 
-interface Toast {
-  id: number;
-  type: 'success' | 'error';
-  message: string;
-}
+
 
 interface StatusOption {
   value: string;
@@ -56,6 +54,7 @@ interface StatusOption {
     ApplicationRowComponent,
     EmailPanelComponent,
     SkeletonComponent,
+    ToastContainerComponent,
   ],
   templateUrl: './applications.component.html',
   styleUrls: ['./applications.component.css'],
@@ -75,12 +74,18 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   filtersOpen = false;
 
   /** Used to render the mobile status pill chips in the filter bar. */
-  statusOptions: StatusOption[] = [
-    { value: '', label: 'All' },
-    { value: 'COMPILED', label: 'Compiled' },
-    { value: 'SENT', label: 'Sent' },
-    { value: 'INTERVIEWING', label: 'Interviewing' },
-    { value: 'REJECTED', label: 'Rejected' },
+  statusOptions = [
+    { label: 'All', value: '' },
+    { label: 'Compiled', value: 'COMPILED' },
+    { label: 'Sent', value: 'SENT' },
+    { label: 'Viewed', value: 'VIEWED' },
+    { label: 'Responded', value: 'RESPONDED' },
+    { label: 'Interview Scheduled', value: 'INTERVIEW_SCHEDULED' },
+    { label: 'Interviewing', value: 'INTERVIEWING' },
+    { label: 'Offer', value: 'OFFER' },
+    { label: 'Rejected', value: 'REJECTED' },
+    { label: 'Ghosted', value: 'GHOSTED' },
+    { label: 'Withdrawn', value: 'WITHDRAWN' },
   ];
 
   availableSkills: Skill[] = [];
@@ -100,10 +105,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   pendingStatusIds = new Set<number>();
   /** Row ids that hit a send error, keyed to the inline error text shown in that panel. */
   sendErrors = new Map<number, string>();
-
-  toasts: Toast[] = [];
-  private toastCounter = 0;
-
   showDeleteModal = false;
   deleteTargetIds: number[] = [];
   deleteMessage = 'Permanently purge this compiled tracking profile record?';
@@ -125,14 +126,32 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   /** Color classes for the mobile status pill/select, keyed by status value. */
   private readonly statusClassMap: Record<string, string> = {
-    COMPILED:
-      'bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-    SENT: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900',
-    INTERVIEWING:
-      'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
-    REJECTED:
-      'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900',
-  };
+  // Neutral / Initial states
+  COMPILED:
+    'bg-slate-100 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+  SENT: 
+    'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900',
+  VIEWED: 
+    'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900',
+
+  // Positive progress / Response / Interview states
+  RESPONDED: 
+    'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-900',
+  INTERVIEW_SCHEDULED: 
+    'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
+  INTERVIEWING:
+    'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
+  OFFER: 
+    'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900',
+
+  // Terminal / Negative states ("Bad terminal")
+  REJECTED:
+    'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900',
+  GHOSTED: 
+    'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700',
+  WITHDRAWN: 
+    'bg-stone-100 dark:bg-stone-800/50 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-700',
+};
 
   constructor(
     private appService: ApplicationsService,
@@ -140,7 +159,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     private categoriesService: CategoryService,
     private cvService: CvVariantsService,
     private templateService: TemplateService,
-    private emailService: EmailService
+    private emailService: EmailService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -278,6 +298,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.errorMessage =
             err.error?.message || 'Could not fetch applications.';
+          this.toastService.error(this.errorMessage);
           this.isLoading = false;
           this.isRefreshing = false;
         },
@@ -316,13 +337,12 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.pendingStatusIds.delete(id);
-          this.pushToast('success', `Status updated to ${status}.`);
+          this.toastService.success(`Status updated to ${status}.`);
         },
         error: (err) => {
           app.status = previousStatus;
           this.pendingStatusIds.delete(id);
-          this.pushToast(
-            'error',
+          this.toastService.error(
             err.error?.message || 'Could not update status.'
           );
         },
@@ -336,10 +356,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         next: () => {
           const app = this.appPage?.content.find((a) => a.id === appId);
           if (app) app.notes = notes;
-          this.pushToast('success', 'Notes saved.');
+          this.toastService.success('Notes saved.');
         },
         error: (err) =>
-          this.pushToast(
+          this.toastService.error(
             'error',
             err.error?.message || 'Could not save notes.'
           ),
@@ -365,7 +385,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (msg) => {
-          this.pushToast('success', msg || 'Email sent!');
+          this.toastService.success(msg || 'Email sent!');
           this.onUpdateStatus(app.id, 'SENT');
           this.isSendingEmail = false;
         },
@@ -384,8 +404,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   onCopyBody(text: string): void {
     navigator.clipboard
       .writeText(text)
-      .then(() => this.pushToast('success', 'Copied to clipboard.'))
-      .catch(() => this.pushToast('error', 'Could not copy to clipboard.'));
+      .then(() => this.toastService.success('Copied to clipboard.'))
+      .catch(() => this.toastService.error('Could not copy to clipboard.'));
   }
 
   // ── Delete ─────────────────────────────────────────────────────────────────
@@ -393,7 +413,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   onDelete(id: number): void {
     this.deleteTargetIds = [id];
     this.deleteMessage =
-      'Permanently purge this compiled tracking profile record?';
+      'Permanently delete this application  it cannot be undone';
     this.showDeleteModal = true;
   }
 
@@ -407,8 +427,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
     forkJoin(requests).subscribe({
       next: () => {
-        this.pushToast(
-          'success',
+        this.toastService.success(
           ids.length > 1
             ? `${ids.length} applications deleted.`
             : 'Application deleted.'
@@ -421,7 +440,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         this.loadApplicationsPage();
       },
       error: (err) =>
-        this.pushToast('error', err.error?.message || 'Could not delete.'),
+        this.toastService.error(
+          'error',
+          err.error?.message || 'Could not delete.'
+        ),
     });
   }
 
@@ -449,7 +471,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
     this.appService.createApplication(payload).subscribe({
       next: (created) => {
-        this.pushToast('success', 'Application created successfully!');
+        this.toastService.success('Application created successfully!');
         this.isModalOpen = false;
         this.expandedAppId = created.id;
         this.loadApplicationsPage();
@@ -462,18 +484,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         );
       },
     });
-  }
-
-  // ── Toasts ─────────────────────────────────────────────────────────────────
-
-  private pushToast(type: Toast['type'], message: string): void {
-    const id = ++this.toastCounter;
-    this.toasts.push({ id, type, message });
-    setTimeout(() => this.dismissToast(id), 4000);
-  }
-
-  dismissToast(id: number): void {
-    this.toasts = this.toasts.filter((t) => t.id !== id);
   }
 
   // ── Mobile card helpers ──────────────────────────────────────────────────

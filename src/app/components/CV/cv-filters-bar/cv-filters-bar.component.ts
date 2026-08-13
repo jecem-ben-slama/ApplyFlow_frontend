@@ -18,5 +18,4 @@ export class CvFiltersBarComponent {
   @Output() searchChange = new EventEmitter<string>();
   @Output() clearSearch = new EventEmitter<void>();
   @Output() addClick = new EventEmitter<void>();
-  @Output() clearAllFilters = new EventEmitter<void>();
 }

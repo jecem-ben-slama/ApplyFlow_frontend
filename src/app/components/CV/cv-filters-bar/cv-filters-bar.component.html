@@ -16,7 +16,7 @@
         </div>
 
         <button (click)="addClick.emit()"
-            class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary hover:opacity-90 text-white text-sm font-semibold px-5 py-2.5 transition-all shadow-sm shadow-primary/10 whitespace-nowrap">
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary hover:opacity-90 text-white text-sm  px-5 py-2.5 transition-all shadow-sm shadow-primary/10 whitespace-nowrap">
             <span class="text-base leading-none">+</span>
             Add Attachment
         </button>
@@ -33,14 +33,9 @@
             <mat-icon class="text-base">close</mat-icon>
         </button>
     </div>
-
     <div *ngIf="resultsLabel || hasActiveFilters" class="flex items-center justify-between gap-3 text-xs">
         <span class="text-slate-500 dark:text-slate-400 font-medium">{{ resultsLabel }}</span>
-        <button *ngIf="hasActiveFilters" type="button" (click)="clearAllFilters.emit()"
-            class="inline-flex items-center gap-1.5 text-primary hover:underline font-semibold">
-            <mat-icon class="!text-sm !w-3.5 !h-3.5">filter_alt_off</mat-icon>
-            Clear all filters
-        </button>
     </div>
+  
 
 </div>

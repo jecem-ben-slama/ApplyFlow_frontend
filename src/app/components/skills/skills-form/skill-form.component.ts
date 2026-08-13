@@ -149,6 +149,18 @@ export class SkillFormComponent implements OnChanges {
       : 'border-slate-200 dark:border-slate-800 focus:ring-indigo-500/20 focus:border-indigo-500';
   }
 
+  /** Color-codes a character counter as it approaches/exceeds the max length. */
+  counterClasses(length: number | undefined): string {
+    const len = length ?? 0;
+    if (len > SkillFormComponent.MAX_SENTENCE_LENGTH) {
+      return 'text-danger-textLight dark:text-danger-textDark font-semibold';
+    }
+    if (len >= SkillFormComponent.MAX_SENTENCE_LENGTH - 20) {
+      return 'text-amber-600 dark:text-amber-400 font-semibold';
+    }
+    return 'text-slate-400';
+  }
+
   private resetValidationState(): void {
     this.errorMessage = '';
     this.fieldErrors = {};

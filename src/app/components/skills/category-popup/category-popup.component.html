@@ -1,6 +1,7 @@
-<div *ngIf="isModalOpen"
+<div *ngIf="isModalOpen" (click)="onCancel()"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-    <div
+    <div (click)="$event.stopPropagation()" role="dialog" aria-modal="true"
+        [attr.aria-label]="isEditing ? 'Edit Category' : 'New Category'"
         class="w-full max-w-xl rounded-3xl border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-surface p-6 shadow-2xl overflow-hidden relative">
 
         <!-- accent bar -->
@@ -32,7 +33,7 @@
                     Category Name
                 </label>
                 <input type="text" name="categoryName" [(ngModel)]="internalName" required minlength="2"
-                    placeholder="e.g., Frontend, Backend, DevOps"
+                    placeholder="e.g., Frontend, Backend, DevOps" autofocus
                     class="w-full rounded-2xl border border-slate-200 dark:border-surface-muted bg-background-light dark:bg-background px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm" />
 
                 <ng-container *ngIf="categoryForm.controls['categoryName'] as ctrl">

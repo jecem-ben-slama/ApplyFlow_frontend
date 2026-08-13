@@ -7,12 +7,12 @@ import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.com
 import { PaginationComponent } from '../../common/pagination/pagination.component';
 import { CvFiltersBarComponent } from '../cv-filters-bar/cv-filters-bar.component';
 import { CvTableComponent, CvSortableColumn } from '../cv-table/cv-table.component';
-import { CvFeedbackComponent } from '../cv-feedback/cv-feedback.component';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 import { ToastService } from '../../common/toast/toast.service';
 import { ToastContainerComponent } from '../../common/toast/toast-container.component';
+import { MatIconModule } from "@angular/material/icon";
 
 @Component({
   selector: 'app-cv-variants',
@@ -24,10 +24,10 @@ import { ToastContainerComponent } from '../../common/toast/toast-container.comp
     DeletePopupComponent,
     CvFiltersBarComponent,
     CvTableComponent,
-    CvFeedbackComponent,
     ToastContainerComponent,
     SkeletonComponent,
-  ],
+    MatIconModule
+],
   templateUrl: './cv-variants.component.html',
 })
 export class CvVariantsComponent implements OnInit, OnDestroy {

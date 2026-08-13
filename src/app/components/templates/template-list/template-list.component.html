@@ -1,162 +1,305 @@
+<!-- template-list.component.html -->
 <div
     class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-2xl p-4 md:p-6 shadow-sm space-y-5">
 
-    <!-- Filter & Search Bar Header -->
+    <!-- Filter & Search Bar Header: stays mounted and interactive during any
+         load — people should be able to keep typing/switching filters
+         without the controls disappearing out from under them. -->
     <app-template-filter [selectedLanguage]="selectedLanguage" [totalElements]="totalElements"
         [currentCount]="templates.length" [searchTerm]="searchTerm" (filterChange)="filterChange.emit($event)"
         (searchChange)="searchChange.emit($event)">
     </app-template-filter>
 
-    <!-- TABLE VIEW (Desktop) -->
-    <div
-        class="hidden md:block overflow-x-auto rounded-2xl border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-background shadow-sm">
-        <table class="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-                <tr
-                    class="border-b border-slate-100 dark:border-surface-muted text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider bg-slate-50/80 dark:bg-surface-muted/30">
-                    <th class="py-4 px-5">Template Name</th>
-                    <th class="py-4 px-5 w-24">Lang</th>
-                    <th class="py-4 px-5 w-1/2">Email Subject</th>
-                    <th class="py-4 px-5 text-right w-28">Actions</th>
-                </tr>
-            </thead>
+    <!-- Content: skeleton while a search/filter/page change is loading,
+         list otherwise. Only this part swaps — never the filter bar above. -->
+    <ng-container *ngIf="loading; else loadedContent">
+        <app-skeleton type="table" [itemsCount]="5" class="hidden md:block"></app-skeleton>
+        <app-skeleton type="card" [itemsCount]="3" class="block md:hidden"></app-skeleton>
+    </ng-container>
 
-            <tbody class="text-xs divide-y divide-slate-100 dark:divide-surface-muted/60">
-                <tr *ngFor="let tmpl of templates"
-                    class="hover:bg-slate-50/60 dark:hover:bg-surface-muted/30 transition-colors group"
-                    [ngClass]="{ 'bg-primary/5 dark:bg-primary/15': editingId === tmpl.id }">
+    <ng-template #loadedContent>
 
-                    <td
-                        class="py-4 px-5 font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap flex items-center gap-2">
-                        <span class="h-2 w-2 rounded-full shrink-0"
-                            [ngClass]="editingId === tmpl.id ? 'bg-primary animate-pulse' : 'bg-slate-300 dark:bg-slate-600'"></span>
-                        {{ tmpl.name }}
-                    </td>
-
-                    <td class="py-4 px-5 whitespace-nowrap">
-                        <span
-                            class="inline-block text-[10px] font-semibold px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 dark:bg-surface-muted/50 dark:text-slate-300 dark:border-surface-muted uppercase tracking-wider">
-                            {{ tmpl.language }}
-                        </span>
-                    </td>
-
-                    <td class="py-4 px-5 text-slate-600 dark:text-slate-400 max-w-0 truncate"
-                        [title]="tmpl.subjectTemplate">
-                        {{ tmpl.subjectTemplate }}
-                    </td>
-
-                    <td class="py-4 px-5 text-right whitespace-nowrap">
-                        <div
-                            class="inline-flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
-                            <button (click)="edit.emit(tmpl)" title="Edit Template"
-                                class="text-slate-400 hover:text-primary dark:hover:text-primary-light transition-all p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-surface-muted/60 inline-flex items-center justify-center">
-                                <mat-icon class="text-base leading-none">edit</mat-icon>
-                            </button>
-
-                            <button (click)="delete.emit(tmpl.id)" title="Delete Template"
-                                class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center justify-center">
-                                <mat-icon class="text-base leading-none">delete</mat-icon>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- MOBILE VIEW Cards -->
-    <div class="block md:hidden space-y-3">
-        <div *ngFor="let tmpl of templates"
-            class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-2xl overflow-hidden shadow-sm transition-all duration-200"
-            [ngClass]="{ 'ring-2 ring-primary/40 border-primary bg-primary/5 dark:bg-primary/10': editingId === tmpl.id }">
-
-            <!-- Clickable Header Row -->
-            <div role="button" tabindex="0" (click)="tmpl.isExpanded = !tmpl.isExpanded"
-                (keydown.enter)="tmpl.isExpanded = !tmpl.isExpanded"
-                (keydown.space)="tmpl.isExpanded = !tmpl.isExpanded"
-                class="w-full flex items-center justify-between p-4 gap-3 bg-slate-50/50 dark:bg-surface-muted/10 active:bg-slate-100 dark:active:bg-surface-muted/30 transition cursor-pointer">
-
-                <div class="min-w-0 flex-1 flex flex-col gap-1.5">
-                    <h4
-                        class="text-sm font-bold text-slate-900 dark:text-slate-100 break-words flex items-center gap-2">
-                        <span class="h-1.5 w-1.5 rounded-full shrink-0"
-                            [ngClass]="editingId === tmpl.id ? 'bg-primary animate-pulse' : 'bg-slate-300 dark:bg-slate-600'"></span>
-                        {{ tmpl.name }}
-                    </h4>
-                    <span
-                        class="text-[9px] font-bold px-2.5 py-0.5 rounded-md bg-slate-100 border border-slate-200 dark:bg-surface-muted dark:text-slate-300 dark:border-surface-muted uppercase tracking-wider w-fit">
-                        {{ tmpl.language }}
-                    </span>
-                </div>
-
-                <div class="flex items-center gap-1.5 shrink-0 text-slate-400 py-1 px-2">
-                    <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                        {{ tmpl.isExpanded ? 'Less' : 'Details' }}
-                    </span>
-                    <mat-icon class="text-base leading-none transition-transform duration-200"
-                        [class.rotate-180]="tmpl.isExpanded">expand_more</mat-icon>
-                </div>
-            </div>
-
-            <!-- Expanded Details & Action Footer -->
-            <div *ngIf="tmpl.isExpanded"
-                class="p-4 bg-background-light dark:bg-surface border-t border-slate-100 dark:border-surface-muted/50 space-y-4 animate-fade-in text-xs">
-
-                <!-- Subject View -->
-                <div>
-                    <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                        Subject Frame
-                    </span>
-                    <p
-                        class="text-slate-700 dark:text-slate-300 break-words leading-relaxed bg-slate-50 dark:bg-surface-muted/30 p-3 rounded-xl border border-slate-200/60 dark:border-surface-muted">
-                        {{ tmpl.subjectTemplate }}
-                    </p>
-                </div>
-
-                <!-- Body Template View -->
-                <div>
-                    <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                        Body Template Content
-                    </span>
-                    <pre
-                        class="font-sans whitespace-pre-wrap text-slate-700 dark:text-slate-300 break-words leading-relaxed bg-slate-50 dark:bg-surface-muted/30 p-3 rounded-xl border border-slate-200/60 dark:border-surface-muted max-h-60 overflow-y-auto">{{ tmpl.bodyTemplate }}</pre>
-                </div>
-
-                <!-- Action Buttons Footer -->
-                <div
-                    class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-surface-muted/40">
-                    <button type="button" (click)="edit.emit(tmpl)"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-surface-muted hover:bg-primary/10 hover:text-primary transition">
-                        <mat-icon class="text-base leading-none">edit</mat-icon>
-                        Edit Template
-                    </button>
-
-                    <button type="button" (click)="delete.emit(tmpl.id)"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition">
-                        <mat-icon class="text-base leading-none">delete</mat-icon>
-                        Delete
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- EMPTY STATE -->
-    <div *ngIf="templates.length === 0 && !loading"
-        class="py-16 px-4 text-center border border-dashed border-slate-200 dark:border-surface-muted rounded-2xl bg-slate-50/50 dark:bg-surface-muted/10">
+        <!-- TABLE VIEW (Desktop) -->
         <div
-            class="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 text-lg font-bold">
-            📝
-        </div>
-        <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">No messaging structures found</p>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-            No templates configured matching your search or filter choices in this workspace segment.
-        </p>
-    </div>
+            class="hidden md:block overflow-hidden rounded-2xl border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-background shadow-sm">
+            <table class="w-full table-fixed text-left border-collapse">
+                <thead>
+                    <tr
+                        class="border-b border-slate-100 dark:border-surface-muted text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider bg-slate-50/80 dark:bg-surface-muted/30">
+                        <th class="py-4 px-5 w-[28%]">Template Name</th>
+                        <th class="py-4 px-3 w-[10%]">Lang</th>
+                        <th class="py-4 px-3 w-[36%]">Email Subject</th>
+                        <th class="py-4 px-3 w-[14%]">Success Rate</th>
+                        <th class="py-4 px-3 text-right w-[12%]">Actions</th>
+                    </tr>
+                </thead>
 
-    <!-- PAGINATION -->
-    <app-pagination [currentPage]="currentPage" [totalPages]="totalPages" [loading]="loading"
-        (pageChange)="pageChange.emit($event)">
-    </app-pagination>
+                <tbody class="text-xs divide-y divide-slate-100 dark:divide-surface-muted/60">
+                    <ng-container *ngFor="let tmpl of templates; trackBy: trackByTemplateId">
+
+                        <!-- Row: acts like a Gmail inbox row -->
+                        <tr (click)="toggleExpand(tmpl)"
+                            class="hover:bg-slate-50/60 dark:hover:bg-surface-muted/30 transition-colors group cursor-pointer select-none"
+                            [ngClass]="{
+                                    'bg-primary/5 dark:bg-primary/15': editingId === tmpl.id,
+                                    'bg-slate-50/80 dark:bg-surface-muted/20': tmpl.isExpanded
+                                }">
+
+                            <td class="py-4 px-5 font-bold text-slate-900 dark:text-slate-100">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <!-- Avatar circle, Gmail-style -->
+                                    <div class="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+                                        [ngStyle]="{ 'background-color': avatarColor(tmpl.name) }">
+                                        {{ initials(tmpl.name) }}
+                                    </div>
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span class="h-2 w-2 rounded-full shrink-0"
+                                            [ngClass]="editingId === tmpl.id ? 'bg-primary animate-pulse' : 'bg-slate-300 dark:bg-slate-600'"></span>
+                                        <span class="truncate">{{ tmpl.name }}</span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="py-4 px-3">
+                                <span
+                                    class="inline-block text-[10px] font-semibold px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 dark:bg-surface-muted/50 dark:text-slate-300 dark:border-surface-muted uppercase tracking-wider">
+                                    {{ tmpl.language }}
+                                </span>
+                            </td>
+
+                            <td class="py-4 px-3 text-slate-600 dark:text-slate-400 truncate"
+                                [title]="tmpl.subjectTemplate">
+                                {{ tmpl.subjectTemplate }}
+                            </td>
+
+                            <td class="py-4 px-3">
+                                <span
+                                    class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl border"
+                                    [ngClass]="successRateClasses(getSuccessRate(tmpl))"
+                                    [title]="getStat(tmpl) ? (getStat(tmpl)?.successCount) + ' / ' + (getStat(tmpl)?.totalApplications) + ' applications' : 'No performance data yet'">
+                                    <ng-container *ngIf="getSuccessRate(tmpl) !== null; else noStat">
+                                        {{ getSuccessRate(tmpl) }}%
+                                    </ng-container>
+                                    <ng-template #noStat>&mdash;</ng-template>
+                                </span>
+                            </td>
+
+                            <td class="py-4 px-3 text-right">
+                                <div
+                                    class="inline-flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                                    <mat-icon
+                                        class="text-base leading-none text-slate-400 transition-transform duration-200 mr-1"
+                                        [class.rotate-180]="tmpl.isExpanded">expand_more</mat-icon>
+
+                                    <button (click)="edit.emit(tmpl); $event.stopPropagation()" title="Edit Template"
+                                        class="text-slate-400 hover:text-primary dark:hover:text-primary-light transition-all p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-surface-muted/60 inline-flex items-center justify-center">
+                                        <mat-icon class="text-base leading-none">edit</mat-icon>
+                                    </button>
+
+                                    <button (click)="delete.emit(tmpl.id); $event.stopPropagation()"
+                                        title="Delete Template"
+                                        class="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center justify-center">
+                                        <mat-icon class="text-base leading-none">delete</mat-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Expanded "opened email" panel -->
+                        <tr *ngIf="tmpl.isExpanded">
+                            <td colspan="5" class="p-0 border-b border-slate-100 dark:border-surface-muted/60">
+                                <div
+                                    class="bg-white dark:bg-surface m-3 rounded-2xl border border-slate-200 dark:border-surface-muted shadow-sm animate-fade-in overflow-hidden">
+
+                                    <!-- Email header block -->
+                                    <div class="p-5 border-b border-slate-100 dark:border-surface-muted/50">
+                                        <h3
+                                            class="text-base font-bold text-slate-900 dark:text-slate-100 leading-snug break-words">
+                                            {{ tmpl.subjectTemplate }}
+                                        </h3>
+
+                                        <div class="flex items-center justify-between gap-3 mt-3 flex-wrap">
+                                            <div class="flex items-center gap-3">
+                                                <div class="h-9 w-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+                                                    [ngStyle]="{ 'background-color': avatarColor(tmpl.name) }">
+                                                    {{ initials(tmpl.name) }}
+                                                </div>
+                                                <div class="min-w-0 leading-tight">
+                                                    <p
+                                                        class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                                        {{ tmpl.name }}
+                                                    </p>
+                                                    <p class="text-[11px] text-slate-400 dark:text-slate-500">
+                                                        Template &middot;
+                                                        <span class="uppercase tracking-wider">{{ tmpl.language
+                                                            }}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <span
+                                                class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl border"
+                                                [ngClass]="successRateClasses(getSuccessRate(tmpl))">
+                                                <ng-container *ngIf="getStat(tmpl) as stat; else noStatExpanded">
+                                                    {{ getSuccessRate(tmpl) }}% success &middot; {{ stat.successCount
+                                                    }}/{{
+                                                    stat.totalApplications }}
+                                                </ng-container>
+                                                <ng-template #noStatExpanded>No performance data yet</ng-template>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Email body block -->
+                                    <div class="p-5">
+                                        <pre
+                                            class="font-sans whitespace-pre-wrap text-[13px] text-slate-700 dark:text-slate-300 break-words leading-relaxed">{{ tmpl.bodyTemplate }}</pre>
+                                    </div>
+
+                                    <!-- Footer actions, like Gmail's reply bar -->
+                                    <div
+                                        class="flex items-center justify-end gap-2 px-5 py-3 bg-slate-50/60 dark:bg-surface-muted/20 border-t border-slate-100 dark:border-surface-muted/40">
+                                        <button type="button" (click)="edit.emit(tmpl); $event.stopPropagation()"
+                                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-surface-muted hover:bg-primary/10 hover:text-primary transition">
+                                            <mat-icon class="text-base leading-none">edit</mat-icon>
+                                            Edit Template
+                                        </button>
+
+                                        <button type="button" (click)="delete.emit(tmpl.id); $event.stopPropagation()"
+                                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition">
+                                            <mat-icon class="text-base leading-none">delete</mat-icon>
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-container>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- MOBILE VIEW Cards (Gmail-style opened message) -->
+        <div class="block md:hidden space-y-3">
+            <div *ngFor="let tmpl of templates; trackBy: trackByTemplateId"
+                class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-2xl overflow-hidden shadow-sm transition-all duration-200"
+                [ngClass]="{ 'ring-2 ring-primary/40 border-primary bg-primary/5 dark:bg-primary/10': editingId === tmpl.id }">
+
+                <!-- Clickable Header Row -->
+                <div role="button" tabindex="0" (click)="toggleExpand(tmpl)" (keydown.enter)="toggleExpand(tmpl)"
+                    (keydown.space)="toggleExpand(tmpl)"
+                    class="w-full flex items-center gap-3 p-4 bg-slate-50/50 dark:bg-surface-muted/10 active:bg-slate-100 dark:active:bg-surface-muted/30 transition cursor-pointer">
+
+                    <!-- Avatar circle -->
+                    <div class="h-9 w-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+                        [ngStyle]="{ 'background-color': avatarColor(tmpl.name) }">
+                        {{ initials(tmpl.name) }}
+                    </div>
+
+                    <div class="min-w-0 flex-1 flex flex-col gap-1">
+                        <h4
+                            class="text-sm font-bold text-slate-900 dark:text-slate-100 break-words flex items-center gap-2">
+                            <span class="h-1.5 w-1.5 rounded-full shrink-0"
+                                [ngClass]="editingId === tmpl.id ? 'bg-primary animate-pulse' : 'bg-slate-300 dark:bg-slate-600'"></span>
+                            {{ tmpl.name }}
+                        </h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            {{ tmpl.subjectTemplate }}
+                        </p>
+                    </div>
+
+                    <div class="flex flex-col items-end gap-1.5 shrink-0">
+                        <span class="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-lg border"
+                            [ngClass]="successRateClasses(getSuccessRate(tmpl))">
+                            <ng-container *ngIf="getSuccessRate(tmpl) !== null; else noStatMobile">
+                                {{ getSuccessRate(tmpl) }}%
+                            </ng-container>
+                            <ng-template #noStatMobile>&mdash;</ng-template>
+                        </span>
+                        <mat-icon class="text-base leading-none text-slate-400 transition-transform duration-200"
+                            [class.rotate-180]="tmpl.isExpanded">expand_more</mat-icon>
+                    </div>
+                </div>
+
+                <!-- Expanded "opened email" panel -->
+                <div *ngIf="tmpl.isExpanded"
+                    class="bg-white dark:bg-surface border-t border-slate-100 dark:border-surface-muted/50 animate-fade-in">
+
+                    <!-- Subject as email header -->
+                    <div class="p-4 border-b border-slate-100 dark:border-surface-muted/40">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug break-words">
+                            {{ tmpl.subjectTemplate }}
+                        </h3>
+                        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                            Template &middot; <span class="uppercase tracking-wider">{{ tmpl.language }}</span>
+                        </p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2" *ngIf="getStat(tmpl) as stat">
+                            {{ getSuccessRate(tmpl) }}% success rate &middot; {{ stat.successCount }}/{{
+                            stat.totalApplications }} applications
+                        </p>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="p-4">
+                        <pre
+                            class="font-sans whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-300 break-words leading-relaxed max-h-60 overflow-y-auto">{{ tmpl.bodyTemplate }}</pre>
+                    </div>
+
+                    <!-- Action Buttons Footer -->
+                    <div
+                        class="flex items-center justify-end gap-2 px-4 py-3 bg-slate-50/60 dark:bg-surface-muted/20 border-t border-slate-100 dark:border-surface-muted/40">
+                        <button type="button" (click)="edit.emit(tmpl)"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-surface-muted hover:bg-primary/10 hover:text-primary transition">
+                            <mat-icon class="text-base leading-none">edit</mat-icon>
+                            Edit Template
+                        </button>
+
+                        <button type="button" (click)="delete.emit(tmpl.id)"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition">
+                            <mat-icon class="text-base leading-none">delete</mat-icon>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EMPTY STATE (only reachable once loading is false, so no need to
+             re-check !loading here) -->
+        <div *ngIf="templates.length === 0"
+            class="py-16 px-6 text-center border border-dashed border-slate-200 dark:border-surface-muted rounded-2xl bg-slate-50/50 dark:bg-surface-muted/10 space-y-4">
+            <div
+                class="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto shadow-sm">
+                <mat-icon class="text-2xl leading-none">
+                    {{ searchTerm || selectedLanguage ? 'search_off' : 'note_add' }}
+                </mat-icon>
+            </div>
+            <div class="space-y-1">
+                <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">
+                    {{ searchTerm || selectedLanguage ? 'No matching templates found' : 'No templates created yet' }}
+                </h4>
+            </div>
+
+            <!-- Action Buttons depending on context -->
+            <div class="flex items-center justify-center gap-3 pt-1">
+                <button *ngIf="searchTerm || selectedLanguage" type="button" (click)="clearFilters.emit()"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 transition">
+                    <mat-icon class="text-base leading-none">restart_alt</mat-icon>
+                    Reset Search & Filters
+                </button>
+
+                <button *ngIf="!searchTerm && !selectedLanguage" type="button" (click)="createFirst.emit()"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-primary hover:bg-primary/90 shadow-sm transition">
+                   + Create Your First Template
+                </button>
+            </div>
+        </div>
+
+        <!-- PAGINATION -->
+        <app-pagination [currentPage]="currentPage" [totalPages]="totalPages" [loading]="false"
+            (pageChange)="pageChange.emit($event)">
+        </app-pagination>
+
+    </ng-template>
 
 </div>

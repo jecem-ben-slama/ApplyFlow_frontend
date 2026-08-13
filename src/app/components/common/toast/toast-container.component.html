@@ -1,16 +1,35 @@
-<div class="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm pointer-events-none">
-    <div *ngFor="let toast of (toasts$ | async)"
-        class="pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm shadow-lg backdrop-blur-md animate-fade-in"
-        [ngClass]="{
-            'border-success bg-success-bg/95 text-success-text dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-100': toast.type === 'success',
-            'border-danger bg-danger-bg/95 text-danger-text dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-100': toast.type === 'error',
-            'border-slate-200 bg-white/95 text-slate-700 dark:border-slate-800 dark:bg-slate-900/95 dark:text-slate-200': toast.type === 'info'
-        }">
-        <mat-icon class="!text-base !w-5 !h-5 mt-0.5 shrink-0">{{ iconFor(toast.type) }}</mat-icon>
-        <span class="flex-1">{{ toast.message }}</span>
+<div class="fixed bottom-4 right-4 z-[100] flex flex-col gap-3 w-[calc(100%-2rem)] max-w-sm pointer-events-none">
+    <div *ngFor="let toast of (toasts$ | async); trackBy: trackById" [@toastAnimation]
+        class="pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-xl border border-slate-200/70 bg-white/95 pl-4 pr-3 py-3.5 text-sm shadow-lg shadow-slate-900/10 ring-1 ring-black/[0.02] backdrop-blur-md dark:border-white/10 dark:bg-slate-900/95 dark:shadow-black/30">
+
+        <!-- accent bar -->
+        <span class="absolute inset-y-0 left-0 w-1" [ngClass]="{
+                'bg-emerald-500': toast.type === 'success',
+                'bg-rose-500': toast.type === 'error',
+                'bg-sky-500': toast.type === 'info'
+            }"></span>
+
+        <!-- icon badge -->
+        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" [ngClass]="{
+                'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400': toast.type === 'success',
+                'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400': toast.type === 'error',
+                'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400': toast.type === 'info'
+            }">
+            <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">{{ iconFor(toast.type) }}</mat-icon>
+        </span>
+
+        <span class="flex-1 pt-1 leading-5 text-slate-700 dark:text-slate-200">{{ toast.message }}</span>
+
         <button type="button" (click)="dismiss(toast.id)" aria-label="Dismiss notification"
-            class="shrink-0 rounded-lg p-1 -m-1 hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+            class="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-slate-900/5 hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-slate-300 transition-colors">
             <mat-icon class="!text-base !w-4 !h-4 block">close</mat-icon>
         </button>
+
+        <!-- auto-dismiss progress -->
+        <span *ngIf="toast.duration" class="absolute bottom-0 left-1 right-0 h-0.5 origin-left" [ngClass]="{
+                'bg-emerald-500/40': toast.type === 'success',
+                'bg-rose-500/40': toast.type === 'error',
+                'bg-sky-500/40': toast.type === 'info'
+            }" [style.animation]="'toast-shrink ' + toast.duration + 'ms linear forwards'"></span>
     </div>
 </div>

@@ -35,7 +35,7 @@
                 <div class="space-y-2">
                     <label
                         class="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-600 dark:text-slate-400">
-                        Display Name <span class="text-rose-500">*</span>
+                        Name <span class="text-rose-500">*</span>
                     </label>
                     <input type="text" [(ngModel)]="formData.name" (blur)="onFieldBlur('name')"
                         placeholder="e.g., Next.js" [attr.aria-invalid]="hasError('name')"
@@ -57,8 +57,8 @@
                     <div class="relative">
                         <select [(ngModel)]="formData.categoryId" (blur)="onFieldBlur('categoryId')"
                             (ngModelChange)="onFieldBlur('categoryId')" [attr.aria-invalid]="hasError('categoryId')"
-                            [ngClass]="fieldClasses('categoryId')"
-                            class="w-full bg-surface-light dark:bg-background border rounded-2xl px-4 py-3 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm appearance-none cursor-pointer">
+                            [disabled]="categories.length === 0" [ngClass]="fieldClasses('categoryId')"
+                            class="w-full bg-surface-light dark:bg-background border rounded-2xl px-4 py-3 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm appearance-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-60">
                             <option [ngValue]="null" disabled>— Select a category —</option>
                             <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
                         </select>
@@ -69,6 +69,11 @@
                         class="flex items-center gap-1.5 text-[11px] text-danger-textLight dark:text-danger-textDark font-semibold">
                         <mat-icon class="!text-sm !w-3.5 !h-3.5">error</mat-icon>
                         {{ fieldErrors.categoryId }}
+                    </p>
+                    <p *ngIf="categories.length === 0 && !hasError('categoryId')"
+                        class="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+                        <mat-icon class="!text-sm !w-3.5 !h-3.5">info</mat-icon>
+                        No categories yet — create one below before adding a skill.
                     </p>
                 </div>
             </div>
@@ -81,7 +86,8 @@
                             class="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-600 dark:text-slate-400">
                             English Sentence <span class="text-rose-500">*</span>
                         </label>
-                        <span class="text-[10px] text-slate-400 tabular-nums font-mono">{{ formData.sentenceEn || 0
+                        <span class="text-[10px] tabular-nums font-mono"
+                            [ngClass]="counterClasses(formData.sentenceEn.length)">{{ formData.sentenceEn.length || 0
                             }}/400</span>
                     </div>
                     <textarea [(ngModel)]="formData.sentenceEn" (blur)="onFieldBlur('sentenceEn')"
@@ -102,7 +108,8 @@
                             class="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-600 dark:text-slate-400">
                             French Sentence <span class="text-rose-500">*</span>
                         </label>
-                        <span class="text-[10px] text-slate-400 tabular-nums font-mono">{{ formData.sentenceFr || 0
+                        <span class="text-[10px] tabular-nums font-mono"
+                            [ngClass]="counterClasses(formData.sentenceFr.length)">{{ formData.sentenceFr.length || 0
                             }}/400</span>
                     </div>
                     <textarea [(ngModel)]="formData.sentenceFr" (blur)="onFieldBlur('sentenceFr')"
