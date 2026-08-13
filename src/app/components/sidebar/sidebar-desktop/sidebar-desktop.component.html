@@ -1,7 +1,7 @@
 <aside
-    [class]="'hidden md:flex shrink-0 transition-all duration-200 ease-in-out h-screen border-r border-slate-200/80 dark:border-surface-muted bg-background-light dark:bg-background-dark flex-col justify-between sticky top-0 text-slate-700 dark:text-slate-200 overflow-hidden shadow-sm ' + (collapsed ? 'w-16' : 'w-64')">
+    [class]="'hidden md:flex shrink-0 transition-all duration-200 ease-in-out h-screen border-r border-slate-200/80 dark:border-surface-muted bg-background-light dark:bg-background-dark flex-col justify-between sticky top-0 text-slate-700 dark:text-slate-200 shadow-sm ' + (collapsed ? 'w-16' : 'w-64')">
 
-    <div class="space-y-6">
+    <div class="space-y-6 overflow-hidden">
         <!-- Logo & Collapse Button -->
         <div class="flex items-center justify-between px-3.5 pt-4">
             <div class="flex items-center gap-3 min-w-0">
@@ -36,7 +36,11 @@
     </div>
 
     <!-- User / Settings Footer -->
-    <div class="pt-3 border-t border-slate-200/80 dark:border-surface-muted mx-3 mb-3">
+    <!-- NOTE: no overflow-hidden here, and this wrapper is now the positioning
+         context (relative) for the gear popup so it stays anchored to the
+         sidebar's edge instead of the tiny gear button, in both collapsed
+         and expanded states. -->
+    <div class="relative pt-3 border-t border-slate-200/80 dark:border-surface-muted mx-3 mb-3">
         <div [class]="'flex items-center gap-2 p-1.5 ' + (collapsed ? 'justify-center flex-col' : '')">
 
             <img *ngIf="userProfilePic" [src]="userProfilePic" alt="Profile picture" (error)="photoError.emit()"
@@ -53,24 +57,11 @@
             </span>
 
             <!-- Gear / Settings -->
-            <div class="relative">
-                <button (click)="toggleGearMenu($event)"
-                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-dark rounded-xl p-1.5 transition-all"
-                    aria-label="Theme settings">
-                    <mat-icon class="scale-95">settings</mat-icon>
-                </button>
-
-                <div *ngIf="isGearOpen"
-                    class="absolute bottom-10 right-0 bg-surface-light dark:bg-surface-dark border border-slate-200 dark:border-surface-muted rounded-2xl shadow-xl p-2 z-50 min-w-[240px] animate-fade-in"
-                    (click)="$event.stopPropagation()">
-
-                    <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        Preferences
-                    </div>
-
-                    <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
-                </div>
-            </div>
+            <button (click)="toggleGearMenu($event)"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-dark rounded-xl p-1.5 transition-all"
+                aria-label="Theme settings">
+                <mat-icon class="scale-95">settings</mat-icon>
+            </button>
 
             <!-- Logout -->
             <button (click)="logout.emit()"
@@ -78,6 +69,19 @@
                 aria-label="Sign out">
                 <mat-icon class="scale-95">logout</mat-icon>
             </button>
+        </div>
+
+        <!-- Popup now positioned relative to the whole footer, not the gear button,
+             so min-w-[240px] never gets clipped by the w-16 collapsed rail -->
+        <div *ngIf="isGearOpen"
+            class="absolute bottom-full mb-2 right-0 bg-surface-light dark:bg-surface-dark border border-slate-200 dark:border-surface-muted rounded-2xl shadow-xl p-2 z-50 min-w-[240px] animate-fade-in"
+            (click)="$event.stopPropagation()">
+
+            <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Preferences
+            </div>
+
+            <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
         </div>
     </div>
 </aside>

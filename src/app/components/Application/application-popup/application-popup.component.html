@@ -118,13 +118,13 @@
                                 Language <span class="text-rose-500">*</span>
                             </label>
                             <select id="field-language" [(ngModel)]="formModel.language" name="language"
-                                (blur)="markTouched('language')"
+                                (change)="onLanguageChange()" (blur)="markTouched('language')"
                                 [ngClass]="hasFieldError('language')
                                     ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
                                     : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
                                 class="mt-1.5 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border focus:outline-none focus:ring-2 text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all">
-                                <option value="en">English</option>
-                                <option value="fr">French</option>
+                                <option *ngFor="let lang of availableLanguages" [ngValue]="lang">{{ lang | uppercase }}
+                                </option>
                             </select>
                             <p *ngIf="getFieldError('language')"
                                 class="mt-1.5 text-xs text-rose-500 dark:text-rose-400 font-medium">
@@ -141,11 +141,15 @@
                     <label
                         class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">CV
                         Variant</label>
-                    <select [(ngModel)]="formModel.cvVariantId" name="cvVariantId"
+                    <select [(ngModel)]="formModel.cvVariantId" name="cvVariantId" (change)="onCvVariantChange()"
                         class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all">
                         <option [ngValue]="null">No specific variant</option>
-                        <option *ngFor="let cv of availableCvVariants" [ngValue]="cv.id">{{ cv.name }}</option>
+                        <option *ngFor="let cv of filteredCvVariants" [ngValue]="cv.id">{{ cv.name }} ({{ cv.language |
+                            uppercase }})</option>
                     </select>
+                    <p *ngIf="!filteredCvVariants.length" class="mt-1.5 text-xs text-slate-400 dark:text-slate-500">
+                        No CV variants available for the selected language.
+                    </p>
 
                 </div>
 
@@ -205,7 +209,7 @@
                         class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">Notes</label>
                     <textarea [(ngModel)]="formModel.notes" name="notes" rows="3" maxlength="500"
                         class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 resize-none shadow-sm transition-all"
-                        placeholder="Extra context — achievements, tone, specific tech…"></textarea>
+                        placeholder="Extra context — remarques —  info…"></textarea>
                     <p class="text-right text-[11px] font-mono text-slate-400 dark:text-slate-500 mt-1">
                         {{ formModel.notes?.length || 0 }} / 500
                     </p>
@@ -288,6 +292,11 @@
         <div
             class="px-6 py-4 border-t border-slate-200 dark:border-surface-muted flex justify-end gap-3 bg-background-light/50 dark:bg-surface-muted/20">
 
+            <div *ngIf="noCvConfirmationPending" role="alert"
+                class="mr-auto flex items-center gap-2 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs px-3.5 py-2.5">
+                No CV attached — click Compile again to send anyway.
+            </div>
+
             <button type="button" (click)="closeModal()"
                 class="px-4 py-2.5 rounded-xl text-sm bg-surface-light dark:bg-background-dark hover:bg-slate-100 dark:hover:bg-surface-muted/80 border border-slate-200 dark:border-surface-muted text-slate-700 dark:text-slate-200 transition-all font-medium shadow-sm">
                 Cancel
@@ -295,10 +304,11 @@
 
             <button type="button" (click)="onSubmit()" [disabled]="isLoading || (submitAttemptedOnce && !isFormValid())"
                 [attr.title]="submitAttemptedOnce && !isFormValid() ? 'Fix the highlighted fields to continue' : null"
-                class="px-5 py-2.5 rounded-xl text-sm bg-primary hover:opacity-90 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all font-medium flex items-center gap-2">
+                class="px-5 py-2.5 rounded-xl text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all font-medium flex items-center gap-2"
+                [ngClass]="noCvConfirmationPending ? 'bg-amber-500 hover:opacity-90' : 'bg-primary hover:opacity-90'">
                 <span *ngIf="isLoading"
                     class="inline-block animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></span>
-                {{ isLoading ? 'Compiling…' : 'Compile Email' }}
+                {{ isLoading ? 'Compiling…' : (noCvConfirmationPending ? 'Compile Anyway' : 'Compile Email') }}
             </button>
 
         </div>

@@ -9,6 +9,7 @@ import {
   TemplateDto,
   Category,
 } from '../../../models';
+import { ToastService } from '../../common/toast/toast.service';
 
 type ValidatedField =
   | 'templateId'
@@ -29,7 +30,10 @@ const FIELD_LIMITS = {
   templateUrl: './application-popup.component.html',
 })
 export class ApplicationPopupComponent implements OnInit {
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(
+    private sanitizer: DomSanitizer,
+    private toastService: ToastService
+  ) {}
   @Input() availableSkills: Skill[] = [];
   @Input() availableCategories: Category[] = [];
   @Input() availableCvVariants: CvVariantDto[] = [];
@@ -57,6 +61,14 @@ export class ApplicationPopupComponent implements OnInit {
   errorMessage = '';
   copied = false;
   selectedCategoryId: number | null = null;
+
+  /** True after a first Compile click without a CV — next click confirms and proceeds. */
+  private pendingNoCvConfirmation = false;
+
+  /** Public read used by the template to switch the submit button into its confirm state. */
+  get noCvConfirmationPending(): boolean {
+    return this.pendingNoCvConfirmation;
+  }
 
   /** Tracks which fields the user has interacted with, so errors only show after blur/change. */
   private touched: Partial<Record<ValidatedField, boolean>> = {};
@@ -110,6 +122,7 @@ export class ApplicationPopupComponent implements OnInit {
 
   onTemplateChange(): void {
     this.markTouched('templateId');
+    this.pendingNoCvConfirmation = false;
     if (!this.formModel.templateId) {
       this.selectedTemplatePreview = undefined;
       return;
@@ -117,6 +130,82 @@ export class ApplicationPopupComponent implements OnInit {
     this.selectedTemplatePreview = this.availableTemplates.find(
       (t) => t.id === Number(this.formModel.templateId)
     );
+
+    // Match template language safely against available languages (case-insensitive)
+    if (this.selectedTemplatePreview?.language) {
+      const templateLang = this.selectedTemplatePreview.language
+        .trim()
+        .toLowerCase();
+      const matchedLang = this.availableLanguages.find(
+        (lang) => lang.trim().toLowerCase() === templateLang
+      );
+
+      if (matchedLang) {
+        this.formModel.language = matchedLang;
+        this.markTouched('language');
+      }
+    }
+
+    this.resetCvVariantIfIncompatible();
+  }
+
+  // ─── Language helpers ──────────────────────────────────────────────────────
+
+  /**
+   * Languages available to pick from. Built from whatever templates and CV
+   * variants actually use (so a template's language is never missing from
+   * the dropdown), de-duplicated case-insensitively, plus a couple of
+   * sane defaults so the field is never empty.
+   */
+  get availableLanguages(): string[] {
+    const seen = new Map<string, string>(); // lowercase key -> original casing
+    const add = (lang?: string) => {
+      const value = (lang || '').trim();
+      if (!value) return;
+      const key = value.toLowerCase();
+      if (!seen.has(key)) seen.set(key, value);
+    };
+
+    ['en', 'fr'].forEach(add);
+    this.availableTemplates.forEach((t) => add(t.language));
+    this.availableCvVariants.forEach((cv) => add(cv.language));
+
+    return Array.from(seen.values()).sort((a, b) => a.localeCompare(b));
+  }
+
+  private sameLanguage(a?: string, b?: string): boolean {
+    return (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase();
+  }
+
+  onLanguageChange(): void {
+    this.markTouched('language');
+    this.pendingNoCvConfirmation = false;
+    this.resetCvVariantIfIncompatible();
+  }
+
+  // ─── CV variant helpers ────────────────────────────────────────────────────
+
+  /** Only CV variants matching the application's current language are selectable. */
+  get filteredCvVariants(): CvVariantDto[] {
+    if (!this.formModel.language) return this.availableCvVariants;
+    return this.availableCvVariants.filter((cv) =>
+      this.sameLanguage(cv.language, this.formModel.language)
+    );
+  }
+
+  onCvVariantChange(): void {
+    this.pendingNoCvConfirmation = false;
+  }
+
+  /** Clears the selected CV variant if it no longer matches the current language. */
+  private resetCvVariantIfIncompatible(): void {
+    if (!this.formModel.cvVariantId) return;
+    const stillValid = this.filteredCvVariants.some(
+      (cv) => cv.id === this.formModel.cvVariantId
+    );
+    if (!stillValid) {
+      this.formModel.cvVariantId = null as any;
+    }
   }
 
   /**
@@ -402,6 +491,14 @@ export class ApplicationPopupComponent implements OnInit {
       return;
     }
 
+    if (!this.formModel.cvVariantId && !this.pendingNoCvConfirmation) {
+      this.pendingNoCvConfirmation = true;
+      this.toastService.info(
+        "No CV attached — this can't be added after compiling. Click Compile again to proceed anyway."
+      );
+      return;
+    }
+
     // Normalise {{companyname}} → {{company}} before emitting
     const activeTemplate = this.availableTemplates.find(
       (t) => t.id === Number(this.formModel.templateId)
@@ -432,6 +529,7 @@ export class ApplicationPopupComponent implements OnInit {
         : undefined,
     };
 
+    this.pendingNoCvConfirmation = false;
     this.formSubmit.emit(payload);
   }
 

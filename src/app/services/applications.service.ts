@@ -26,7 +26,8 @@ export class ApplicationsService {
     sortBy: string = 'dateApplied',
     direction: 'asc' | 'desc' = 'desc',
     status?: string,
-    keyword?: string
+    keyword?: string,
+    language?: string
   ): Observable<Page<ApplicationResponseDto>> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -36,6 +37,7 @@ export class ApplicationsService {
 
     if (status) params = params.set('status', status);
     if (keyword) params = params.set('keyword', keyword);
+    if (language) params = params.set('language', language);
 
     return this.http
       .get<ApiResponse<Page<ApplicationResponseDto>>>(this.baseUrl, {

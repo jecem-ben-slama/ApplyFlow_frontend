@@ -18,4 +18,11 @@ export class CvFiltersBarComponent {
   @Output() searchChange = new EventEmitter<string>();
   @Output() clearSearch = new EventEmitter<void>();
   @Output() addClick = new EventEmitter<void>();
+  @Output() clearFilters = new EventEmitter<void>();
+
+  onClearFilters(): void {
+    this.languageChange.emit('');
+    this.clearSearch.emit();
+    this.clearFilters.emit();
+  }
 }

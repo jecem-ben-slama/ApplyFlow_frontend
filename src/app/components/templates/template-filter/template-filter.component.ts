@@ -78,4 +78,14 @@ export class TemplateFilterComponent implements OnInit, OnDestroy, OnChanges {
   onBlur(): void {
     this.isInputFocused = false;
   }
+
+  get hasActiveFilters(): boolean {
+    return !!this.selectedLanguage || !!this.searchTerm.trim();
+  }
+
+  onClearFilters(): void {
+    this.localSearchTerm = '';
+    this.searchChange.emit('');
+    this.filterChange.emit('ALL');
+  }
 }

@@ -8,6 +8,8 @@ import { TemplateComponent } from '../templates-view/templates.component';
 import { StatMetricDto } from 'src/app/models/statsmetric.model';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 
+export type TemplateSortColumn = 'name' | 'language';
+
 @Component({
   selector: 'app-template-list',
   standalone: true,
@@ -17,7 +19,7 @@ import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
     MatIconModule,
     PaginationComponent,
     TemplateFilterComponent,
-    SkeletonComponent
+    SkeletonComponent,
   ],
   templateUrl: './template-list.component.html',
 })
@@ -31,6 +33,10 @@ export class TemplateListComponent {
   @Input() searchTerm = '';
   @Input() editingId: number | null = null;
 
+  /** Current sort column/direction, owned by the parent (same pattern as currentPage). */
+  @Input() sortBy: TemplateSortColumn = 'name';
+  @Input() direction: 'asc' | 'desc' = 'asc';
+
   // Template performance stats, keyed by template name (StatMetricDto.categoryName)
   @Input() templateStats: { [categoryName: string]: StatMetricDto } = {};
 
@@ -41,6 +47,11 @@ export class TemplateListComponent {
   @Output() delete = new EventEmitter<number | undefined>();
   @Output() clearFilters = new EventEmitter<void>();
   @Output() createFirst = new EventEmitter<void>();
+
+  /** Emitted with the new sort column when a header is clicked. Parent decides
+   *  the resulting direction (toggle if same column, 'asc' if new column) —
+   *  same responsibility split as pageChange/filterChange above. */
+  @Output() sortChange = new EventEmitter<TemplateSortColumn>();
 
   private readonly avatarPalette = [
     '#6366F1', // indigo
@@ -62,6 +73,21 @@ export class TemplateListComponent {
 
   toggleExpand(tmpl: TemplateComponent): void {
     tmpl.isExpanded = !tmpl.isExpanded;
+  }
+
+  onSortClick(column: TemplateSortColumn): void {
+    this.sortChange.emit(column);
+  }
+
+  /** '↑'/'↓' for the active column, a muted '↕' otherwise — so every sortable
+   *  header always shows it's clickable, not just the currently active one. */
+  sortIndicator(column: TemplateSortColumn): string {
+    if (this.sortBy !== column) return '↕';
+    return this.direction === 'asc' ? '↑' : '↓';
+  }
+
+  isActiveSort(column: TemplateSortColumn): boolean {
+    return this.sortBy === column;
   }
 
   /** First 1-2 letters of the template name, for the Gmail-style avatar circle. */
