@@ -7,10 +7,10 @@
             class="px-6 py-4 border-b border-slate-200 dark:border-surface-muted flex items-start justify-between bg-background-light/50 dark:bg-surface-muted/20">
             <div>
                 <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">
-                    Compile New Email
+                    New Preset
                 </h2>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Build a dynamic, context-aware outreach email
+                    Save a reusable combination of template, language, CV, and skills
                 </p>
             </div>
             <button (click)="closeModal()" type="button" aria-label="Close dialog"
@@ -30,12 +30,27 @@
 
                 <div
                     class="bg-background-light dark:bg-surface-muted/30 rounded-2xl p-4 border border-slate-200 dark:border-surface-muted/60">
+                    <label class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
+                        Preset Name <span class="text-rose-500">*</span>
+                    </label>
+                    <input id="preset-field-name" [(ngModel)]="formModel.name" name="name" (blur)="markTouched('name')"
+                        [maxlength]="fieldLimits.name" [ngClass]="hasFieldError('name')
+                            ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
+                            : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
+                        class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border focus:outline-none focus:ring-2 text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all"
+                        placeholder="e.g. Backend Engineer — English outreach" />
+                    <p *ngIf="getFieldError('name')"
+                        class="mt-1.5 text-xs text-rose-500 dark:text-rose-400 font-medium">
+                        {{ getFieldError('name') }}
+                    </p>
+                </div>
 
+                <div
+                    class="bg-background-light dark:bg-surface-muted/30 rounded-2xl p-4 border border-slate-200 dark:border-surface-muted/60">
                     <label class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
                         Template <span class="text-rose-500">*</span>
                     </label>
-
-                    <select id="field-templateId" [(ngModel)]="formModel.templateId" name="templateId"
+                    <select id="preset-field-templateId" [(ngModel)]="formModel.templateId" name="templateId"
                         (change)="onTemplateChange()" (blur)="markTouched('templateId')" [ngClass]="hasFieldError('templateId')
                             ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
                             : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
@@ -49,7 +64,6 @@
                         class="mt-1.5 text-xs text-rose-500 dark:text-rose-400 font-medium">
                         {{ getFieldError('templateId') }}
                     </p>
-
                 </div>
 
                 <div
@@ -59,57 +73,11 @@
                         <div>
                             <label
                                 class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
-                                Company <span class="text-rose-500">*</span>
+                                Default Job Title
                             </label>
-                            <input id="field-companyName" [(ngModel)]="formModel.companyName" name="companyName"
-                                (blur)="markTouched('companyName')" [maxlength]="fieldLimits.companyName"
-                                [ngClass]="hasFieldError('companyName')
-                                    ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
-                                    : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
-                                class="mt-1.5 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border focus:outline-none focus:ring-2 text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all"
-                                placeholder="Google" />
-                            <p *ngIf="getFieldError('companyName')"
-                                class="mt-1.5 text-xs text-rose-500 dark:text-rose-400 font-medium">
-                                {{ getFieldError('companyName') }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label
-                                class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
-                                Position <span class="text-rose-500">*</span>
-                            </label>
-                            <input id="field-jobTitle" [(ngModel)]="formModel.jobTitle" name="jobTitle"
-                                (blur)="markTouched('jobTitle')" [maxlength]="fieldLimits.jobTitle"
-                                [ngClass]="hasFieldError('jobTitle')
-                                    ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
-                                    : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
-                                class="mt-1.5 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border focus:outline-none focus:ring-2 text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all"
-                                placeholder="Senior Engineer" />
-                            <p *ngIf="getFieldError('jobTitle')"
-                                class="mt-1.5 text-xs text-rose-500 dark:text-rose-400 font-medium">
-                                {{ getFieldError('jobTitle') }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label
-                                class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
-                                Email <span class="text-rose-500">*</span>
-                            </label>
-                            <input id="field-recipientEmail" [(ngModel)]="formModel.recipientEmail"
-                                name="recipientEmail" type="email" (blur)="markTouched('recipientEmail')"
-                                [ngClass]="hasFieldError('recipientEmail')
-                                    ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
-                                    : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
-                                class="mt-1.5 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border focus:outline-none focus:ring-2 text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all"
-                                placeholder="hr@company.com" />
-                            <p *ngIf="getFieldError('recipientEmail')"
-                                class="mt-1.5 text-xs text-rose-500 dark:text-rose-400 font-medium">
-                                {{ getFieldError('recipientEmail') }}
-                            </p>
+                            <input [(ngModel)]="formModel.jobTitle" name="jobTitle" [maxlength]="fieldLimits.jobTitle"
+                                class="mt-1.5 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all"
+                                placeholder="Optional — leave blank to fill per application" />
                         </div>
 
                         <div>
@@ -117,7 +85,7 @@
                                 class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
                                 Language <span class="text-rose-500">*</span>
                             </label>
-                            <select id="field-language" [(ngModel)]="formModel.language" name="language"
+                            <select id="preset-field-language" [(ngModel)]="formModel.language" name="language"
                                 (change)="onLanguageChange()" (blur)="markTouched('language')"
                                 [ngClass]="hasFieldError('language')
                                     ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
@@ -132,16 +100,14 @@
                             </p>
                         </div>
                     </div>
-
                 </div>
 
                 <div 
                     class="bg-background-light dark:bg-surface-muted/30 rounded-2xl p-4 border border-slate-200 dark:border-surface-muted/60">
-
                     <label
                         class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">CV
                         Variant</label>
-                    <select [(ngModel)]="formModel.cvVariantId" name="cvVariantId" (change)="onCvVariantChange()"
+                    <select [(ngModel)]="formModel.cvVariantId" name="cvVariantId"
                         class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all">
                         <option [ngValue]="null">No specific variant</option>
                         <option *ngFor="let cv of filteredCvVariants" [ngValue]="cv.id">{{ cv.name }} ({{ cv.language |
@@ -150,7 +116,6 @@
                     <p *ngIf="!filteredCvVariants.length" class="mt-1.5 text-xs text-slate-400 dark:text-slate-500">
                         No CV variants available.
                     </p>
-
                 </div>
 
                 <div
@@ -194,13 +159,12 @@
                                 (click)="toggleSkillSelection(skill.id)"
                                 class="text-xs px-3 py-1.5 rounded-xl border transition-all"
                                 [ngClass]="formModel.skillIds.includes(skill.id)
-                            ? 'bg-primary text-white border-primary shadow-sm'
-                            : 'bg-surface-light dark:bg-background-dark text-slate-700 dark:text-slate-300 border-slate-200 dark:border-surface-muted hover:border-primary/50'">
+                              ? 'bg-primary text-white border-primary shadow-sm'
+                              : 'bg-surface-light dark:bg-background-dark text-slate-700 dark:text-slate-300 border-slate-200 dark:border-surface-muted hover:border-primary/50'">
                                 {{ skill.name }}
                             </button>
                         </div>
                     </div>
-
                 </div>
 
                 <div
@@ -209,7 +173,7 @@
                         class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">Notes</label>
                     <textarea [(ngModel)]="formModel.notes" name="notes" rows="3" maxlength="500"
                         class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 resize-none shadow-sm transition-all"
-                        placeholder="Extra context — remarques —  info…"></textarea>
+                        placeholder="Any default context to carry into applications built from this preset…"></textarea>
                     <p class="text-right text-[11px] font-mono text-slate-400 dark:text-slate-500 mt-1">
                         {{ formModel.notes?.length || 0 }} / 500
                     </p>
@@ -229,8 +193,8 @@
                                 <h4
                                     class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 dark:text-slate-200">
                                     Live Email Preview</h4>
-                                <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Updates as you fill the
-                                    form</p>
+                                <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Company &amp; recipient
+                                    fill in per application</p>
                             </div>
 
                             <button *ngIf="hasPreviewContent()" type="button" (click)="copyEmailToClipboard()"
@@ -246,19 +210,12 @@
                                 ✉
                             </div>
                             <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">No preview yet</p>
-                            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Select a template and fill in the
-                                details</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Select a template to preview the
+                                email</p>
                         </div>
 
                         <div *ngIf="hasPreviewContent()"
                             class="p-4 space-y-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-
-                            <div *ngIf="formModel.recipientEmail" class="flex items-baseline gap-2 text-xs pb-1">
-                                <span
-                                    class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 w-5 shrink-0">To</span>
-                                <span class="text-slate-600 dark:text-slate-300 truncate font-mono">{{
-                                    formModel.recipientEmail }}</span>
-                            </div>
 
                             <div class="pb-2 border-b border-slate-100 dark:border-surface-muted/60">
                                 <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
@@ -291,12 +248,6 @@
 
         <div
             class="px-6 py-4 border-t border-slate-200 dark:border-surface-muted flex justify-end gap-3 bg-background-light/50 dark:bg-surface-muted/20">
-
-            <div *ngIf="noCvConfirmationPending" role="alert"
-                class="mr-auto flex items-center gap-2 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs px-3.5 py-2.5">
-                No CV attached — click Compile again to send anyway.
-            </div>
-
             <button type="button" (click)="closeModal()"
                 class="px-4 py-2.5 rounded-xl text-sm bg-surface-light dark:bg-background-dark hover:bg-slate-100 dark:hover:bg-surface-muted/80 border border-slate-200 dark:border-surface-muted text-slate-700 dark:text-slate-200 transition-all font-medium shadow-sm">
                 Cancel
@@ -304,13 +255,11 @@
 
             <button type="button" (click)="onSubmit()" [disabled]="isLoading || (submitAttemptedOnce && !isFormValid())"
                 [attr.title]="submitAttemptedOnce && !isFormValid() ? 'Fix the highlighted fields to continue' : null"
-                class="px-5 py-2.5 rounded-xl text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all font-medium flex items-center gap-2"
-                [ngClass]="noCvConfirmationPending ? 'bg-amber-500 hover:opacity-90' : 'bg-primary hover:opacity-90'">
+                class="px-5 py-2.5 rounded-xl text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all font-medium flex items-center gap-2 bg-primary hover:opacity-90">
                 <span *ngIf="isLoading"
                     class="inline-block animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></span>
-                {{ isLoading ? 'Compiling…' : (noCvConfirmationPending ? 'Compile Anyway' : 'Compile Email') }}
+                {{ isLoading ? 'Saving…' : 'Save Preset' }}
             </button>
-
         </div>
 
     </div>

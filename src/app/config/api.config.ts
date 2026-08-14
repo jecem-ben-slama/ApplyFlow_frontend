@@ -29,6 +29,10 @@ export class ApiConfig {
         detail: (id: number) => `${base}/api/applications/${id}`,
         metrics: `${base}/api/applications/metrics`,
       },
+      applicationPresets: {
+        base: `${base}/api/application-presets`,
+        detail: (id: number) => `${base}/api/application-presets/${id}`,
+      },
       emails: {
         send: `${base}/api/emails/send`,
       },

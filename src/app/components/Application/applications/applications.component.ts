@@ -31,14 +31,10 @@ import { CategoryService } from 'src/app/services/category.service';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 import { ToastContainerComponent } from '../../common/toast/toast-container.component';
 import { ToastService } from '../../common/toast/toast.service';
+import { ApplicationPresetDto } from 'src/app/models/application_preset.model';
+import { PresetListComponent } from '../../Presets/preset-list/preset-list.component';
 
 type SortableColumn = 'companyName' | 'jobTitle' | 'dateApplied' | 'status';
-
-interface StatusOption {
-  value: string;
-  label: string;
-}
-
 interface LanguageOption {
   value: string;
   label: string;
@@ -56,6 +52,7 @@ interface LanguageOption {
     DeletePopupComponent,
     ApplicationRowComponent,
     EmailPanelComponent,
+    PresetListComponent,
     SkeletonComponent,
     ToastContainerComponent,
   ],
@@ -75,7 +72,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   filterLanguage = '';
 
   /** Tab control state */
-  activeTab: 'all' | 'compiled' = 'all';
+  activeTab: 'all' | 'compiled' | 'presets' = 'all';
+
+  /** The preset currently loaded into the popup, if opened via "Send" from the presets tab. */
+  selectedPreset: ApplicationPresetDto | null = null;
 
   /** Controls the collapsible filter panel on mobile. Always visible on desktop. */
   filtersOpen = false;
@@ -180,11 +180,14 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   // ── Tabs ───────────────────────────────────────────────────────────────────
 
-  switchTab(tab: 'all' | 'compiled'): void {
+  switchTab(tab: 'all' | 'compiled' | 'presets'): void {
     if (this.activeTab === tab) return;
     this.activeTab = tab;
-    this.currentPage = 0;
     this.expandedAppId = null;
+
+    if (tab === 'presets') return;
+
+    this.currentPage = 0;
     this.filterStatus = ''; // Reset status filter when switching tabs
     this.loadApplicationsPage();
   }
@@ -496,14 +499,24 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.deleteTargetIds = [];
   }
 
+  // ── Presets ────────────────────────────────────────────────────────────────
+
+  /** "Send" emitted from <app-preset-list> — opens the existing popup pre-filled with everything but company/email. */
+  onSendFromPreset(preset: ApplicationPresetDto): void {
+    this.selectedPreset = preset;
+    this.isModalOpen = true;
+  }
+
   // ── Modal ──────────────────────────────────────────────────────────────────
 
   openCreateModal(): void {
+    this.selectedPreset = null;
     this.isModalOpen = true;
   }
 
   closeModal(): void {
     this.isModalOpen = false;
+    this.selectedPreset = null;
     this.errorMessage = '';
   }
 
@@ -517,6 +530,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       next: (created) => {
         this.toastService.success('Application created successfully!');
         this.isModalOpen = false;
+        this.selectedPreset = null;
         this.activeTab = 'compiled';
         this.expandedAppId = created.id;
         this.loadApplicationsPage();

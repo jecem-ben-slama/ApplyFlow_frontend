@@ -9,6 +9,7 @@ import {
   TemplateDto,
   Category,
 } from '../../../models';
+import { ApplicationPresetDto } from 'src/app/models/application_preset.model';
 import { ToastService } from '../../common/toast/toast.service';
 
 type ValidatedField =
@@ -39,6 +40,8 @@ export class ApplicationPopupComponent implements OnInit {
   @Input() availableCvVariants: CvVariantDto[] = [];
   @Input() availableTemplates: TemplateDto[] = [];
   @Input() isLoading = false;
+  /** When set (opened via "Send" from a preset), pre-fills the form on init. */
+  @Input() prefillFromPreset: ApplicationPresetDto | null = null;
 
   @Output() close = new EventEmitter<void>();
   @Output() formSubmit = new EventEmitter<ApplicationCreateDto>();
@@ -88,7 +91,47 @@ export class ApplicationPopupComponent implements OnInit {
     'language',
   ];
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    if (this.prefillFromPreset) {
+      this.applyPreset(this.prefillFromPreset);
+    }
+  }
+
+  // ─── Presets ──────────────────────────────────────────────────────────────
+
+  /**
+   * Pre-fills the form from a preset. Company name, job title, and recipient
+   * email are intentionally left untouched — those are per-application and
+   * are not part of a preset. Reuses onTemplateChange/resetCvVariantIfIncompatible
+   * so the live preview, language matching, and CV compatibility checks all
+   * stay in sync with what the user would get by picking these values manually.
+   */
+  private applyPreset(preset: ApplicationPresetDto): void {
+    if (preset.templateId != null) {
+      this.formModel.templateId = preset.templateId;
+      this.onTemplateChange();
+    }
+    if (preset.jobTitle) {
+      this.formModel.jobTitle = preset.jobTitle;
+    }
+    if (preset.language) {
+      this.formModel.language = preset.language;
+    }
+
+    if (preset.cvVariantId != null) {
+      this.formModel.cvVariantId = preset.cvVariantId;
+    }
+    // Re-check compatibility now that language + cvVariantId are both final.
+    this.resetCvVariantIfIncompatible();
+
+    if (preset.skillIds?.length) {
+      this.formModel.skillIds = [...preset.skillIds];
+    }
+
+    if (preset.notes) {
+      this.formModel.notes = preset.notes;
+    }
+  }
 
   // ─── Skill helpers ────────────────────────────────────────────────────────
 
@@ -214,7 +257,9 @@ export class ApplicationPopupComponent implements OnInit {
    */
   getLiveTemplateBodyPreview(): string {
     if (!this.selectedTemplatePreview?.bodyTemplate) return '';
-    return this.applyPlaceholders(this.selectedTemplatePreview.bodyTemplate);
+    return this.applyBodyPlaceholders(
+      this.selectedTemplatePreview.bodyTemplate
+    );
   }
 
   // ─── Live email preview ──────────────────────────────────────────────────
@@ -232,7 +277,7 @@ export class ApplicationPopupComponent implements OnInit {
    */
   getRenderedSubject(): string {
     if (this.selectedTemplatePreview?.subjectTemplate) {
-      return this.applyPlaceholders(
+      return this.applySubjectPlaceholders(
         this.selectedTemplatePreview.subjectTemplate
       );
     }
@@ -283,7 +328,9 @@ export class ApplicationPopupComponent implements OnInit {
    */
   getRenderedEmailBody(): string {
     if (!this.selectedTemplatePreview?.bodyTemplate) return '';
-    return this.applyPlaceholders(this.selectedTemplatePreview.bodyTemplate);
+    return this.applyBodyPlaceholders(
+      this.selectedTemplatePreview.bodyTemplate
+    );
   }
 
   getWordCount(): number {
@@ -536,14 +583,25 @@ export class ApplicationPopupComponent implements OnInit {
   // ─── Private ─────────────────────────────────────────────────────────────
 
   /**
-   * Central placeholder resolver.
-   * Handles all known tag variants case-insensitively.
-   * If the template contains a skills placeholder, it is replaced with a
-   * bullet list of selected skill names. If not, bullets are appended before
-   * any trailing sign-off line (heuristic: last non-empty line starting with
-   * a common closing word).
+   * Resolver exclusively for the subject template. Only handles company and position fields.
    */
-  private applyPlaceholders(template: string): string {
+  private applySubjectPlaceholders(template: string): string {
+    const company = this.formModel.companyName || '';
+    const position = this.formModel.jobTitle || '';
+
+    return template
+      .replace(/\{\{companyname\}\}/gi, company)
+      .replace(/\{\{company\}\}/gi, company)
+      .replace(/\{\{position\}\}/gi, position)
+      .replace(/\{\{role\}\}/gi, position)
+      .replace(/\{\{jobtitle\}\}/gi, position)
+      .replace(/\{\{job_title\}\}/gi, position);
+  }
+
+  /**
+   * Resolver exclusively for the body template. Handles company, position, skills, and notes.
+   */
+  private applyBodyPlaceholders(template: string): string {
     const company = this.formModel.companyName || '';
     const position = this.formModel.jobTitle || '';
     const bullets = this.buildSkillBullets();
