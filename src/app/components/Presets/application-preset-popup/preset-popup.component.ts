@@ -4,17 +4,22 @@ import {
   Input,
   OnChanges,
   OnInit,
+  OnDestroy,
   Output,
   SimpleChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import { Skill, CvVariantDto, TemplateDto, Category } from '../../../models';
 import {
   ApplicationPresetCreateDto,
   ApplicationPresetDto,
 } from 'src/app/models/application_preset.model';
+import { ToastService } from '../../common/toast/toast.service';
+// Adjust this import path to match where toast.service.ts actually lives relative to this component.
 
 type ValidatedField = 'name' | 'templateId' | 'language';
 
@@ -29,8 +34,11 @@ const FIELD_LIMITS = {
   imports: [CommonModule, FormsModule],
   templateUrl: './preset-popup.component.html',
 })
-export class PresetPopupComponent implements OnInit, OnChanges {
-  constructor(private sanitizer: DomSanitizer) {}
+export class PresetPopupComponent implements OnInit, OnChanges, OnDestroy {
+  constructor(
+    private sanitizer: DomSanitizer,
+    private toastService: ToastService
+  ) {}
 
   @Input() availableSkills: Skill[] = [];
   @Input() availableCategories: Category[] = [];
@@ -41,6 +49,7 @@ export class PresetPopupComponent implements OnInit, OnChanges {
 
   @Output() close = new EventEmitter<void>();
   @Output() presetSubmit = new EventEmitter<ApplicationPresetCreateDto>();
+  @Output() draftSave = new EventEmitter<ApplicationPresetCreateDto>();
 
   formModel: ApplicationPresetCreateDto = {
     name: '',
@@ -72,15 +81,122 @@ export class PresetPopupComponent implements OnInit, OnChanges {
     'language',
   ];
 
+  // ---------------------------------------------------------------------
+  // Draft persistence (localStorage)
+  // ---------------------------------------------------------------------
+
+  /** localStorage key used to persist an unsaved draft across reloads/tab switches. */
+  private readonly draftStorageKey = 'presetPopup.draft';
+
+  private draftTrigger = new Subject<void>();
+  private draftSub?: Subscription;
+
+  /**
+   * True while an existing preset is loaded for editing. Mirrors `isEditing`
+   * on the template form: an edited preset's values are never part of the
+   * pending "new preset" draft, so drafts are never restored into,
+   * persisted from, or cleared while `presetToEdit` is set.
+   */
+  private get isEditing(): boolean {
+    return !!this.presetToEdit;
+  }
+
   ngOnInit(): void {
     this.initFormState();
+
+    // Covers both possible hosting patterns: if this component is created
+    // fresh per open (like the application popup), this is the moment it
+    // opened. If it's a persistent instance instead, this only covers the
+    // very first open — see ngOnChanges below for later re-opens.
+    if (!this.isEditing) {
+      this.restoreDraft();
+    }
+
+    this.draftSub = this.draftTrigger.pipe(debounceTime(600)).subscribe(() => {
+      if (!this.isEditing) {
+        this.persistDraft();
+        this.draftSave.emit({ ...this.formModel });
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['presetToEdit'] || changes['availableTemplates']) {
       this.initFormState();
     }
+
+    const presetChange = changes['presetToEdit'];
+    if (presetChange && !presetChange.firstChange && !this.presetToEdit) {
+      // presetToEdit just went back to null — i.e. the popup was reopened
+      // (or switched over) for a *new* preset. If this component instance
+      // is reused rather than destroyed between opens, ngOnInit won't fire
+      // again, so re-attempt a draft restore here too; otherwise the draft
+      // would only reappear after a full page refresh.
+      this.restoreDraft();
+    }
   }
+
+  ngOnDestroy(): void {
+    this.draftSub?.unsubscribe();
+  }
+
+  /** Call whenever the user edits the form, so the draft gets (debounced) persisted. */
+  notifyDraft(): void {
+    this.draftTrigger.next();
+  }
+
+  private persistDraft(): void {
+    try {
+      localStorage.setItem(
+        this.draftStorageKey,
+        JSON.stringify(this.formModel)
+      );
+    } catch {
+      // localStorage unavailable (private browsing, quota, etc.) — fail silently
+    }
+  }
+
+  private restoreDraft(): void {
+    try {
+      const raw = localStorage.getItem(this.draftStorageKey);
+      if (!raw) return;
+
+      const draft: Partial<ApplicationPresetCreateDto> = JSON.parse(raw);
+      const formIsEmpty =
+        !this.formModel.name &&
+        !this.formModel.jobTitle &&
+        !this.formModel.notes &&
+        !this.formModel.templateId &&
+        !this.formModel.skillIds?.length;
+
+      // Only restore into an empty form so we never clobber data initFormState just set
+      if (formIsEmpty) {
+        this.formModel = { ...this.formModel, ...draft };
+
+        // Re-run the same side effects a manual selection would trigger, so
+        // the template preview / language match / CV compatibility all stay
+        // in sync with the restored values.
+        if (this.formModel.templateId) {
+          this.selectedTemplatePreview = this.availableTemplates.find(
+            (t) => t.id === Number(this.formModel.templateId)
+          );
+        }
+        this.resetCvVariantIfIncompatible();
+
+        this.toastService.info('Unsaved draft restored.');
+      }
+    } catch {
+      // Corrupted draft — ignore and start fresh
+    }
+  }
+
+  private clearDraft(): void {
+    try {
+      localStorage.removeItem(this.draftStorageKey);
+    } catch {}
+  }
+
+  // ---------------------------------------------------------------------
 
   private initFormState(): void {
     if (this.presetToEdit) {
@@ -142,6 +258,7 @@ export class PresetPopupComponent implements OnInit, OnChanges {
     } else {
       this.formModel.skillIds.push(skillId);
     }
+    this.notifyDraft();
   }
 
   clearCategorySelection(): void {
@@ -155,6 +272,7 @@ export class PresetPopupComponent implements OnInit, OnChanges {
 
     if (!this.formModel.templateId) {
       this.selectedTemplatePreview = undefined;
+      this.notifyDraft();
       return;
     }
     this.selectedTemplatePreview = this.availableTemplates.find(
@@ -175,6 +293,7 @@ export class PresetPopupComponent implements OnInit, OnChanges {
     }
 
     this.resetCvVariantIfIncompatible();
+    this.notifyDraft();
   }
 
   // ─── Language helpers ──────────────────────────────────────────────────────
@@ -202,6 +321,7 @@ export class PresetPopupComponent implements OnInit, OnChanges {
   onLanguageChange(): void {
     this.markTouched('language');
     this.resetCvVariantIfIncompatible();
+    this.notifyDraft();
   }
 
   // ─── CV variant helpers ────────────────────────────────────────────────────
@@ -211,6 +331,10 @@ export class PresetPopupComponent implements OnInit, OnChanges {
     return this.availableCvVariants.filter((cv) =>
       this.sameLanguage(cv.language, this.formModel.language)
     );
+  }
+
+  onCvVariantChange(): void {
+    this.notifyDraft();
   }
 
   private resetCvVariantIfIncompatible(): void {
@@ -415,7 +539,11 @@ export class PresetPopupComponent implements OnInit, OnChanges {
 
   // ─── Modal ────────────────────────────────────────────────────────────────
 
+  /** Wraps the close output so the persisted draft is cleared on explicit dismissal — but only when this wasn't an edit of an existing preset. */
   closeModal(): void {
+    if (!this.isEditing) {
+      this.clearDraft();
+    }
     this.close.emit();
   }
 
@@ -503,6 +631,12 @@ export class PresetPopupComponent implements OnInit, OnChanges {
         ? Number(this.formModel.cvVariantId)
         : null,
     };
+
+    // Only clear the draft when this was a genuine new-preset draft — saving
+    // an edit to an existing preset has no relationship to it.
+    if (!this.isEditing) {
+      this.clearDraft();
+    }
 
     this.presetSubmit.emit(payload);
   }

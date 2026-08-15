@@ -62,7 +62,8 @@
                                 Company <span class="text-rose-500">*</span>
                             </label>
                             <input id="field-companyName" [(ngModel)]="formModel.companyName" name="companyName"
-                                (blur)="markTouched('companyName')" [maxlength]="fieldLimits.companyName"
+                                (ngModelChange)="notifyDraft()" (blur)="markTouched('companyName')"
+                                [maxlength]="fieldLimits.companyName"
                                 [ngClass]="hasFieldError('companyName')
                                     ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
                                     : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
@@ -80,7 +81,8 @@
                                 Position <span class="text-rose-500">*</span>
                             </label>
                             <input id="field-jobTitle" [(ngModel)]="formModel.jobTitle" name="jobTitle"
-                                (blur)="markTouched('jobTitle')" [maxlength]="fieldLimits.jobTitle"
+                                (ngModelChange)="notifyDraft()" (blur)="markTouched('jobTitle')"
+                                [maxlength]="fieldLimits.jobTitle"
                                 [ngClass]="hasFieldError('jobTitle')
                                     ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
                                     : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
@@ -100,7 +102,8 @@
                                 Email <span class="text-rose-500">*</span>
                             </label>
                             <input id="field-recipientEmail" [(ngModel)]="formModel.recipientEmail"
-                                name="recipientEmail" type="email" (blur)="markTouched('recipientEmail')"
+                                name="recipientEmail" type="email" (ngModelChange)="notifyDraft()"
+                                (blur)="markTouched('recipientEmail')"
                                 [ngClass]="hasFieldError('recipientEmail')
                                     ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
                                     : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
@@ -208,6 +211,7 @@
                     <label
                         class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">Notes</label>
                     <textarea [(ngModel)]="formModel.notes" name="notes" rows="3" maxlength="500"
+                        (ngModelChange)="notifyDraft()"
                         class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 resize-none shadow-sm transition-all"
                         placeholder="Extra context — remarques —  info…"></textarea>
                     <p class="text-right text-[11px] font-mono text-slate-400 dark:text-slate-500 mt-1">

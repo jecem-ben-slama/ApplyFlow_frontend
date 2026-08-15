@@ -95,8 +95,6 @@ export class TemplatesComponent implements OnInit, OnDestroy {
   deleteMessage = 'Are you sure you want to drop this layout parsing template?';
 
   // ── Draft persistence ──
-  private readonly DRAFT_KEY = 'applyflow_template_draft';
-
   constructor(
     private templateService: TemplateService,
     private analyticsService: AnalyticsService,
@@ -105,9 +103,7 @@ export class TemplatesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.adjustFormVisibilityForViewport();
-    this.restoreDraftIfAny();
 
-    // Setup stable search stream with RxJS debounce
     this.searchSubscription = this.searchSubject
       .pipe(debounceTime(350), distinctUntilChanged())
       .subscribe((term) => {
@@ -132,44 +128,9 @@ export class TemplatesComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── Draft persistence ──
 
-  private restoreDraftIfAny(): void {
-    if (typeof window === 'undefined') return;
 
-    const saved = localStorage.getItem(this.DRAFT_KEY);
-    if (!saved) return;
 
-    try {
-      const draft = JSON.parse(saved) as TemplateData;
-      const hasContent =
-        draft?.name?.trim() ||
-        draft?.subjectTemplate?.trim() ||
-        draft?.bodyTemplate?.trim();
-
-      if (hasContent) {
-        this.newTemplate = { ...this.newTemplate, ...draft };
-        this.isFormVisible = true;
-        this.toastService.success('Restored your unsaved draft.');
-      } else {
-        localStorage.removeItem(this.DRAFT_KEY);
-      }
-    } catch {
-      localStorage.removeItem(this.DRAFT_KEY);
-    }
-  }
-
-  onDraftSave(data: TemplateData): void {
-    // Only persist drafts for new (non-edit) templates
-    if (this.editingTemplateId !== null) return;
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(this.DRAFT_KEY, JSON.stringify(data));
-  }
-
-  private clearDraft(): void {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(this.DRAFT_KEY);
-  }
 
   // ── Existing methods ──
 
@@ -200,11 +161,8 @@ export class TemplatesComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
         error: (err) => {
-          console.error('Error fetching workspace templates profile:', err);
           this.loading = false;
-          this.toastService.error(
-            'Failed to load templates. Please try again.'
-          );
+          this.toastService.error(err.error?.message ?? 'Failed to load templates. Please try again.');
         },
       });
   }
@@ -217,8 +175,9 @@ export class TemplatesComponent implements OnInit, OnDestroy {
         this.templateStats = map;
       },
       error: (err) => {
-        console.error('Error fetching template performance stats:', err);
-        // Non-blocking: leave templateStats empty so the column just shows "No data"
+        this.toastService.error(
+          err.error?.message ?? 'Failed to load template stats. Please try again.'
+        );
       },
     });
   }
@@ -287,7 +246,6 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       bodyTemplate: '',
     };
     this.isFormVisible = false;
-    this.clearDraft();
   }
 
   onSubmitTemplate(data: TemplateData): void {
@@ -317,10 +275,6 @@ export class TemplatesComponent implements OnInit, OnDestroy {
             this.toastService.success('Template updated successfully.');
           },
           error: (err) => {
-            console.error(
-              'Failed to patch targeted template entry context:',
-              err
-            );
             this.loading = false;
             this.toastService.error(
               err.error?.message ??
@@ -331,14 +285,15 @@ export class TemplatesComponent implements OnInit, OnDestroy {
     } else {
       this.templateService.createTemplate(data).subscribe({
         next: () => {
-          this.clearDraft();
           this.onCancelEdit();
           this.loadTemplates();
           this.toastService.success('Template created successfully.');
         },
         error: (err) => {
           this.loading = false;
-          this.toastService.error(err.error.message);
+          this.toastService.error(
+            err.error?.message ?? 'Failed to create template. Please try again.'
+          );
         },
       });
     }

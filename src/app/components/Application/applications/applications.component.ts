@@ -290,7 +290,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.errorMessage =
-          err.error?.message || 'Error loading workspace data.';
+          err.error?.message || 'Error loading data.';
         this.isLoading = false;
       },
     });
@@ -503,11 +503,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
     forkJoin(requests).subscribe({
       next: () => {
-        this.toastService.success(
-          ids.length > 1
-            ? `${ids.length} applications deleted.`
-            : 'Application deleted.'
-        );
+        this.toastService.success('Application deleted successfully.');
 
         if (this.expandedAppId !== null && ids.includes(this.expandedAppId)) {
           this.expandedAppId = null;

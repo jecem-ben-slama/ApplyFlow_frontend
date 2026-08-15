@@ -4,6 +4,8 @@ import {
   Output,
   EventEmitter,
   OnChanges,
+  OnDestroy,
+  DoCheck,
   SimpleChanges,
 } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
@@ -11,6 +13,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { Category } from '../../../models';
+import { ToastService } from '../../common/toast/toast.service';
 
 interface SkillFormData {
   name: string;
@@ -50,7 +53,9 @@ interface SkillFormErrors {
     ]),
   ],
 })
-export class SkillFormComponent implements OnChanges {
+export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
+  constructor(private toastService: ToastService) {}
+
   @Input() categories: Category[] = [];
   @Input() editingSkillId: number | null = null;
   @Input() isFormExpanded = false;
@@ -87,18 +92,166 @@ export class SkillFormComponent implements OnChanges {
   private static readonly MAX_NAME_LENGTH = 80;
   private static readonly MAX_SENTENCE_LENGTH = 400;
 
+  // ─── Draft persistence (localStorage) ──────────────────────────────────────
+
+  /** localStorage key used to persist an unsaved draft across reloads/tab switches. */
+  private readonly draftStorageKey = 'skillForm.draft';
+  /** Drafts older than this are treated as stale and discarded rather than restored. */
+  private readonly draftMaxAgeMs = 24 * 60 * 60 * 1000; // 24h
+
+  /** Last-seen JSON snapshot of formData, used by ngDoCheck to detect edits cheaply. */
+  private lastFormSnapshot = '';
+  private persistDebounceHandle: ReturnType<typeof setTimeout> | null = null;
+
+  /** Set when a draft was silently restored into formData — the toast fires the next time the form is actually opened, not immediately on load. */
+  private draftPendingToast = false;
+
   ngOnChanges(changes: SimpleChanges): void {
+    // Entering edit mode invalidates any draft-save that's still pending from
+    // typing into a *new* skill — without this, the debounce timer would fire
+    // after formData has already been overwritten with the edited skill's
+    // data, and silently persist that as if it were the new-skill draft.
+    if (changes['editingSkillId'] && this.editingSkillId !== null) {
+      this.cancelPendingDraftPersist();
+
+      // Opening the form for editing must always show it, even if it was
+      // previously closed via Cancel. Relying solely on isFormExpanded
+      // transitioning false->true breaks the second time you click Edit,
+      // since isFormExpanded may stay bound to true across both clicks and
+      // Angular won't re-fire ngOnChanges for a value that didn't change.
+      this.isFormVisible = true;
+    }
+
     if (changes['initialData']) {
       this.formData = { ...this.initialData };
       this.resetValidationState();
+
+      // Only new-skill entries get a draft — editing an existing skill
+      // should always reflect that skill's real saved data.
+      if (this.editingSkillId === null) {
+        this.restoreDraft();
+      }
+      this.lastFormSnapshot = JSON.stringify(this.formData);
     }
-    if (changes['isFormExpanded'] && this.isFormExpanded) {
+
+    if (
+      changes['isFormExpanded'] &&
+      this.isFormExpanded &&
+      !this.isFormVisible
+    ) {
       this.isFormVisible = true;
+      if (this.editingSkillId === null) {
+        this.notifyDraftRestoredIfPending();
+      }
     }
   }
 
+  ngDoCheck(): void {
+    if (this.editingSkillId !== null) return; // don't persist drafts while editing an existing skill
+
+    const snapshot = JSON.stringify(this.formData);
+    if (snapshot !== this.lastFormSnapshot) {
+      this.lastFormSnapshot = snapshot;
+      this.scheduleDraftPersist(snapshot);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.cancelPendingDraftPersist();
+  }
+
+  private cancelPendingDraftPersist(): void {
+    if (this.persistDebounceHandle) {
+      clearTimeout(this.persistDebounceHandle);
+      this.persistDebounceHandle = null;
+    }
+  }
+
+  /**
+   * Schedules a persist of the given snapshot (captured at call time, not
+   * re-read from `this.formData` when the timer fires). This is what avoids
+   * the edit-mode race: even if `formData` has since been overwritten by a
+   * switch into editing, we still only ever write the snapshot that was
+   * valid when the user was actually typing it.
+   */
+  private scheduleDraftPersist(snapshot: string): void {
+    this.cancelPendingDraftPersist();
+    this.persistDebounceHandle = setTimeout(() => {
+      this.persistDebounceHandle = null;
+      // Extra safety net: if edit mode was entered in between, don't persist.
+      if (this.editingSkillId !== null) return;
+      this.persistDraftSnapshot(snapshot);
+    }, 600);
+  }
+
+  private persistDraftSnapshot(snapshot: string): void {
+    try {
+      const payload = { data: JSON.parse(snapshot), savedAt: Date.now() };
+      localStorage.setItem(this.draftStorageKey, JSON.stringify(payload));
+    } catch {
+      // localStorage unavailable (private browsing, quota, etc.) — fail silently
+    }
+  }
+
+  private restoreDraft(): void {
+    try {
+      const raw = localStorage.getItem(this.draftStorageKey);
+      if (!raw) return;
+
+      const { data, savedAt } = JSON.parse(raw) as {
+        data: Partial<SkillFormData>;
+        savedAt: number;
+      };
+
+      const isExpired =
+        typeof savedAt !== 'number' ||
+        Date.now() - savedAt > this.draftMaxAgeMs;
+      if (isExpired) {
+        this.clearDraft();
+        return;
+      }
+
+      const formIsEmpty =
+        !this.formData.name &&
+        !this.formData.sentenceEn &&
+        !this.formData.sentenceFr &&
+        this.formData.categoryId === null;
+
+      // Only restore into an empty form so we never clobber data set another way
+      if (formIsEmpty) {
+        this.formData = { ...this.formData, ...data };
+        this.draftPendingToast = true;
+      }
+    } catch {
+      // Corrupted draft — ignore and start fresh
+      this.clearDraft();
+    }
+  }
+
+  /** Shows the "draft restored" toast, but only the first time the form is actually opened after a silent restore. */
+  private notifyDraftRestoredIfPending(): void {
+    if (this.draftPendingToast) {
+      this.draftPendingToast = false;
+      this.toastService.info('Unsaved draft restored.');
+    }
+  }
+
+  private clearDraft(): void {
+    try {
+      localStorage.removeItem(this.draftStorageKey);
+    } catch {
+      // ignore
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+
   onToggleForm(): void {
+    const wasVisible = this.isFormVisible;
     this.isFormVisible = !this.isFormVisible;
+    if (!wasVisible && this.isFormVisible && this.editingSkillId === null) {
+      this.notifyDraftRestoredIfPending();
+    }
   }
 
   /** Call on (blur) to mark a field as touched and validate it live. */
@@ -128,14 +281,24 @@ export class SkillFormComponent implements OnChanges {
       categoryId: this.formData.categoryId,
     };
 
+    // Only clear the draft when this was a *new* skill — editing an existing
+    // skill has no relationship to the pending new-skill draft, so saving an
+    // edit must never wipe it out.
+    if (this.editingSkillId === null) {
+      this.clearDraft();
+    }
     this.save.emit(payload);
-        this.isFormVisible = false;
-
+    this.isFormVisible = false;
   }
 
   onCancel(): void {
     this.isFormVisible = false;
     this.resetValidationState();
+    // Same guard as onSave: only discard the draft if we were actually
+    // editing the new-skill form, not cancelling an edit of an existing one.
+    if (this.editingSkillId === null) {
+      this.clearDraft();
+    }
     this.cancel.emit();
   }
 

@@ -33,8 +33,9 @@
                     <label class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
                         Preset Name <span class="text-rose-500">*</span>
                     </label>
-                    <input id="preset-field-name" [(ngModel)]="formModel.name" name="name" (blur)="markTouched('name')"
-                        [maxlength]="fieldLimits.name" [ngClass]="hasFieldError('name')
+                    <input id="preset-field-name" [(ngModel)]="formModel.name" name="name"
+                        (ngModelChange)="notifyDraft()" (blur)="markTouched('name')" [maxlength]="fieldLimits.name"
+                        [ngClass]="hasFieldError('name')
                             ? 'border-rose-400 focus:ring-rose-400 dark:border-rose-500/50'
                             : 'border-slate-200 dark:border-surface-muted focus:ring-primary/20 focus:border-primary'"
                         class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border focus:outline-none focus:ring-2 text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all"
@@ -75,7 +76,8 @@
                                 class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">
                                 Default Job Title
                             </label>
-                            <input [(ngModel)]="formModel.jobTitle" name="jobTitle" [maxlength]="fieldLimits.jobTitle"
+                            <input [(ngModel)]="formModel.jobTitle" name="jobTitle" (ngModelChange)="notifyDraft()"
+                                [maxlength]="fieldLimits.jobTitle"
                                 class="mt-1.5 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all"
                                 placeholder="Optional — leave blank to fill per application" />
                         </div>
@@ -102,12 +104,12 @@
                     </div>
                 </div>
 
-                <div 
+                <div
                     class="bg-background-light dark:bg-surface-muted/30 rounded-2xl p-4 border border-slate-200 dark:border-surface-muted/60">
                     <label
                         class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">CV
                         Variant</label>
-                    <select [(ngModel)]="formModel.cvVariantId" name="cvVariantId"
+                    <select [(ngModel)]="formModel.cvVariantId" name="cvVariantId" (change)="onCvVariantChange()"
                         class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all">
                         <option [ngValue]="null">No specific variant</option>
                         <option *ngFor="let cv of filteredCvVariants" [ngValue]="cv.id">{{ cv.name }} ({{ cv.language |
@@ -172,6 +174,7 @@
                     <label
                         class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">Notes</label>
                     <textarea [(ngModel)]="formModel.notes" name="notes" rows="3" maxlength="500"
+                        (ngModelChange)="notifyDraft()"
                         class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 resize-none shadow-sm transition-all"
                         placeholder="Any default context to carry into applications built from this preset…"></textarea>
                     <p class="text-right text-[11px] font-mono text-slate-400 dark:text-slate-500 mt-1">

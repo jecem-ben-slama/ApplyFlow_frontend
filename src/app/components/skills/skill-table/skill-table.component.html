@@ -1,6 +1,7 @@
 <div
     class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-3xl p-4 md:p-6 shadow-sm space-y-6">
 
+    <app-skeleton *ngIf="loading" type="table" [itemsCount]="5"></app-skeleton>
 
     <div *ngIf="!loading"
         class="hidden md:block overflow-x-auto border border-slate-200 dark:border-surface-muted rounded-2xl bg-surface-light dark:bg-background shadow-sm">

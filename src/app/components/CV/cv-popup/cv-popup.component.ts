@@ -80,7 +80,7 @@ export class CvPopupComponent implements OnInit {
       !/^https:\/\/(drive|docs)\.google\.com\/.+/.test(this.formModel.fileUrl)
     ) {
       this.errorMessage =
-        'The destination URL must be a Google Drive share link.';
+        'The URL must be a Google Drive share link.';
       return;
     }
 

@@ -14,8 +14,6 @@ import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 import { ToastContainerComponent } from '../../common/toast/toast-container.component';
 import { ToastService } from '../../common/toast/toast.service';
 
-// Sub-components
-
 @Component({
   selector: 'app-skills',
   standalone: true,

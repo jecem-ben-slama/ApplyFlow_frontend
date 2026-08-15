@@ -126,7 +126,7 @@ export class PresetListComponent implements OnInit {
         },
         error: (err) => {
           this.toastService.error(
-            err.error?.message || 'Could not fetch presets.'
+            err.error?.message || 'Could not load presets.'
           );
           this.isLoading = false;
         },
@@ -256,7 +256,9 @@ export class PresetListComponent implements OnInit {
         this.isSubmittingPreset = false;
         this.showPopup = false;
         this.toastService.success(
-          this.selectedPresetForEdit ? 'Preset updated.' : 'Preset created.'
+          this.selectedPresetForEdit
+            ? 'Preset updated successfully.'
+            : 'Preset created successfully.'
         );
         this.selectedPresetForEdit = null;
         this.currentPage = 0;

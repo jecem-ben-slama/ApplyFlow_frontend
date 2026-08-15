@@ -135,7 +135,7 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.errorMessage =
             err.error?.message ??
-            'Failed to populate CV directory pipeline profiles.';
+            'Failed to load your CVs.';
           this.isListLoading = false;
           this.isRefetching = false;
         },
@@ -220,8 +220,8 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
       next: () => {
         this.toastService.success(
           this.isEditing
-            ? 'CV profile adjusted.'
-            : 'CV profile cataloged successfully.'
+            ? 'CV updated successfully.'
+            : 'CV added successfully.'
         );
         this.isSubmitting = false;
         this.closeModal();
@@ -230,7 +230,7 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.toastService.error(
           err.error?.message ??
-            'Transaction error on model mutation processing.'
+            'an unexpected error occurred, please try again.'
         );
         this.isSubmitting = false;
       },
@@ -252,13 +252,13 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
 
     this.cvService.deleteCvVariant(id).subscribe({
       next: () => {
-        this.toastService.success('CV track sequence removed.');
+        this.toastService.success('CV deleted successfully.');
         this.isDeleting = false;
         this.loadCvVariants();
       },
       error: (err) => {
         this.toastService.error(
-          err.error?.message ?? 'Failed to discard record parameters.'
+          err.error?.message ?? 'Failed to delete CV.'
         );
         this.isDeleting = false;
       },
@@ -269,6 +269,6 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
     this.showDeleteModal = false;
     this.deleteTargetId = undefined;
     this.deleteMessage =
-      'Are you sure you want to delete this track profile record permanently?';
+      'Are you sure you want to delete this CV permanently?';
   }
 }
