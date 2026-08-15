@@ -40,6 +40,7 @@ export class PresetDetailsPanelComponent implements OnChanges {
   private skillsService = inject(SkillsService);
 
   resolvedTemplateName: string | null = null;
+  resolvedTemplateBody: string | null = null;
   isLoadingTemplate = false;
 
   resolvedCvVariantName: string | null = null;
@@ -58,40 +59,49 @@ export class PresetDetailsPanelComponent implements OnChanges {
     );
   }
 
-  /** Composes the resolved preset data into a flowing, email-shaped preview. */
+  /** Renders the actual template body fetched from the backend, including the CV name and skills block. */
   get previewBody(): string {
-    const role = this.preset.jobTitle || 'this role';
-    const language = (this.preset.language || 'EN').toUpperCase();
-    const lines: string[] = [`Dear Hiring Manager,`, ``];
-
-    lines.push(
-      `I'm applying for ${role} (${language})` +
-        (this.resolvedTemplateName
-          ? `, using the "${this.resolvedTemplateName}" template.`
-          : `.`)
-    );
-
-    if (this.resolvedCvVariantName) {
-      lines.push(``, `Attached CV: ${this.resolvedCvVariantName}.`);
+    if (!this.resolvedTemplateBody) {
+      return 'Loading template content...';
     }
 
-    if (this.resolvedSkillSentences.length) {
-      lines.push(
-        ``,
-        `Key skills highlighted: ${this.resolvedSkillSentences.join(', ')}.`
+    const company = '[Company Name]';
+    const role = this.preset.jobTitle || '[Job Title]';
+    const cvName = this.resolvedCvVariantName || '[CV Variant]';
+
+    const skillsContent = this.resolvedSkillSentences
+      .filter((s) => !!s)
+      .map((s) => `• ${s}`)
+      .join('\n');
+
+    let body = this.resolvedTemplateBody
+      .replace(/\{\{companyname\}\}/gi, company)
+      .replace(/\{\{company\}\}/gi, company)
+      .replace(/\{\{position\}\}/gi, role)
+      .replace(/\{\{role\}\}/gi, role)
+      .replace(/\{\{jobtitle\}\}/gi, role)
+      .replace(/\{\{job_title\}\}/gi, role)
+      .replace(/\{\{cv\}\}/gi, cvName)
+      .replace(/\{\{cv_variant\}\}/gi, cvName)
+      .replace(/\{\{language\}\}/gi, this.preset.language ?? '')
+      .replace(/\{\{notes\}\}/gi, this.preset.notes ?? '')
+      .replace(
+        /\{\{(skills_block|skills|skillbullets|skill_bullets)\}\}/gi,
+        skillsContent
       );
+
+    // If the template doesn't explicitly contain a CV placeholder, append it cleanly at the bottom
+    if (
+      this.resolvedCvVariantName &&
+      !body.includes(this.resolvedCvVariantName)
+    ) {
+      body += `\n\nAttached CV: ${this.resolvedCvVariantName}`;
     }
 
-    lines.push(``, `Looking forward to hearing from you.`, ``, `Best regards,`);
-
-    return lines.join('\n');
+    return body;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // isSending/sendError also flow through here (they're @Input()s too), so
-    // this must only reset/re-fetch when the preset itself actually changed —
-    // otherwise every send-in-progress tick wipes the preview back to
-    // "Building preview…" and re-hits all three services for no reason.
     if (!this.isSending) {
       this.confirmingSend = false;
     }
@@ -99,28 +109,28 @@ export class PresetDetailsPanelComponent implements OnChanges {
     if (!changes['preset']) return;
 
     this.resolvedTemplateName = null;
+    this.resolvedTemplateBody = null;
     this.resolvedCvVariantName = null;
     this.resolvedSkillSentences = [];
     clearTimeout(this.confirmTimeout);
 
-    if (this.preset?.templateId) this.fetchTemplateName();
+    if (this.preset?.templateId) this.fetchTemplate();
     if (this.preset?.cvVariantId) this.fetchCvVariantName();
     if (this.preset?.skillIds?.length) this.fetchSkillNames();
   }
 
-  private fetchTemplateName(): void {
+  private fetchTemplate(): void {
     this.isLoadingTemplate = true;
     this.templateService.getTemplateById(this.preset.templateId).subscribe({
       next: (template) => {
-        // Was reading `template.bodyTemplate` — the full email body, not a
-        // short label — which flooded the avatar row and the "using the ..."
-        // sentence with the entire template text instead of its name.
         this.resolvedTemplateName =
           template.name ?? `Template #${this.preset.templateId}`;
+        this.resolvedTemplateBody = template.bodyTemplate ?? '';
         this.isLoadingTemplate = false;
       },
       error: () => {
         this.resolvedTemplateName = `Template #${this.preset.templateId}`;
+        this.resolvedTemplateBody = 'Failed to load template body.';
         this.isLoadingTemplate = false;
       },
     });
@@ -143,13 +153,6 @@ export class PresetDetailsPanelComponent implements OnChanges {
       });
   }
 
-  /**
-   * Resolves each skill's full sentence in the preset's language (French if
-   * `preset.language` is French, English otherwise), falling back to the
-   * other language's sentence. Skills with neither sentence set are dropped
-   * rather than falling back to a bare name — same rule as the application
-   * popup's `getSkillSentence`/`buildSkillBullets`.
-   */
   private fetchSkillNames(): void {
     this.isLoadingSkills = true;
     forkJoin(
