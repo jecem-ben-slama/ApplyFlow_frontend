@@ -10,7 +10,6 @@ import {
   Category,
 } from '../../../models';
 import { ApplicationPresetDto } from 'src/app/models/application_preset.model';
-import { ToastService } from '../../common/toast/toast.service';
 
 type ValidatedField =
   | 'templateId'
@@ -31,10 +30,7 @@ const FIELD_LIMITS = {
   templateUrl: './application-popup.component.html',
 })
 export class ApplicationPopupComponent implements OnInit {
-  constructor(
-    private sanitizer: DomSanitizer,
-    private toastService: ToastService
-  ) {}
+  constructor(private sanitizer: DomSanitizer) {}
   @Input() availableSkills: Skill[] = [];
   @Input() availableCategories: Category[] = [];
   @Input() availableCvVariants: CvVariantDto[] = [];
@@ -45,6 +41,8 @@ export class ApplicationPopupComponent implements OnInit {
 
   @Output() close = new EventEmitter<void>();
   @Output() formSubmit = new EventEmitter<ApplicationCreateDto>();
+  /** Emitted instead of `formSubmit` when the user picks "Compile & Send" — parent creates the application then sends the email right away. */
+  @Output() formSubmitAndSend = new EventEmitter<ApplicationCreateDto>();
 
   formModel: ApplicationCreateDto = {
     companyName: '',
@@ -65,12 +63,36 @@ export class ApplicationPopupComponent implements OnInit {
   copied = false;
   selectedCategoryId: number | null = null;
 
-  /** True after a first Compile click without a CV — next click confirms and proceeds. */
+  /** True after a first click without a CV — next click on the same button confirms and proceeds. */
   private pendingNoCvConfirmation = false;
+  /** Which action (compile-only or compile & send) triggered the pending no-CV confirmation. */
+  private pendingAction: 'compile' | 'send' | null = null;
+  /** Which action is currently in flight, so each submit button shows its own loading label. */
+  private lastSubmittedAction: 'compile' | 'send' | null = null;
 
-  /** Public read used by the template to switch the submit button into its confirm state. */
+  /** Public read used by the template to show the no-CV warning banner. */
   get noCvConfirmationPending(): boolean {
     return this.pendingNoCvConfirmation;
+  }
+
+  /** True when the "Compile Only" button is the one awaiting no-CV confirmation. */
+  get isCompileConfirmationPending(): boolean {
+    return this.pendingNoCvConfirmation && this.pendingAction === 'compile';
+  }
+
+  /** True when the "Compile & Send" button is the one awaiting no-CV confirmation. */
+  get isSendConfirmationPending(): boolean {
+    return this.pendingNoCvConfirmation && this.pendingAction === 'send';
+  }
+
+  /** True while a compile-only submission is in flight, for the compile button's own spinner/label. */
+  get isCompileLoading(): boolean {
+    return this.isLoading && this.lastSubmittedAction === 'compile';
+  }
+
+  /** True while a compile-and-send submission is in flight, for the send button's own spinner/label. */
+  get isSendLoading(): boolean {
+    return this.isLoading && this.lastSubmittedAction === 'send';
   }
 
   /** Tracks which fields the user has interacted with, so errors only show after blur/change. */
@@ -148,6 +170,26 @@ export class ApplicationPopupComponent implements OnInit {
     );
   }
 
+  /**
+   * Returns strictly the skill's sentence in the application's current language
+   * (French if `formModel.language` is French, English otherwise), falling
+   * back to the other language's sentence, without ever prepending or including the skill name.
+   */
+  getSkillSentence(id: number): string {
+    const skill = this.availableSkills.find((s) => s.id === id);
+    if (!skill) return `Skill #${id}`;
+
+    const isFrench = (this.formModel.language || '')
+      .trim()
+      .toLowerCase()
+      .startsWith('fr');
+
+    const preferred = isFrench ? skill.sentenceFr : skill.sentenceEn;
+    const fallback = isFrench ? skill.sentenceEn : skill.sentenceFr;
+
+    return preferred?.trim() || fallback?.trim() || '';
+  }
+
   toggleSkillSelection(skillId: number): void {
     const index = this.formModel.skillIds.indexOf(skillId);
     if (index > -1) {
@@ -166,6 +208,7 @@ export class ApplicationPopupComponent implements OnInit {
   onTemplateChange(): void {
     this.markTouched('templateId');
     this.pendingNoCvConfirmation = false;
+    this.pendingAction = null;
     if (!this.formModel.templateId) {
       this.selectedTemplatePreview = undefined;
       return;
@@ -223,6 +266,7 @@ export class ApplicationPopupComponent implements OnInit {
   onLanguageChange(): void {
     this.markTouched('language');
     this.pendingNoCvConfirmation = false;
+    this.pendingAction = null;
     this.resetCvVariantIfIncompatible();
   }
 
@@ -238,6 +282,7 @@ export class ApplicationPopupComponent implements OnInit {
 
   onCvVariantChange(): void {
     this.pendingNoCvConfirmation = false;
+    this.pendingAction = null;
   }
 
   /** Clears the selected CV variant if it no longer matches the current language. */
@@ -523,7 +568,25 @@ export class ApplicationPopupComponent implements OnInit {
 
   // ─── Submit ───────────────────────────────────────────────────────────────
 
+  /** "Compile Only" button — creates the application without sending an email. */
   onSubmit(): void {
+    this.processSubmit('compile');
+  }
+
+  /** "Compile & Send" button — creates the application and sends the email immediately. */
+  onSubmitAndSend(): void {
+    this.processSubmit('send');
+  }
+
+  /**
+   * Shared submit pipeline for both actions. Validates the form, then gates
+   * on a missing CV: the first click for a given action just warns (via
+   * `pendingAction`/`pendingNoCvConfirmation`) and the matching button's
+   * label flips to its "Anyway" state; a second click on that same button
+   * proceeds. Switching template/language/CV variant clears the pending
+   * state so a stale confirmation can never silently apply to new data.
+   */
+  private processSubmit(action: 'compile' | 'send'): void {
     if (this.isLoading) return;
     this.errorMessage = '';
     this.submitAttempted = true;
@@ -538,11 +601,12 @@ export class ApplicationPopupComponent implements OnInit {
       return;
     }
 
-    if (!this.formModel.cvVariantId && !this.pendingNoCvConfirmation) {
+    const alreadyConfirmedForThisAction =
+      this.pendingNoCvConfirmation && this.pendingAction === action;
+
+    if (!this.formModel.cvVariantId && !alreadyConfirmedForThisAction) {
       this.pendingNoCvConfirmation = true;
-      this.toastService.info(
-        "No CV attached — this can't be added after compiling. Click Compile again to proceed anyway."
-      );
+      this.pendingAction = action;
       return;
     }
 
@@ -577,7 +641,14 @@ export class ApplicationPopupComponent implements OnInit {
     };
 
     this.pendingNoCvConfirmation = false;
-    this.formSubmit.emit(payload);
+    this.pendingAction = null;
+    this.lastSubmittedAction = action;
+
+    if (action === 'send') {
+      this.formSubmitAndSend.emit(payload);
+    } else {
+      this.formSubmit.emit(payload);
+    }
   }
 
   // ─── Private ─────────────────────────────────────────────────────────────
@@ -647,7 +718,9 @@ export class ApplicationPopupComponent implements OnInit {
   private buildSkillBullets(): string {
     if (!this.formModel.skillIds.length) return '';
     return this.formModel.skillIds
-      .map((id) => `• ${this.getSkillName(id)}`)
+      .map((id) => this.getSkillSentence(id))
+      .filter((sentence) => !!sentence)
+      .map((sentence) => `• ${sentence}`)
       .join('\n');
   }
 }

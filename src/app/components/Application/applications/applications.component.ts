@@ -383,10 +383,23 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         next: () => {
           this.pendingStatusIds.delete(id);
           this.toastService.success(`Status updated to ${status}.`);
-          if (
-            (status === 'COMPILED' && this.activeTab === 'all') ||
-            (previousStatus === 'COMPILED' && this.activeTab === 'compiled')
+
+          if (status === 'COMPILED' && this.activeTab === 'all') {
+            // Moved INTO 'Compiled' while looking at 'All' — it no longer
+            // belongs in this list, reload to drop it.
+            this.loadApplicationsPage();
+          } else if (
+            previousStatus === 'COMPILED' &&
+            status !== 'COMPILED' &&
+            this.activeTab === 'compiled'
           ) {
+            // Moved OUT of 'Compiled' (e.g. a send sets it to 'SENT') while
+            // looking at the 'Compiled' tab. That tab only ever queries
+            // status=COMPILED, so simply reloading here would filter the
+            // row straight out of view — the row (and its expanded panel)
+            // would just vanish. Follow it over to 'All', where every
+            // non-compiled status actually lives, then reload there.
+            this.activeTab = 'all';
             this.loadApplicationsPage();
           }
         },
@@ -425,6 +438,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.isSendingEmail = true;
     this.sendErrors.delete(app.id);
 
+    const wasCompiled = app.status === 'COMPILED';
+
     this.emailService
       .sendEmail({
         recipientEmail: app.recipientEmail,
@@ -436,8 +451,19 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (msg) => {
           this.toastService.success(msg || 'Email sent!');
-          this.onUpdateStatus(app.id, 'SENT');
           this.isSendingEmail = false;
+
+          // The backend already flips the status to SENT as part of
+          // sending the email — don't PATCH it again from the client.
+          // Reflect it locally so the UI is correct even before the
+          // reload below comes back, and if we were viewing the
+          // 'compiled' tab, follow the row to 'all' since it no longer
+          // matches that tab's status=COMPILED filter.
+          app.status = 'SENT';
+          if (wasCompiled && this.activeTab === 'compiled') {
+            this.activeTab = 'all';
+          }
+          this.loadApplicationsPage();
         },
         error: (err) => {
           const message = err.error?.message || 'Email delivery failed.';
@@ -543,6 +569,89 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         );
       },
     });
+  }
+
+  /** "Compile & Send" from the popup — creates the application, then immediately sends its email. */
+  onCreateAndSendSubmit(payload: ApplicationCreateDto): void {
+    this.isLoading = true;
+
+    this.appService.createApplication(payload).subscribe({
+      next: (created) => {
+        this.isModalOpen = false;
+        this.selectedPreset = null;
+        this.isLoading = false;
+        this.sendEmailAfterCompile(created);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.popupRef?.setError(
+          err.error?.message || 'Failed to create application.'
+        );
+      },
+    });
+  }
+
+  /**
+   * Sends the email right after a "Compile & Send" creation. The backend
+   * flips the application's status to SENT as part of sending the email,
+   * so no client-side status patch happens here — we just follow the tab
+   * and reload once the send resolves.
+   */
+  private sendEmailAfterCompile(app: ApplicationResponseDto): void {
+    this.activeTab = 'compiled';
+    this.expandedAppId = app.id;
+    // Show the compiled email immediately — same as "Compile Only" — instead
+    // of waiting for the send round-trip before the list (and the expanded
+    // email panel) appear.
+    this.loadApplicationsPage();
+
+    if (!app.recipientEmail) {
+      this.sendErrors.set(app.id, 'Cannot send: recipient email is missing.');
+      this.toastService.error(
+        'Application compiled, but cannot send: recipient email is missing.'
+      );
+      return;
+    }
+
+    this.isSendingEmail = true;
+    this.sendErrors.delete(app.id);
+
+    this.emailService
+      .sendEmail({
+        recipientEmail: app.recipientEmail,
+        subject: app.generatedSubject,
+        body: app.generatedBody,
+        cvVariantId: app.cvVariantId ? Number(app.cvVariantId) : undefined,
+        applicationId: app.id,
+      })
+      .subscribe({
+        next: (msg) => {
+          this.isSendingEmail = false;
+          this.toastService.success(
+            msg || 'Application compiled and email sent!'
+          );
+
+          // The backend already flips the status to SENT as part of
+          // sending the email — don't PATCH it again from the client.
+          // The row is now SENT, not COMPILED, so the 'compiled' tab's
+          // status=COMPILED filter would drop it on reload, collapsing
+          // the panel out from under the user. Follow it to 'all', the
+          // same destination every COMPILED → non-COMPILED transition
+          // goes to.
+          this.activeTab = 'all';
+          this.loadApplicationsPage();
+        },
+        error: (err) => {
+          this.isSendingEmail = false;
+          this.sendErrors.set(
+            app.id,
+            err.error?.message || 'Email delivery failed.'
+          );
+          this.toastService.error(
+            'Application compiled, but the email failed to send.'
+          );
+        },
+      });
   }
 
   // ── Mobile card helpers ──────────────────────────────────────────────────

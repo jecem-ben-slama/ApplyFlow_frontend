@@ -4,6 +4,7 @@ import {
   Input,
   OnChanges,
   Output,
+  SimpleChanges,
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -44,7 +45,7 @@ export class PresetDetailsPanelComponent implements OnChanges {
   resolvedCvVariantName: string | null = null;
   isLoadingCvVariant = false;
 
-  resolvedSkillNames: string[] = [];
+  resolvedSkillSentences: string[] = [];
   isLoadingSkills = false;
 
   copied = false;
@@ -60,12 +61,11 @@ export class PresetDetailsPanelComponent implements OnChanges {
   /** Composes the resolved preset data into a flowing, email-shaped preview. */
   get previewBody(): string {
     const role = this.preset.jobTitle || 'this role';
+    const language = (this.preset.language || 'EN').toUpperCase();
     const lines: string[] = [`Dear Hiring Manager,`, ``];
 
     lines.push(
-      `I'm applying for ${role}.  ${(
-        this.preset.language || 'EN'
-      ).toUpperCase()}` +
+      `I'm applying for ${role} (${language})` +
         (this.resolvedTemplateName
           ? `, using the "${this.resolvedTemplateName}" template.`
           : `.`)
@@ -75,10 +75,10 @@ export class PresetDetailsPanelComponent implements OnChanges {
       lines.push(``, `Attached CV: ${this.resolvedCvVariantName}.`);
     }
 
-    if (this.resolvedSkillNames.length) {
+    if (this.resolvedSkillSentences.length) {
       lines.push(
         ``,
-        `Key skills highlighted: ${this.resolvedSkillNames.join(', ')}.`
+        `Key skills highlighted: ${this.resolvedSkillSentences.join(', ')}.`
       );
     }
 
@@ -87,13 +87,20 @@ export class PresetDetailsPanelComponent implements OnChanges {
     return lines.join('\n');
   }
 
-  ngOnChanges(): void {
-    this.resolvedTemplateName = null;
-    this.resolvedCvVariantName = null;
-    this.resolvedSkillNames = [];
+  ngOnChanges(changes: SimpleChanges): void {
+    // isSending/sendError also flow through here (they're @Input()s too), so
+    // this must only reset/re-fetch when the preset itself actually changed —
+    // otherwise every send-in-progress tick wipes the preview back to
+    // "Building preview…" and re-hits all three services for no reason.
     if (!this.isSending) {
       this.confirmingSend = false;
     }
+
+    if (!changes['preset']) return;
+
+    this.resolvedTemplateName = null;
+    this.resolvedCvVariantName = null;
+    this.resolvedSkillSentences = [];
     clearTimeout(this.confirmTimeout);
 
     if (this.preset?.templateId) this.fetchTemplateName();
@@ -105,8 +112,11 @@ export class PresetDetailsPanelComponent implements OnChanges {
     this.isLoadingTemplate = true;
     this.templateService.getTemplateById(this.preset.templateId).subscribe({
       next: (template) => {
+        // Was reading `template.bodyTemplate` — the full email body, not a
+        // short label — which flooded the avatar row and the "using the ..."
+        // sentence with the entire template text instead of its name.
         this.resolvedTemplateName =
-          template.bodyTemplate ?? `Template #${this.preset.templateId}`;
+          template.name ?? `Template #${this.preset.templateId}`;
         this.isLoadingTemplate = false;
       },
       error: () => {
@@ -133,19 +143,35 @@ export class PresetDetailsPanelComponent implements OnChanges {
       });
   }
 
+  /**
+   * Resolves each skill's full sentence in the preset's language (French if
+   * `preset.language` is French, English otherwise), falling back to the
+   * other language's sentence. Skills with neither sentence set are dropped
+   * rather than falling back to a bare name — same rule as the application
+   * popup's `getSkillSentence`/`buildSkillBullets`.
+   */
   private fetchSkillNames(): void {
     this.isLoadingSkills = true;
     forkJoin(
       this.preset.skillIds.map((id) => this.skillsService.getSkillById(id))
     ).subscribe({
       next: (skills) => {
-        this.resolvedSkillNames = skills.map(
-          (s, i) => s.name ?? `Skill #${this.preset.skillIds[i]}`
-        );
+        const isFrench = (this.preset.language || '')
+          .trim()
+          .toLowerCase()
+          .startsWith('fr');
+
+        this.resolvedSkillSentences = skills
+          .map((s) => {
+            const preferred = isFrench ? s.sentenceFr : s.sentenceEn;
+            const fallback = isFrench ? s.sentenceEn : s.sentenceFr;
+            return preferred?.trim() || fallback?.trim() || '';
+          })
+          .filter((sentence) => !!sentence);
         this.isLoadingSkills = false;
       },
       error: () => {
-        this.resolvedSkillNames = this.preset.skillIds.map(
+        this.resolvedSkillSentences = this.preset.skillIds.map(
           (id) => `Skill #${id}`
         );
         this.isLoadingSkills = false;

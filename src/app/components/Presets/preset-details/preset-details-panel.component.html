@@ -4,9 +4,7 @@
     <div class="flex flex-col border-b md:border-b-0 md:border-r border-slate-200 dark:border-surface-muted">
         <div
             class="bg-background-light dark:bg-surface-muted/30 border-b border-slate-200 dark:border-surface-muted px-4 sm:px-5 py-4 space-y-2">
-            <p class="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 leading-snug">
-                {{ preset.jobTitle || 'Application Preset' }}
-            </p>
+           
             <div class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 overflow-hidden">
                 <span
                     class="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-white text-[10px] sm:text-xs font-semibold shrink-0 uppercase font-mono">
@@ -54,7 +52,7 @@
                 (click)="onCopyClick()">
                 {{ copied ? '✓ Copied' : 'Copy' }}
             </button>
-           
+
         </div>
     </div>
 

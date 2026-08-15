@@ -56,6 +56,22 @@ export class ApplicationRowComponent {
     });
   }
 
+  /**
+   * A COMPILED row hasn't been sent yet, so its status is entirely
+   * backend-driven up to that point — the dropdown is locked until the
+   * user actually sends it (which is what transitions it out of COMPILED
+   * on the backend).
+   */
+  get isStatusLocked(): boolean {
+    return this.app.status === 'COMPILED';
+  }
+
+  get statusLockedTitle(): string {
+    return this.isStatusLocked
+      ? 'Status is locked until this application is sent'
+      : '';
+  }
+
   private readonly statusClassMap: Record<string, string> = {
     // Neutral / Initial states
     COMPILED:
