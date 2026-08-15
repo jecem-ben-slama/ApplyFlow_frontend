@@ -1,8 +1,10 @@
 import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ApplicationResponseDto } from '../../../models';
 import { CvVariantsService } from 'src/app/services/cv-variants.service';
+import { PendingSelectionService } from 'src/app/services/pending-selection.service';
 
 @Component({
   selector: '[app-application-row]',
@@ -27,6 +29,8 @@ export class ApplicationRowComponent {
   @Output() selectToggle = new EventEmitter<number>();
 
   private cvVariantService = inject(CvVariantsService);
+  private router = inject(Router);
+  private pendingSelection = inject(PendingSelectionService);
 
   resolvedVariantName: string | null = null;
   isLoadingVariant = false;
@@ -54,6 +58,16 @@ export class ApplicationRowComponent {
         this.isLoadingVariant = false;
       },
     });
+  }
+
+  /**
+   * Navigates to the dashboard and asks it to auto-select this application's
+   * timeline entry. No query params: the id is handed off via
+   * PendingSelectionService and consumed once the dashboard initializes.
+   */
+  viewDetails(): void {
+    this.pendingSelection.setPendingAppId(this.app.id);
+    this.router.navigate(['/dashboard'], { fragment: 'timeline-section' });
   }
 
   /**

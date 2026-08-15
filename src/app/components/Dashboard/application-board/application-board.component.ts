@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApplicationStatus } from '../../../services/stats.service';
 import { ApplicationSummaryDto } from '../../../services/analytics.service';
@@ -18,6 +18,9 @@ import {
 export class ApplicationBoardComponent {
   @Input() applications: ApplicationSummaryDto[] = [];
   @Input() loading = false;
+
+  /** Emits the id of the card that was clicked, so the parent can select it. */
+  @Output() cardSelected = new EventEmitter<number>();
 
   readonly statusOrder = STATUS_ORDER;
   readonly cap = KANBAN_COLUMN_CAP;
