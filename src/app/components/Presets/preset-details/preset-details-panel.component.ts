@@ -4,6 +4,7 @@ import {
   Input,
   OnChanges,
   Output,
+  SimpleChanges,
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -39,12 +40,13 @@ export class PresetDetailsPanelComponent implements OnChanges {
   private skillsService = inject(SkillsService);
 
   resolvedTemplateName: string | null = null;
+  resolvedTemplateBody: string | null = null;
   isLoadingTemplate = false;
 
   resolvedCvVariantName: string | null = null;
   isLoadingCvVariant = false;
 
-  resolvedSkillNames: string[] = [];
+  resolvedSkillSentences: string[] = [];
   isLoadingSkills = false;
 
   copied = false;
@@ -57,60 +59,78 @@ export class PresetDetailsPanelComponent implements OnChanges {
     );
   }
 
-  /** Composes the resolved preset data into a flowing, email-shaped preview. */
+  /** Renders the actual template body fetched from the backend, including the CV name and skills block. */
   get previewBody(): string {
-    const role = this.preset.jobTitle || 'this role';
-    const lines: string[] = [`Dear Hiring Manager,`, ``];
-
-    lines.push(
-      `I'm applying for ${role}.  ${(
-        this.preset.language || 'EN'
-      ).toUpperCase()}` +
-        (this.resolvedTemplateName
-          ? `, using the "${this.resolvedTemplateName}" template.`
-          : `.`)
-    );
-
-    if (this.resolvedCvVariantName) {
-      lines.push(``, `Attached CV: ${this.resolvedCvVariantName}.`);
+    if (!this.resolvedTemplateBody) {
+      return 'Loading template content...';
     }
 
-    if (this.resolvedSkillNames.length) {
-      lines.push(
-        ``,
-        `Key skills highlighted: ${this.resolvedSkillNames.join(', ')}.`
+    const company = '[Company Name]';
+    const role = this.preset.jobTitle || '[Job Title]';
+    const cvName = this.resolvedCvVariantName || '[CV Variant]';
+
+    const skillsContent = this.resolvedSkillSentences
+      .filter((s) => !!s)
+      .map((s) => `• ${s}`)
+      .join('\n');
+
+    let body = this.resolvedTemplateBody
+      .replace(/\{\{companyname\}\}/gi, company)
+      .replace(/\{\{company\}\}/gi, company)
+      .replace(/\{\{position\}\}/gi, role)
+      .replace(/\{\{role\}\}/gi, role)
+      .replace(/\{\{jobtitle\}\}/gi, role)
+      .replace(/\{\{job_title\}\}/gi, role)
+      .replace(/\{\{cv\}\}/gi, cvName)
+      .replace(/\{\{cv_variant\}\}/gi, cvName)
+      .replace(/\{\{language\}\}/gi, this.preset.language ?? '')
+      .replace(/\{\{notes\}\}/gi, this.preset.notes ?? '')
+      .replace(
+        /\{\{(skills_block|skills|skillbullets|skill_bullets)\}\}/gi,
+        skillsContent
       );
+
+    // If the template doesn't explicitly contain a CV placeholder, append it cleanly at the bottom
+    if (
+      this.resolvedCvVariantName &&
+      !body.includes(this.resolvedCvVariantName)
+    ) {
+      body += `\n\nAttached CV: ${this.resolvedCvVariantName}`;
     }
 
-    lines.push(``, `Looking forward to hearing from you.`, ``, `Best regards,`);
-
-    return lines.join('\n');
+    return body;
   }
 
-  ngOnChanges(): void {
-    this.resolvedTemplateName = null;
-    this.resolvedCvVariantName = null;
-    this.resolvedSkillNames = [];
+  ngOnChanges(changes: SimpleChanges): void {
     if (!this.isSending) {
       this.confirmingSend = false;
     }
+
+    if (!changes['preset']) return;
+
+    this.resolvedTemplateName = null;
+    this.resolvedTemplateBody = null;
+    this.resolvedCvVariantName = null;
+    this.resolvedSkillSentences = [];
     clearTimeout(this.confirmTimeout);
 
-    if (this.preset?.templateId) this.fetchTemplateName();
+    if (this.preset?.templateId) this.fetchTemplate();
     if (this.preset?.cvVariantId) this.fetchCvVariantName();
     if (this.preset?.skillIds?.length) this.fetchSkillNames();
   }
 
-  private fetchTemplateName(): void {
+  private fetchTemplate(): void {
     this.isLoadingTemplate = true;
     this.templateService.getTemplateById(this.preset.templateId).subscribe({
       next: (template) => {
         this.resolvedTemplateName =
-          template.bodyTemplate ?? `Template #${this.preset.templateId}`;
+          template.name ?? `Template #${this.preset.templateId}`;
+        this.resolvedTemplateBody = template.bodyTemplate ?? '';
         this.isLoadingTemplate = false;
       },
       error: () => {
         this.resolvedTemplateName = `Template #${this.preset.templateId}`;
+        this.resolvedTemplateBody = 'Failed to load template body.';
         this.isLoadingTemplate = false;
       },
     });
@@ -139,13 +159,22 @@ export class PresetDetailsPanelComponent implements OnChanges {
       this.preset.skillIds.map((id) => this.skillsService.getSkillById(id))
     ).subscribe({
       next: (skills) => {
-        this.resolvedSkillNames = skills.map(
-          (s, i) => s.name ?? `Skill #${this.preset.skillIds[i]}`
-        );
+        const isFrench = (this.preset.language || '')
+          .trim()
+          .toLowerCase()
+          .startsWith('fr');
+
+        this.resolvedSkillSentences = skills
+          .map((s) => {
+            const preferred = isFrench ? s.sentenceFr : s.sentenceEn;
+            const fallback = isFrench ? s.sentenceEn : s.sentenceFr;
+            return preferred?.trim() || fallback?.trim() || '';
+          })
+          .filter((sentence) => !!sentence);
         this.isLoadingSkills = false;
       },
       error: () => {
-        this.resolvedSkillNames = this.preset.skillIds.map(
+        this.resolvedSkillSentences = this.preset.skillIds.map(
           (id) => `Skill #${id}`
         );
         this.isLoadingSkills = false;
