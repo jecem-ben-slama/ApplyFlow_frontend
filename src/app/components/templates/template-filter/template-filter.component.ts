@@ -27,7 +27,7 @@ export class TemplateFilterComponent implements OnInit, OnDestroy, OnChanges {
   @Input() searchTerm = '';
 
   localSearchTerm = '';
-  isInputFocused = false; // Prevents parent updates from stealing focus
+  isInputFocused = false; 
 
   private searchSubject = new Subject<string>();
   private searchSubscription!: Subscription;

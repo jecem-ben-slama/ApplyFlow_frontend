@@ -129,6 +129,8 @@ export class SkillFormComponent implements OnChanges {
     };
 
     this.save.emit(payload);
+        this.isFormVisible = false;
+
   }
 
   onCancel(): void {
