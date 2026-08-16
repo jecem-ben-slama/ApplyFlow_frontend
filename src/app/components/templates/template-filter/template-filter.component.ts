@@ -27,7 +27,7 @@ export class TemplateFilterComponent implements OnInit, OnDestroy, OnChanges {
   @Input() searchTerm = '';
 
   localSearchTerm = '';
-  isInputFocused = false; // Prevents parent updates from stealing focus
+  isInputFocused = false; 
 
   private searchSubject = new Subject<string>();
   private searchSubscription!: Subscription;
@@ -46,7 +46,6 @@ export class TemplateFilterComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Only update local value if the user is NOT currently typing/focused
     if (changes['searchTerm'] && !this.isInputFocused) {
       const parentVal = changes['searchTerm'].currentValue || '';
       if (parentVal !== this.localSearchTerm) {

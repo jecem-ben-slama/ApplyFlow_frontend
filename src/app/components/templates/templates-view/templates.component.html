@@ -21,7 +21,7 @@
         <app-template-form [isFormVisible]="isFormVisible" [isEditing]="editingTemplateId !== null" [loading]="loading"
             [errorMessage]="errorMessage" [templateData]="newTemplate" [subjectPlaceholder]="subjectPlaceholder"
             (toggle)="onToggleForm()" (formSubmit)="onSubmitTemplate($event)" (cancel)="onCancelEdit()"
-            (draftSave)="onDraftSave($event)">
+            >
         </app-template-form>
 
         <!-- Template List: always mounted — it now owns its own skeleton

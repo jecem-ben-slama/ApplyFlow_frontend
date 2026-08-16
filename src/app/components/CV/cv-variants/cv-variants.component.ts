@@ -26,8 +26,8 @@ import { MatIconModule } from "@angular/material/icon";
     CvTableComponent,
     ToastContainerComponent,
     SkeletonComponent,
-    MatIconModule
-],
+    MatIconModule,
+  ],
   templateUrl: './cv-variants.component.html',
 })
 export class CvVariantsComponent implements OnInit, OnDestroy {
@@ -127,21 +127,30 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (page) => {
+          // If a delete emptied the page we're viewing (or a filter change
+          // did), step back one page and re-fetch rather than showing a
+          // blank list. Guarded on currentPage > 0 so a genuinely empty
+          // result set at page 0 still renders the empty state normally.
+          if ((page.content?.length ?? 0) === 0 && this.currentPage > 0) {
+            this.currentPage -= 1;
+            this.isListLoading = false;
+            this.isRefetching = false;
+            this.loadCvVariants();
+            return;
+          }
+
           this.cvPage = page;
           this.hasLoadedOnce = true;
           this.isListLoading = false;
           this.isRefetching = false;
         },
         error: (err) => {
-          this.errorMessage =
-            err.error?.message ??
-            'Failed to populate CV directory pipeline profiles.';
+          this.errorMessage = err.error?.message ?? 'Failed to load your CVs.';
           this.isListLoading = false;
           this.isRefetching = false;
         },
       });
   }
-
   onSearchChange(query: string): void {
     this.searchQuery = query;
     this.searchSubject.next(query);
@@ -219,9 +228,7 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
     request$.subscribe({
       next: () => {
         this.toastService.success(
-          this.isEditing
-            ? 'CV profile adjusted.'
-            : 'CV profile cataloged successfully.'
+          this.isEditing ? 'CV updated successfully.' : 'CV added successfully.'
         );
         this.isSubmitting = false;
         this.closeModal();
@@ -230,7 +237,7 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.toastService.error(
           err.error?.message ??
-            'Transaction error on model mutation processing.'
+            'an unexpected error occurred, please try again.'
         );
         this.isSubmitting = false;
       },
@@ -252,14 +259,12 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
 
     this.cvService.deleteCvVariant(id).subscribe({
       next: () => {
-        this.toastService.success('CV track sequence removed.');
+        this.toastService.success('CV deleted successfully.');
         this.isDeleting = false;
         this.loadCvVariants();
       },
       error: (err) => {
-        this.toastService.error(
-          err.error?.message ?? 'Failed to discard record parameters.'
-        );
+        this.toastService.error(err.error?.message ?? 'Failed to delete CV.');
         this.isDeleting = false;
       },
     });
@@ -268,7 +273,6 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
   onCancelDelete(): void {
     this.showDeleteModal = false;
     this.deleteTargetId = undefined;
-    this.deleteMessage =
-      'Are you sure you want to delete this track profile record permanently?';
+    this.deleteMessage = 'Are you sure you want to delete this CV permanently?';
   }
 }

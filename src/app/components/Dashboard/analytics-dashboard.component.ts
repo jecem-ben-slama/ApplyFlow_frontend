@@ -40,6 +40,7 @@ import {
   StatsSummary,
   TimelineEvent,
 } from 'src/app/services/stats.service';
+import { PendingSelectionService } from 'src/app/services/pending-selection.service';
 
 import {
   RangePreset,
@@ -88,6 +89,7 @@ export class AnalyticsDashboardComponent implements OnInit {
   private statsService = inject(StatsService);
   private analyticsService = inject(AnalyticsService);
   private destroyRef = inject(DestroyRef);
+  private pendingSelection = inject(PendingSelectionService);
 
   readonly outcomeStatuses = OUTCOME_STATUSES;
   readonly statusOrder = STATUS_ORDER;
@@ -266,6 +268,14 @@ export class AnalyticsDashboardComponent implements OnInit {
   ngOnInit(): void {
     this.refreshDashboard();
     this.loadApplications();
+
+    // If a "View Details" click on the applications page stashed an id
+    // right before navigating here, consume it now and jump straight to
+    // that application's timeline entry.
+    const pendingId = this.pendingSelection.consumePendingAppId();
+    if (pendingId != null) {
+      this.onSelectApplication(pendingId);
+    }
   }
 
   setPreset(preset: RangePreset): void {
@@ -362,13 +372,6 @@ export class AnalyticsDashboardComponent implements OnInit {
       return;
     }
 
-    setTimeout(() => {
-      document.getElementById('timeline-section')?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    }, 50);
-
     this.loadingTimeline.set(true);
     this.statsService
       .getApplicationTimeline(id)
@@ -377,10 +380,28 @@ export class AnalyticsDashboardComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (events) =>
-          this.applicationTimeline.set(this.withDaysSincePrevious(events)),
+        next: (events) => {
+          this.applicationTimeline.set(this.withDaysSincePrevious(events));
+          this.scrollToTimeline();
+        },
         error: () => this.loadError.set(true),
       });
+  }
+
+  /**
+   * Scrolls to the timeline section only after its content has actually
+   * rendered. A blind setTimeout fires before the page has grown to its
+   * final height (e.g. while applications/timeline are still loading),
+   * so scrollIntoView ends up short of the target. Waiting two animation
+   * frames lets Angular finish painting the new DOM first.
+   */
+  private scrollToTimeline(): void {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = document.getElementById('timeline-section');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
   }
 
   boardColumn(status: ApplicationStatus): ApplicationSummaryDto[] {

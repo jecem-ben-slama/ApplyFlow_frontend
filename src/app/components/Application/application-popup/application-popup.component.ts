@@ -1,7 +1,16 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  OnDestroy,
+  Output,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import {
   ApplicationCreateDto,
   Skill,
@@ -10,6 +19,8 @@ import {
   Category,
 } from '../../../models';
 import { ApplicationPresetDto } from 'src/app/models/application_preset.model';
+import { ToastService } from '../../common/toast/toast.service';
+// Adjust this import path to match where toast.service.ts actually lives relative to this component.
 
 type ValidatedField =
   | 'templateId'
@@ -29,8 +40,11 @@ const FIELD_LIMITS = {
   imports: [CommonModule, FormsModule],
   templateUrl: './application-popup.component.html',
 })
-export class ApplicationPopupComponent implements OnInit {
-  constructor(private sanitizer: DomSanitizer) {}
+export class ApplicationPopupComponent implements OnInit, OnDestroy {
+  constructor(
+    private sanitizer: DomSanitizer,
+    private toastService: ToastService
+  ) {}
   @Input() availableSkills: Skill[] = [];
   @Input() availableCategories: Category[] = [];
   @Input() availableCvVariants: CvVariantDto[] = [];
@@ -43,6 +57,7 @@ export class ApplicationPopupComponent implements OnInit {
   @Output() formSubmit = new EventEmitter<ApplicationCreateDto>();
   /** Emitted instead of `formSubmit` when the user picks "Compile & Send" — parent creates the application then sends the email right away. */
   @Output() formSubmitAndSend = new EventEmitter<ApplicationCreateDto>();
+  @Output() draftSave = new EventEmitter<ApplicationCreateDto>();
 
   formModel: ApplicationCreateDto = {
     companyName: '',
@@ -113,10 +128,102 @@ export class ApplicationPopupComponent implements OnInit {
     'language',
   ];
 
+  // ---------------------------------------------------------------------
+  // Draft persistence (localStorage)
+  // ---------------------------------------------------------------------
+
+  /** localStorage key used to persist an unsaved draft across reloads/tab switches. */
+  private readonly draftStorageKey = 'applicationPopup.draft';
+
+  private draftTrigger = new Subject<void>();
+  private draftSub?: Subscription;
+
+  /**
+   * True when a preset is driving this open of the popup. Mirrors
+   * `isEditing` on the template form: a preset's values are not part of any
+   * pending "new application" draft, so drafts are never restored into,
+   * persisted from, or cleared by a preset-prefilled session.
+   */
+  private get isPresetDriven(): boolean {
+    return !!this.prefillFromPreset;
+  }
+
   ngOnInit(): void {
+    // Unlike the template form, this component is created fresh every time
+    // the modal opens (it lives behind *ngIf in the parent) and destroyed on
+    // close — so ngOnInit *is* "the form just opened". No need to wait for a
+    // separate visibility-change event before restoring or toasting.
     if (this.prefillFromPreset) {
       this.applyPreset(this.prefillFromPreset);
+    } else {
+      this.restoreDraft();
     }
+
+    this.draftSub = this.draftTrigger.pipe(debounceTime(600)).subscribe(() => {
+      if (!this.isPresetDriven) {
+        this.persistDraft();
+        this.draftSave.emit({ ...this.formModel });
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.draftSub?.unsubscribe();
+  }
+
+  /** Call whenever the user edits the form, so the draft gets (debounced) persisted. */
+  notifyDraft(): void {
+    this.draftTrigger.next();
+  }
+
+  private persistDraft(): void {
+    try {
+      localStorage.setItem(
+        this.draftStorageKey,
+        JSON.stringify(this.formModel)
+      );
+    } catch {
+      // localStorage unavailable (private browsing, quota, etc.) — fail silently
+    }
+  }
+
+  private restoreDraft(): void {
+    try {
+      const raw = localStorage.getItem(this.draftStorageKey);
+      if (!raw) return;
+
+      const draft: Partial<ApplicationCreateDto> = JSON.parse(raw);
+      const formIsEmpty =
+        !this.formModel.companyName &&
+        !this.formModel.jobTitle &&
+        !this.formModel.recipientEmail &&
+        !this.formModel.templateId &&
+        !this.formModel.notes &&
+        !this.formModel.skillIds?.length;
+
+      // Only restore into an empty form so we never clobber data the parent passed in
+      if (formIsEmpty) {
+        this.formModel = { ...this.formModel, ...draft };
+
+        // Re-run the same side effects a manual selection would trigger, so
+        // the template preview / language match / CV compatibility all stay
+        // in sync with the restored values.
+        if (this.formModel.templateId) {
+          this.onTemplateChange();
+        }
+        this.resetCvVariantIfIncompatible();
+
+        this.toastService.info('Unsaved draft restored.');
+      }
+    } catch {
+      // Corrupted draft — ignore and start fresh
+    }
+  }
+
+  private clearDraft(): void {
+    try {
+      localStorage.removeItem(this.draftStorageKey);
+    } catch {}
   }
 
   // ─── Presets ──────────────────────────────────────────────────────────────
@@ -197,6 +304,7 @@ export class ApplicationPopupComponent implements OnInit {
     } else {
       this.formModel.skillIds.push(skillId);
     }
+    this.notifyDraft();
   }
 
   clearCategorySelection(): void {
@@ -211,6 +319,7 @@ export class ApplicationPopupComponent implements OnInit {
     this.pendingAction = null;
     if (!this.formModel.templateId) {
       this.selectedTemplatePreview = undefined;
+      this.notifyDraft();
       return;
     }
     this.selectedTemplatePreview = this.availableTemplates.find(
@@ -233,6 +342,7 @@ export class ApplicationPopupComponent implements OnInit {
     }
 
     this.resetCvVariantIfIncompatible();
+    this.notifyDraft();
   }
 
   // ─── Language helpers ──────────────────────────────────────────────────────
@@ -268,6 +378,7 @@ export class ApplicationPopupComponent implements OnInit {
     this.pendingNoCvConfirmation = false;
     this.pendingAction = null;
     this.resetCvVariantIfIncompatible();
+    this.notifyDraft();
   }
 
   // ─── CV variant helpers ────────────────────────────────────────────────────
@@ -283,6 +394,7 @@ export class ApplicationPopupComponent implements OnInit {
   onCvVariantChange(): void {
     this.pendingNoCvConfirmation = false;
     this.pendingAction = null;
+    this.notifyDraft();
   }
 
   /** Clears the selected CV variant if it no longer matches the current language. */
@@ -467,7 +579,11 @@ export class ApplicationPopupComponent implements OnInit {
 
   // ─── Modal ────────────────────────────────────────────────────────────────
 
+  /** Wraps the close output so the persisted draft is cleared on explicit dismissal — but only when this wasn't a preset-prefilled session. */
   closeModal(): void {
+    if (!this.isPresetDriven) {
+      this.clearDraft();
+    }
     this.close.emit();
   }
 
@@ -643,6 +759,12 @@ export class ApplicationPopupComponent implements OnInit {
     this.pendingNoCvConfirmation = false;
     this.pendingAction = null;
     this.lastSubmittedAction = action;
+
+    // Only clear the draft when this was a genuine new-application draft —
+    // a preset-driven session was never persisted as one in the first place.
+    if (!this.isPresetDriven) {
+      this.clearDraft();
+    }
 
     if (action === 'send') {
       this.formSubmitAndSend.emit(payload);

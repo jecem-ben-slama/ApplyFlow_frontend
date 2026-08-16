@@ -118,6 +118,17 @@ export class PresetListComponent implements OnInit {
       )
       .subscribe({
         next: (page) => {
+          // If a delete (or filter change) emptied the page we're viewing,
+          // step back one page and re-fetch rather than showing a blank
+          // list. Guarded on currentPage > 0 so a genuinely empty result
+          // set at page 0 still renders the empty state normally.
+          if ((page.content?.length ?? 0) === 0 && this.currentPage > 0) {
+            this.currentPage -= 1;
+            this.isLoading = false;
+            this.loadPresetsPage();
+            return;
+          }
+
           this.presetPage = page;
           const meta = getPageMeta(page);
           this.currentPage = meta.number;
@@ -126,7 +137,7 @@ export class PresetListComponent implements OnInit {
         },
         error: (err) => {
           this.toastService.error(
-            err.error?.message || 'Could not fetch presets.'
+            err.error?.message || 'Could not load presets.'
           );
           this.isLoading = false;
         },
@@ -256,7 +267,9 @@ export class PresetListComponent implements OnInit {
         this.isSubmittingPreset = false;
         this.showPopup = false;
         this.toastService.success(
-          this.selectedPresetForEdit ? 'Preset updated.' : 'Preset created.'
+          this.selectedPresetForEdit
+            ? 'Preset updated successfully.'
+            : 'Preset created successfully.'
         );
         this.selectedPresetForEdit = null;
         this.currentPage = 0;

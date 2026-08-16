@@ -10,8 +10,6 @@
         (searchChange)="searchChange.emit($event)">
     </app-template-filter>
 
-    <!-- Content: skeleton while a search/filter/page change is loading,
-         list otherwise. Only this part swaps — never the filter bar above. -->
     <ng-container *ngIf="loading; else loadedContent">
         <app-skeleton type="table" [itemsCount]="5" class="hidden md:block"></app-skeleton>
         <app-skeleton type="card" [itemsCount]="3" class="block md:hidden"></app-skeleton>
