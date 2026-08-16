@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './components/login/login.component';
-import { authGuard } from './core/guards/auth.guard'; // Adjust this path to where your guard file is located
+import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 
 export const routes: Routes = [
@@ -8,6 +8,24 @@ export const routes: Routes = [
     path: 'login',
     component: LoginComponent,
     canActivate: [guestGuard],
+  },
+
+  {
+    path: 'legal',
+    loadComponent: () =>
+      import('./components/legal/legal.component').then(
+        (m) => m.LegalComponent
+      ),
+  },
+  {
+    path: 'privacy-policy',
+    redirectTo: 'legal',
+    pathMatch: 'full',
+  },
+  {
+    path: 'terms-of-service',
+    redirectTo: 'legal',
+    pathMatch: 'full',
   },
 
   {
@@ -20,7 +38,6 @@ export const routes: Routes = [
   },
   {
     path: 'templates',
-
     loadComponent: () =>
       import('./components/templates/templates-view/templates.component').then(
         (m) => m.TemplatesComponent
@@ -51,7 +68,7 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard], // Protected from anonymous access
   },
- 
+
   {
     path: '',
     redirectTo: 'applications',

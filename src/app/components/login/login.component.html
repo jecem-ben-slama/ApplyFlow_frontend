@@ -1,1 +1,136 @@
-<p>login works!</p>
+<div class="split-container">
+    <!-- Left Side: Login Form -->
+    <div class="login-pane">
+        <div class="login-card">
+            <div class="brand-header">
+                <h1>Apply Flow</h1>
+                <p class="subtitle">Smart Application & Skill Tracker</p>
+            </div>
+
+            <div class="card-body">
+                <p class="prompt-text">
+                    Sign in to sync your application templates, select resumes directly from
+                    <strong>Google Drive</strong>, and send follow-ups via <strong>Gmail</strong>.
+                </p>
+
+                <button (click)="onGoogleLogin()" class="google-signin-btn" type="button">
+                    <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            fill="#4285F4" />
+                        <path
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            fill="#34A853" />
+                        <path
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                            fill="#FBBC05" />
+                        <path
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z"
+                            fill="#EA4335" />
+                    </svg>
+                    <span>Continue with Google</span>
+                </button>
+            </div>
+
+            <div class="card-footer">
+                <p>© 2026 ApplyFlow. Secure OAuth2 Authentication.</p>
+                <div class="legal-links">
+                    <a routerLink="/legal" fragment="privacy" class="link-btn">Privacy Policy</a>
+                    <span>•</span>
+                    <a routerLink="/legal" fragment="terms" class="link-btn">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side: Feature Showcase Carousel -->
+    <div class="showcase-pane">
+        <div class="showcase-content">
+            <div class="slider-wrapper">
+                <div class="slides-track" [style.transform]="'translateX(-' + (currentSlide * 100) + '%)'">
+                    <div class="slide" *ngFor="let slide of slides">
+                        <span class="feature-badge">{{ slide.badge }}</span>
+                        <h2>{{ slide.title }}</h2>
+                        <p class="tagline">{{ slide.tagline }}</p>
+                        <p class="description">{{ slide.description }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Indicators -->
+            <div class="carousel-controls">
+                <button *ngFor="let slide of slides; let i = index" type="button" class="dot"
+                    [class.active]="i === currentSlide" (click)="setSlide(i)"
+                    [attr.aria-label]="'Go to slide ' + (i + 1)"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Overlay -->
+<div class="modal-backdrop" *ngIf="activeModal" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>{{ activeModal === 'privacy' ? 'Privacy Policy' : 'Terms of Service' }}</h2>
+            <button type="button" class="close-btn" (click)="closeModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <ng-container *ngIf="activeModal === 'privacy'">
+                <p><strong>Effective Date:</strong> August 16, 2026</p>
+            
+                <h3>1. Information We Collect</h3>
+                <p><strong>Account Data:</strong> When you sign in with Google OAuth, we collect basic profile details including
+                    your name, email address, and profile picture URL.</p>
+                <p><strong>Google User Data & Restricted Scopes:</strong></p>
+                <ul>
+                    <li><strong>Google Drive Access (Read-Only):</strong> We access your Google Drive files in read-only mode
+                        strictly to allow you to select, preview, and attach existing resumes, portfolio documents, or cover letter
+                        templates to your job applications within ApplyFlow.</li>
+                    <li><strong>Gmail Access (Send Only):</strong> We request permission to send emails on your behalf exclusively
+                        to submit application packages, follow-up emails, or inquiries directly to recruiters through your connected
+                        Gmail account. We do not read, process, or store your inbox messages or metadata.</li>
+                </ul>
+            
+                <h3>2. How We Use Information</h3>
+                <p>To authenticate your identity, secure access, synchronize application materials, import select Drive files, and
+                    transmit job application emails on your command.</p>
+            
+                <h3>3. Data Sharing & Google Limited Use Statement</h3>
+                <p>ApplyFlow does not sell, rent, or transfer your personal data or Google user data to third parties, advertising
+                    platforms, or AI models.</p>
+                <p><strong>Google API Limited Use Disclosure:</strong> ApplyFlow's use and transfer to any other app of information
+                    received from Google APIs will adhere to the <a
+                        href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank"
+                        rel="noopener noreferrer">Google API Services User Data Policy</a>, including the Limited Use requirements.
+                </p>
+            
+                <h3>4. Security & Retention</h3>
+                <p>Your data is transmitted using TLS encryption and retained only while your account remains active. You may revoke
+                    Google API permissions at any time via your Google Security Settings.</p>
+            </ng-container>
+            <ng-container *ngIf="activeModal === 'terms'">
+                <p><strong>Effective Date:</strong> August 16, 2026</p>
+
+                <h3>1. Acceptance of Terms</h3>
+                <p>By using ApplyFlow, you agree to comply with and be bound by these terms.</p>
+
+                <h3>2. User Conduct</h3>
+                <p>You are responsible for maintaining account security and agree not to misuse the service or attempt
+                    unauthorized access.</p>
+
+                <h3>3. OAuth Authentication</h3>
+                <p>ApplyFlow uses Google OAuth 2.0 to manage user access securely as outlined in our Privacy Policy.</p>
+
+                <h3>4. Limitation of Liability</h3>
+                <p>ApplyFlow is provided "as is" without express warranties. We are not liable for service interruptions
+                    or data loss.</p>
+            </ng-container>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-close-action" (click)="closeModal()">Close</button>
+        </div>
+    </div>
+</div>

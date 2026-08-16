@@ -1,0 +1,437 @@
+/* ==========================================================================
+   1. Master Layout & Split Container
+   ========================================================================== */
+.split-container
+{
+    display: flex;
+    min-height: 100vh;
+    width: 100vw;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   2. Left Pane: Login Card & Actions
+   ========================================================================== */
+.login-pane
+{
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 40px 20px;
+}
+
+.login-card
+{
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.brand-header h1
+{
+    margin: 0;
+    font-size: 2.5rem;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.subtitle
+{
+    color: #7f8c8d;
+    margin-top: 5px;
+    font-size: 1rem;
+}
+
+.card-body
+{
+    margin: 40px 0;
+}
+
+.prompt-text
+{
+    color: #34495e;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 30px;
+}
+
+.google-signin-btn
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    background-color: #ffffff;
+    color: #757575;
+    border: 1px solid #dadce0;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.google-signin-btn:hover
+{
+    background-color: #f8f9fa;
+    box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3),
+        0 4px 8px 3px rgba(60, 64, 67, 0.15);
+}
+
+.google-icon
+{
+    display: block;
+}
+
+.card-footer
+{
+    font-size: 0.8rem;
+    color: #bdc3c7;
+}
+
+.legal-links
+{
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.link-btn
+{
+    background: none;
+    border: none;
+    color: #7f8c8d;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+}
+
+.link-btn:hover
+{
+    color: #2c3e50;
+}
+
+/* ==========================================================================
+   3. Right Pane: Feature Showcase Carousel
+   ========================================================================== */
+.showcase-pane
+{
+    flex: 1.2;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60px;
+    color: #ffffff;
+    position: relative;
+}
+
+.showcase-content
+{
+    max-width: 500px;
+    width: 100%;
+}
+
+.slider-wrapper
+{
+    overflow: hidden;
+    width: 100%;
+}
+
+.slides-track
+{
+    display: flex;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+}
+
+.slide
+{
+    min-width: 100%;
+    box-sizing: border-box;
+}
+
+.feature-badge
+{
+    display: inline-block;
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.slide h2
+{
+    font-size: 2.2rem;
+    margin: 0 0 12px 0;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.tagline
+{
+    font-size: 1.15rem;
+    color: #93c5fd;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+.description
+{
+    font-size: 0.95rem;
+    color: #94a3b8;
+    line-height: 1.6;
+}
+
+.carousel-controls
+{
+    display: flex;
+    gap: 10px;
+    margin-top: 40px;
+}
+
+.dot
+{
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dot.active
+{
+    background-color: #3b82f6;
+    width: 32px;
+    border-radius: 6px;
+}
+
+/* ==========================================================================
+   4. Modal Popups (Privacy Policy & Terms of Service)
+   ========================================================================== */
+.modal-backdrop
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-card
+{
+    background: #ffffff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 550px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal-header
+{
+    padding: 20px 24px;
+    border-bottom: 1px solid #eef2f5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2
+{
+    margin: 0;
+    font-size: 1.25rem;
+    color: #2c3e50;
+}
+
+.close-btn
+{
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #95a5a6;
+    cursor: pointer;
+}
+
+.close-btn:hover
+{
+    color: #2c3e50;
+}
+
+.modal-body
+{
+    padding: 24px;
+    overflow-y: auto;
+    text-align: left;
+    color: #34495e;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.modal-body h3
+{
+    font-size: 1rem;
+    margin-top: 16px;
+    margin-bottom: 6px;
+    color: #2c3e50;
+}
+
+.modal-footer
+{
+    padding: 16px 24px;
+    border-top: 1px solid #eef2f5;
+    text-align: right;
+}
+
+.btn-close-action
+{
+    background-color: #2c3e50;
+    color: #ffffff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-close-action:hover
+{
+    background-color: #1a252f;
+}
+
+@keyframes fadeIn
+{
+    from
+    {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to
+    {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================================================
+   5. Mobile & Responsive Overrides (< 900px)
+   ========================================================================== */
+@media (max-width: 900px)
+{
+    .split-container
+    {
+        flex-direction: column;
+        min-height: 100vh;
+        height: auto;
+        overflow-y: auto;
+    }
+
+    /* Compact top showcase header */
+    .showcase-pane
+    {
+        flex: none;
+        width: 100%;
+        padding: 32px 20px 24px 20px;
+        box-sizing: border-box;
+    }
+
+    .showcase-content
+    {
+        max-width: 100%;
+    }
+
+    .feature-badge
+    {
+        margin-bottom: 12px;
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+
+    .slide h2
+    {
+        font-size: 1.4rem;
+        margin-bottom: 6px;
+    }
+
+    .tagline
+    {
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+    }
+
+    .description
+    {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    .carousel-controls
+    {
+        margin-top: 20px;
+        justify-content: center;
+    }
+
+    .dot
+    {
+        width: 8px;
+        height: 8px;
+    }
+
+    .dot.active
+    {
+        width: 20px;
+    }
+
+    /* Bottom login form container */
+    .login-pane
+    {
+        flex: 1;
+        padding: 32px 20px 40px 20px;
+        background-color: #ffffff;
+    }
+
+    .login-card
+    {
+        max-width: 360px;
+    }
+
+    .brand-header h1
+    {
+        font-size: 2rem;
+    }
+
+    .card-body
+    {
+        margin: 24px 0;
+    }
+
+    .prompt-text
+    {
+        font-size: 0.875rem;
+        margin-bottom: 20px;
+    }
+}
