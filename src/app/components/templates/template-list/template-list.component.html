@@ -11,8 +11,13 @@
     </app-template-filter>
 
     <ng-container *ngIf="loading; else loadedContent">
-        <app-skeleton type="table" [itemsCount]="5" class="hidden md:block"></app-skeleton>
-        <app-skeleton type="card" [itemsCount]="3" class="block md:hidden"></app-skeleton>
+        <div
+            class="rounded-2xl border border-slate-200 dark:border-surface-muted bg-surface-light/70 dark:bg-surface-dark/40 p-4 sm:p-6 shadow-sm">
+            <div class="space-y-4">
+                <app-skeleton type="table" [itemsCount]="5" class="hidden md:block"></app-skeleton>
+                <app-skeleton type="card" [itemsCount]="3" class="block md:hidden"></app-skeleton>
+            </div>
+        </div>
     </ng-container>
 
     <ng-template #loadedContent>
