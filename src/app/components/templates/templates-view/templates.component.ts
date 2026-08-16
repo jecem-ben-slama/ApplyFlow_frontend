@@ -128,12 +128,6 @@ export class TemplatesComponent implements OnInit, OnDestroy {
     }
   }
 
-
-
-
-
-  // ── Existing methods ──
-
   loadTemplates(isBackground: boolean = false): void {
     if (!isBackground) {
       this.loading = true;
@@ -150,6 +144,17 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (page: Page<TemplateDto>) => {
+          // If a delete (or filter change) emptied the page we're viewing,
+          // step back one page and re-fetch rather than showing a blank
+          // list. Guarded on currentPage > 0 so a genuinely empty result
+          // set at page 0 still renders the empty state normally.
+          if ((page.content?.length ?? 0) === 0 && this.currentPage > 0) {
+            this.currentPage -= 1;
+            this.loading = false;
+            this.loadTemplates(isBackground);
+            return;
+          }
+
           const meta = getPageMeta(page);
           this.templates = page.content.map((t) => ({
             ...t,
@@ -162,7 +167,9 @@ export class TemplatesComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.loading = false;
-          this.toastService.error(err.error?.message ?? 'Failed to load templates. Please try again.');
+          this.toastService.error(
+            err.error?.message ?? 'Failed to load templates. Please try again.'
+          );
         },
       });
   }
@@ -176,7 +183,8 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.toastService.error(
-          err.error?.message ?? 'Failed to load template stats. Please try again.'
+          err.error?.message ??
+            'Failed to load template stats. Please try again.'
         );
       },
     });

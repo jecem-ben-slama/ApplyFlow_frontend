@@ -289,8 +289,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       },
       error: (err) => {
-        this.errorMessage =
-          err.error?.message || 'Error loading data.';
+        this.errorMessage = err.error?.message || 'Error loading data.';
         this.isLoading = false;
       },
     });
@@ -321,6 +320,19 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (page) => {
+          // If a delete (or filter change) emptied out the page we're
+          // currently viewing but earlier pages still have content,
+          // step back one page and re-fetch instead of showing a blank
+          // list. Guards against currentPage=0 to avoid looping forever
+          // on a genuinely empty result set.
+          if (page.content.length === 0 && this.currentPage > 0) {
+            this.currentPage -= 1;
+            this.isLoading = false;
+            this.isRefreshing = false;
+            this.loadApplicationsPage();
+            return;
+          }
+
           this.appPage = this.postProcessApplications(page);
           const meta = getPageMeta(this.appPage);
           this.currentPage = meta.number;

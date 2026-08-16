@@ -99,22 +99,20 @@ export class SkillsComponent implements OnInit {
   }
 
   loadCategories(): void {
-    this.categoryService
-      .getAllCategories()
-      .subscribe({
-        next: (cats) => (this.categories = cats),
-        error: (err) => {
-          this.errorMessage =
-            err.error.message ||
-            'Could not load categories. Please refresh the page.';
-          this.toastService.error(this.errorMessage);
-        },
-      });
+    this.categoryService.getAllCategories().subscribe({
+      next: (cats) => (this.categories = cats),
+      error: (err) => {
+        this.errorMessage =
+          err.error.message ||
+          'Could not load categories. Please refresh the page.';
+        this.toastService.error(this.errorMessage);
+      },
+    });
   }
 
   loadSkills(): void {
     this.loading = true;
-    this.skills=[];
+    this.skills = [];
     this.skillsService
       .getAllSkills(
         this.currentPage,
@@ -127,6 +125,24 @@ export class SkillsComponent implements OnInit {
       .subscribe({
         next: (page) => {
           const meta = getPageMeta(page);
+
+          // If a delete (a single skill, or a category-cascade that took
+          // several skills with it) emptied the page we're viewing, step
+          // back one page and re-fetch rather than showing a blank list.
+          // meta.totalElements > 0 keeps a genuinely empty result set
+          // (no skills at all, or none matching the filter) rendering
+          // the normal empty state instead of looping.
+          if (
+            meta.totalElements > 0 &&
+            page.content.length === 0 &&
+            this.currentPage > 0
+          ) {
+            this.currentPage--;
+            this.loading = false;
+            this.loadSkills();
+            return;
+          }
+
           this.skills = page.content;
           this.totalPages = meta.totalPages;
           this.totalElements = meta.totalElements;
@@ -347,8 +363,9 @@ export class SkillsComponent implements OnInit {
       if (this.editingSkillId === this.deleteTargetId) this.resetForm();
       this.skillsService.deleteSkill(this.deleteTargetId).subscribe({
         next: () => {
-          if (this.skills.length - 1 === 0 && this.currentPage > 0)
-            this.currentPage--;
+          // Page-backtrack (if the deleted skill was the last item on
+          // this page) is now handled inside loadSkills() itself, so no
+          // pre-check is needed here.
           this.loadSkills();
           this.loading = false;
           this.toastService.success('Skill deleted successfully');
@@ -366,6 +383,8 @@ export class SkillsComponent implements OnInit {
       this.categoryService.deleteCategory(this.deleteTargetId).subscribe({
         next: () => {
           this.loadCategories();
+          // loadSkills() self-corrects if the category-cascade deletion
+          // emptied the current page.
           this.loadSkills();
           this.loading = false;
           this.toastService.success('Category deleted successfully');
