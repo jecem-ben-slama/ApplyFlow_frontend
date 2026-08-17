@@ -1,13 +1,7 @@
 <div
     class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-3xl p-4 md:p-6 shadow-sm space-y-6">
 
-<div
-    class="rounded-2xl border border-slate-200 dark:border-surface-muted bg-surface-light/70 dark:bg-surface-dark/40 p-4 sm:p-6 shadow-sm">
-    <div class="space-y-4">
-        <app-skeleton type="table" [itemsCount]="5" class="hidden md:block"></app-skeleton>
-        <app-skeleton type="card" [itemsCount]="3" class="block md:hidden"></app-skeleton>
-    </div>
-</div>
+
     <div *ngIf="!loading"
         class="hidden md:block overflow-x-auto border border-slate-200 dark:border-surface-muted rounded-2xl bg-surface-light dark:bg-background shadow-sm">
         <table class="w-full text-left border-collapse min-w-[860px]">

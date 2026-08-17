@@ -1,0 +1,35 @@
+# --- STAGE 1: Build the Angular app ---
+FROM node:24.13.0-alpine AS build
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Build using the specified configuration (default: production)
+ARG BUILD_PROFILE=production
+RUN npm run build -- --configuration=${BUILD_PROFILE}
+
+
+# --- STAGE 2: Serve with Nginx ---
+FROM nginx:alpine
+
+# Copy the compiled build from the previous stage to Nginx's web root
+# (Make sure "applyflow-ui" matches your actual Angular project name in angular.json)
+COPY --from=build /app/dist/applyflow-ui /usr/share/nginx/html
+
+# Copy your custom nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy the entrypoint script that writes config from env vars at startup
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Vercel container runtime maps traffic dynamically via $PORT (defaults to 80)
+ENV PORT=80
+
+EXPOSE 80
+ENTRYPOINT ["/entrypoint.sh"]
