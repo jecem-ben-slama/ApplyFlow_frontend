@@ -10,7 +10,7 @@ COPY . .
 ARG BUILD_PROFILE=production
 RUN npm run build -- --configuration=${BUILD_PROFILE}
 
-# --- STAGE 2: Serve with Nginx ---
+
 FROM nginx:alpine
 
 COPY --from=build /app/dist/applyflow-ui /usr/share/nginx/html
