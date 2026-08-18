@@ -7,6 +7,7 @@ import { PaginationComponent } from '../../common/pagination/pagination.componen
 import { TemplateComponent } from '../templates-view/templates.component';
 import { StatMetricDto } from 'src/app/models/statsmetric.model';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
+import { TemplateSegmentsPipe } from '../template-segments.pipe';
 
 export type TemplateSortColumn = 'name' | 'language';
 
@@ -20,6 +21,7 @@ export type TemplateSortColumn = 'name' | 'language';
     PaginationComponent,
     TemplateFilterComponent,
     SkeletonComponent,
+    TemplateSegmentsPipe,
   ],
   templateUrl: './template-list.component.html',
 })

@@ -430,7 +430,9 @@ export class ApplicationPopupComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Rendered subject line text plain.
+   * Rendered subject line text plain. Used for the actual payload/clipboard
+   * copy, so unfilled fields resolve to '' here (never a visible pending
+   * mark) — that styling only belongs in the *Html preview variants.
    */
   getRenderedSubject(): string {
     if (this.selectedTemplatePreview?.subjectTemplate) {
@@ -447,31 +449,61 @@ export class ApplicationPopupComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Rendered subject highlighted with inline dynamic colors.
+   * Rendered subject for the live preview panel: filled fields get a quiet
+   * blue tint, and any placeholder that isn't filled in yet stays visible as
+   * a muted, dashed-underline label instead of silently vanishing — so the
+   * user can see at a glance what's left to fill in, without the preview
+   * shouting about it.
    */
   getRenderedSubjectHtml(): SafeHtml {
-    const rawSubject = this.getRenderedSubject();
+    const company = this.formModel.companyName || '';
+    const position = this.formModel.jobTitle || '';
 
-    const escape = (s: string) =>
-      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if (this.selectedTemplatePreview?.subjectTemplate) {
+      const html = this.escapeHtml(this.selectedTemplatePreview.subjectTemplate)
+        .replace(
+          /\{\{companyname\}\}/gi,
+          this.renderPreviewValue(company, 'Company Name')
+        )
+        .replace(
+          /\{\{company\}\}/gi,
+          this.renderPreviewValue(company, 'Company Name')
+        )
+        .replace(
+          /\{\{position\}\}/gi,
+          this.renderPreviewValue(position, 'Position')
+        )
+        .replace(
+          /\{\{role\}\}/gi,
+          this.renderPreviewValue(position, 'Position')
+        )
+        .replace(
+          /\{\{jobtitle\}\}/gi,
+          this.renderPreviewValue(position, 'Position')
+        )
+        .replace(
+          /\{\{job_title\}\}/gi,
+          this.renderPreviewValue(position, 'Position')
+        );
 
-    const highlight = (s: string) =>
-      s
-        ? `<span style="color:#3b82f6;font-weight:600">${escape(s)}</span>`
-        : '';
-
-    let html = escape(rawSubject);
-    if (this.formModel.jobTitle) {
-      html = html.replace(
-        new RegExp(escape(this.formModel.jobTitle), 'gi'),
-        highlight(this.formModel.jobTitle)
-      );
+      return this.sanitizer.bypassSecurityTrustHtml(html);
     }
-    if (this.formModel.companyName) {
-      html = html.replace(
-        new RegExp(escape(this.formModel.companyName), 'gi'),
-        highlight(this.formModel.companyName)
-      );
+
+    // No template subject to work from — compose the same fallback text as
+    // getRenderedSubject(), just with the present values tinted. There's no
+    // literal placeholder token here to keep visible, since the fallback
+    // only ever includes the parts that are actually filled in.
+    let html: string;
+    if (position && company) {
+      html = `Application for ${this.filledMark(position)} at ${this.filledMark(
+        company
+      )}`;
+    } else if (position) {
+      html = `Application for ${this.filledMark(position)}`;
+    } else if (company) {
+      html = `Application at ${this.filledMark(company)}`;
+    } else {
+      html = 'Job Application';
     }
 
     return this.sanitizer.bypassSecurityTrustHtml(html);
@@ -497,19 +529,15 @@ export class ApplicationPopupComponent implements OnInit, OnDestroy {
 
   /**
    * Returns the email body as sanitized HTML where injected values (company,
-   * position, skills) are wrapped in a blue span so they stand out from the
-   * static template text.
+   * position, skills, notes) get a quiet inline tint so they stand out from
+   * the static template text without shouting. Any placeholder that has
+   * nothing to substitute yet — an empty company/position/notes, or no
+   * skills selected — stays visible as a small muted label rather than being
+   * replaced with nothing, so the user can see exactly what the template
+   * still needs.
    */
   getRenderedEmailBodyHtml(): SafeHtml {
     if (!this.selectedTemplatePreview?.bodyTemplate) return '';
-
-    const escape = (s: string) =>
-      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    const highlight = (s: string) =>
-      s
-        ? `<span style="color:#3b82f6;font-weight:500">${escape(s)}</span>`
-        : '';
 
     const company = this.formModel.companyName || '';
     const position = this.formModel.jobTitle || '';
@@ -521,34 +549,62 @@ export class ApplicationPopupComponent implements OnInit, OnDestroy {
       this.selectedTemplatePreview.bodyTemplate
     );
 
-    // Build highlighted bullets HTML (one per line)
+    // Build tinted bullets HTML (one per line), or a pending label if the
+    // template expects skills but none are selected yet.
     const bulletsHtml = bullets
       ? bullets
           .split('\n')
-          .map((line) => highlight(line))
+          .map((line) => this.filledMark(line))
           .join('\n')
-      : '';
+      : this.pendingMark('Skills');
 
-    let html = escape(this.selectedTemplatePreview.bodyTemplate)
+    let html = this.escapeHtml(this.selectedTemplatePreview.bodyTemplate)
       // company
-      .replace(/\{\{companyname\}\}/gi, highlight(company))
-      .replace(/\{\{company\}\}/gi, highlight(company))
+      .replace(
+        /\{\{companyname\}\}/gi,
+        this.renderPreviewValue(company, 'Company Name')
+      )
+      .replace(
+        /\{\{company\}\}/gi,
+        this.renderPreviewValue(company, 'Company Name')
+      )
       // position
-      .replace(/\{\{position\}\}/gi, highlight(position))
-      .replace(/\{\{role\}\}/gi, highlight(position))
-      .replace(/\{\{jobtitle\}\}/gi, highlight(position))
-      .replace(/\{\{job_title\}\}/gi, highlight(position))
+      .replace(
+        /\{\{position\}\}/gi,
+        this.renderPreviewValue(position, 'Position')
+      )
+      .replace(/\{\{role\}\}/gi, this.renderPreviewValue(position, 'Position'))
+      .replace(
+        /\{\{jobtitle\}\}/gi,
+        this.renderPreviewValue(position, 'Position')
+      )
+      .replace(
+        /\{\{job_title\}\}/gi,
+        this.renderPreviewValue(position, 'Position')
+      )
       // misc
-      .replace(/\{\{language\}\}/gi, highlight(this.formModel.language ?? ''))
-      .replace(/\{\{notes\}\}/gi, highlight(this.formModel.notes ?? ''))
+      .replace(
+        /\{\{language\}\}/gi,
+        this.renderPreviewValue(this.formModel.language, 'Language')
+      )
+      .replace(
+        /\{\{notes\}\}/gi,
+        this.renderPreviewValue(this.formModel.notes, 'Notes')
+      )
       // skills (all variants including skills_block)
       .replace(
         /\{\{(skills_block|skills|skillbullets|skill_bullets)\}\}/gi,
         bulletsHtml
       );
 
-    // If no placeholder exists but skills are selected, inject before sign-off
-    if (!hasSkillPlaceholder && bulletsHtml) {
+    // If no placeholder exists but skills are selected, inject before sign-off.
+    // (Nothing to inject if the template has no placeholder AND no skills are
+    // selected — there's no token in the raw text to keep visible in that case.)
+    if (!hasSkillPlaceholder && bullets) {
+      const highlightedBullets = bullets
+        .split('\n')
+        .map((line) => this.filledMark(line))
+        .join('\n');
       const lines = html.split('\n');
       const closingKeywords =
         /^(best|regards|sincerely|cordialement|yours|kind|merci|thank)/i;
@@ -560,7 +616,7 @@ export class ApplicationPopupComponent implements OnInit, OnDestroy {
           break;
         }
       }
-      lines.splice(insertAt, 0, '', bulletsHtml, '');
+      lines.splice(insertAt, 0, '', highlightedBullets, '');
       html = lines.join('\n');
     }
 
@@ -773,7 +829,41 @@ export class ApplicationPopupComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ─── Private ─────────────────────────────────────────────────────────────
+  // ─── Preview highlighting ──────────────────────────────────────────────────
+
+  private escapeHtml(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /**
+   * Highlight for a value that IS present — a quiet inline tint, not a
+   * loud badge. Plain text (no inline-flex/nowrap) so it wraps exactly like
+   * the surrounding copy, whether it's one word or a full sentence.
+   */
+  private filledMark(value: string): string {
+    return `<span style="background-color:rgba(59,130,246,0.14);color:#60a5fa;padding:0 3px;border-radius:3px;font-weight:500;box-decoration-break:clone;-webkit-box-decoration-break:clone">${this.escapeHtml(
+      value
+    )}</span>`;
+  }
+
+  /**
+   * Counterpart for a placeholder with nothing to substitute yet. Styled as
+   * a quiet small-caps tag — muted color, dashed underline, no fill — so it
+   * reads as "still needed" rather than as an alert. Deliberately smaller
+   * and lower-contrast than `filledMark`, since a pending field is
+   * informational, not urgent.
+   */
+  private pendingMark(label: string): string {
+    return `<span style="color:#94a3b8;font-weight:600;font-size:0.78em;letter-spacing:0.04em;text-transform:uppercase;border-bottom:1px dashed #64748b;padding-bottom:1px;white-space:nowrap">${this.escapeHtml(
+      label
+    )}</span>`;
+  }
+
+  /** Renders a placeholder's replacement HTML: filled mark if present, pending mark (with label) if empty. */
+  private renderPreviewValue(value: string | undefined, label: string): string {
+    const filled = (value ?? '').trim();
+    return filled ? this.filledMark(filled) : this.pendingMark(label);
+  }
 
   /**
    * Resolver exclusively for the subject template. Only handles company and position fields.
@@ -844,5 +934,20 @@ export class ApplicationPopupComponent implements OnInit, OnDestroy {
       .filter((sentence) => !!sentence)
       .map((sentence) => `• ${sentence}`)
       .join('\n');
+  }
+
+  clearAllSkills(): void {
+    this.formModel.skillIds = [];
+    this.notifyDraft();
+  }
+
+  /** Count of currently selected skills that belong to a given category — drives the category button badges. */
+  getSelectedCountForCategory(categoryId: number): number {
+    const idsInCategory = new Set(
+      this.availableSkills
+        .filter((s) => s.categoryId === categoryId)
+        .map((s) => s.id)
+    );
+    return this.formModel.skillIds.filter((id) => idsInCategory.has(id)).length;
   }
 }

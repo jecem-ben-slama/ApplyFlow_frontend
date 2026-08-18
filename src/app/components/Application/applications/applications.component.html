@@ -177,13 +177,14 @@
             </div>
         
         <!-- Results count inside the bottom of the filters container -->
-        <div
-            class="px-4 sm:px-5 py-2.5 bg-slate-50/50 dark:bg-surface-muted/20 border-t border-slate-100 dark:border-surface-muted/60 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
-            <span *ngIf="appPage">
-                 <span class="font-medium text-slate-700 dark:text-slate-300">{{ appPage.content.length || 0 }} Results</span>
-            </span> 
-            <span *ngIf="!appPage">Loading results...</span>
-        </div>
+    <!-- Results count inside the bottom of the filters container -->
+    <div
+        class="px-4 sm:px-5 py-2.5 bg-slate-50/50 dark:bg-surface-muted/20 border-t border-slate-100 dark:border-surface-muted/60 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+        <span *ngIf="!isLoading && !isRefreshing && appPage">
+            <span class="font-medium text-slate-700 dark:text-slate-300">{{ appPage.content.length || 0 }} Results</span>
+        </span>
+        <span *ngIf="isLoading || isRefreshing">Loading results...</span>
+    </div>
         </div>
 
         <!-- Persistent error banner -->

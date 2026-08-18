@@ -27,13 +27,14 @@ export class TemplateFilterComponent implements OnInit, OnDestroy, OnChanges {
   @Input() searchTerm = '';
 
   localSearchTerm = '';
-  isInputFocused = false; 
+  isInputFocused = false;
 
   private searchSubject = new Subject<string>();
   private searchSubscription!: Subscription;
 
   @Output() filterChange = new EventEmitter<string>();
   @Output() searchChange = new EventEmitter<string>();
+  @Input() loading: boolean = false;
 
   ngOnInit(): void {
     this.localSearchTerm = this.searchTerm;

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import {  forkJoin } from 'rxjs';
 
 import { ApplicationPresetService } from '../../../services/application-preset.service';
 import { SkillsService } from '../../../services/skills.service';

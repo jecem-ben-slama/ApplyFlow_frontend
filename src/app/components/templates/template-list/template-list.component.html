@@ -6,8 +6,8 @@
          load — people should be able to keep typing/switching filters
          without the controls disappearing out from under them. -->
     <app-template-filter [selectedLanguage]="selectedLanguage" [totalElements]="totalElements"
-        [currentCount]="templates.length" [searchTerm]="searchTerm" (filterChange)="filterChange.emit($event)"
-        (searchChange)="searchChange.emit($event)">
+        [currentCount]="templates.length" [searchTerm]="searchTerm" [loading]="loading"
+        (filterChange)="filterChange.emit($event)" (searchChange)="searchChange.emit($event)">
     </app-template-filter>
 
     <ng-container *ngIf="loading; else loadedContent">
@@ -91,9 +91,18 @@
                                 </span>
                             </td>
 
-                            <td class="py-4 px-3 text-slate-600 dark:text-slate-400 truncate"
-                                [title]="tmpl.subjectTemplate">
-                                {{ tmpl.subjectTemplate }}
+                            <td class="py-4 px-3 text-slate-600 dark:text-slate-400" [title]="tmpl.subjectTemplate">
+                                <div class="flex items-center gap-0.5 overflow-hidden whitespace-nowrap">
+                                    <ng-container *ngFor="let seg of (tmpl.subjectTemplate | templateSegments)">
+                                        <span *ngIf="seg.isPlaceholder"
+                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-200/80 dark:border-violet-500/30 font-mono text-[10px] font-bold shrink-0">
+                                            <span
+                                                class="h-1.5 w-1.5 rounded-full bg-violet-400 dark:bg-violet-400/80 shrink-0"></span>{{
+                                            seg.text }}
+                                        </span>
+                                        <span *ngIf="!seg.isPlaceholder" class="truncate">{{ seg.text }}</span>
+                                    </ng-container>
+                                </div>
                             </td>
 
                             <td class="py-4 px-3">
@@ -138,8 +147,16 @@
                                     <!-- Email header block -->
                                     <div class="p-5 border-b border-slate-100 dark:border-surface-muted/50">
                                         <h3
-                                            class="text-base font-bold text-slate-900 dark:text-slate-100 leading-snug break-words">
-                                            {{ tmpl.subjectTemplate }}
+                                            class="flex items-center flex-wrap gap-x-1.5 gap-y-1 text-base font-bold text-slate-900 dark:text-slate-100 leading-snug break-words">
+                                            <ng-container *ngFor="let seg of (tmpl.subjectTemplate | templateSegments)">
+                                                <span *ngIf="seg.isPlaceholder"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-200/80 dark:border-violet-500/30 shadow-sm font-mono text-[11px] font-bold align-middle">
+                                                    <span
+                                                        class="h-1.5 w-1.5 rounded-full bg-violet-400 dark:bg-violet-400/80 shrink-0"></span>{{
+                                                    seg.text }}
+                                                </span>
+                                                <ng-container *ngIf="!seg.isPlaceholder">{{ seg.text }}</ng-container>
+                                            </ng-container>
                                         </h3>
 
                                         <div class="flex items-center justify-between gap-3 mt-3 flex-wrap">
@@ -177,7 +194,7 @@
                                     <!-- Email body block -->
                                     <div class="p-5">
                                         <pre
-                                            class="font-sans whitespace-pre-wrap text-[13px] text-slate-700 dark:text-slate-300 break-words leading-relaxed">{{ tmpl.bodyTemplate }}</pre>
+                                            class="font-sans whitespace-pre-wrap text-[13px] text-slate-700 dark:text-slate-300 break-words leading-relaxed"><ng-container *ngFor="let seg of (tmpl.bodyTemplate | templateSegments)"><span *ngIf="seg.isPlaceholder" class="inline-flex items-center gap-1 px-2.5 py-0.5 mx-0.5 -my-px rounded-full bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-200/80 dark:border-violet-500/30 shadow-sm font-mono text-[11px] font-bold align-middle whitespace-nowrap"><span class="h-1.5 w-1.5 rounded-full bg-violet-400 dark:bg-violet-400/80 shrink-0"></span>{{ seg.text }}</span><ng-container *ngIf="!seg.isPlaceholder">{{ seg.text }}</ng-container></ng-container></pre>
                                     </div>
 
                                     <!-- Footer actions, like Gmail's reply bar -->
@@ -227,9 +244,18 @@
                                 [ngClass]="editingId === tmpl.id ? 'bg-primary animate-pulse' : 'bg-slate-300 dark:bg-slate-600'"></span>
                             {{ tmpl.name }}
                         </h4>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
-                            {{ tmpl.subjectTemplate }}
-                        </p>
+                        <div class="flex items-center gap-0.5 overflow-hidden whitespace-nowrap">
+                            <ng-container *ngFor="let seg of (tmpl.subjectTemplate | templateSegments)">
+                                <span *ngIf="seg.isPlaceholder"
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-200/80 dark:border-violet-500/30 font-mono text-[10px] font-bold shrink-0">
+                                    <span
+                                        class="h-1.5 w-1.5 rounded-full bg-violet-400 dark:bg-violet-400/80 shrink-0"></span>{{
+                                    seg.text }}
+                                </span>
+                                <span *ngIf="!seg.isPlaceholder"
+                                    class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ seg.text }}</span>
+                            </ng-container>
+                        </div>
                     </div>
 
                     <div class="flex flex-col items-end gap-1.5 shrink-0">
@@ -251,8 +277,17 @@
 
                     <!-- Subject as email header -->
                     <div class="p-4 border-b border-slate-100 dark:border-surface-muted/40">
-                        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug break-words">
-                            {{ tmpl.subjectTemplate }}
+                        <h3
+                            class="flex items-center flex-wrap gap-x-1.5 gap-y-1 text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug break-words">
+                            <ng-container *ngFor="let seg of (tmpl.subjectTemplate | templateSegments)">
+                                <span *ngIf="seg.isPlaceholder"
+                                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-200/80 dark:border-violet-500/30 shadow-sm font-mono text-[11px] font-bold align-middle">
+                                    <span
+                                        class="h-1.5 w-1.5 rounded-full bg-violet-400 dark:bg-violet-400/80 shrink-0"></span>{{
+                                    seg.text }}
+                                </span>
+                                <ng-container *ngIf="!seg.isPlaceholder">{{ seg.text }}</ng-container>
+                            </ng-container>
                         </h3>
                         <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
                             Template &middot; <span class="uppercase tracking-wider">{{ tmpl.language }}</span>
@@ -266,7 +301,7 @@
                     <!-- Body -->
                     <div class="p-4">
                         <pre
-                            class="font-sans whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-300 break-words leading-relaxed max-h-60 overflow-y-auto">{{ tmpl.bodyTemplate }}</pre>
+                            class="font-sans whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-300 break-words leading-relaxed max-h-60 overflow-y-auto"><ng-container *ngFor="let seg of (tmpl.bodyTemplate | templateSegments)"><span *ngIf="seg.isPlaceholder" class="inline-flex items-center gap-1 px-2.5 py-0.5 mx-0.5 -my-px rounded-full bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-200/80 dark:border-violet-500/30 shadow-sm font-mono text-[11px] font-bold align-middle whitespace-nowrap"><span class="h-1.5 w-1.5 rounded-full bg-violet-400 dark:bg-violet-400/80 shrink-0"></span>{{ seg.text }}</span><ng-container *ngIf="!seg.isPlaceholder">{{ seg.text }}</ng-container></ng-container></pre>
                     </div>
 
                     <!-- Action Buttons Footer -->

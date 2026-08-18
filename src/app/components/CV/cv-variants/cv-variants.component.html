@@ -10,13 +10,11 @@
     <div class="space-y-6">
 
         <!-- Filters bar + feedback: always mounted, never replaced by skeleton -->
-        <app-cv-filters-bar [selectedLanguage]="selectedLanguage" [searchQuery]="searchQuery"
-            [resultsLabel]="resultsLabel" [hasActiveFilters]="hasActiveFilters"
-            (languageChange)="onLanguageFilterChange($event)" (searchChange)="onSearchChange($event)"
-            (clearSearch)="clearSearch()" (addClick)="openCreateModal()" (clearAllFilters)="clearAllFilters()"
-            class="block animate-fade-in">
-        </app-cv-filters-bar>
-
+    <app-cv-filters-bar [selectedLanguage]="selectedLanguage" [searchQuery]="searchQuery" [resultsLabel]="resultsLabel"
+        [hasActiveFilters]="hasActiveFilters" [loading]="isListLoading || isRefetching" (languageChange)="onLanguageFilterChange($event)"
+        (searchChange)="onSearchChange($event)" (clearSearch)="clearSearch()" (addClick)="openCreateModal()"
+        (clearAllFilters)="clearAllFilters()" class="block animate-fade-in">
+    </app-cv-filters-bar>
 
         <!-- Skeleton replaces this section for any load: first mount, or a later
              refetch from search / filter / sort / page change. -->

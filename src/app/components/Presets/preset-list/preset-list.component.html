@@ -21,9 +21,11 @@
         </button>
     </div>
 
-    <!-- Filter bar -->
-    <div
-        class="bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-md border border-slate-200/80 dark:border-surface-muted rounded-2xl shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row gap-4 items-end">
+<!-- Filter bar -->
+<div
+    class="bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-md border border-slate-200/80 dark:border-surface-muted rounded-2xl shadow-sm overflow-hidden">
+
+    <div class="p-4 sm:p-5 flex flex-col sm:flex-row gap-4 items-end">
         <div class="flex-1 w-full">
             <label class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
                 Keyword Search
@@ -65,6 +67,17 @@
             ✕ Clear filters
         </button>
     </div>
+
+    <!-- Results count -->
+    <div
+        class="px-4 sm:px-5 py-2.5 bg-slate-50/50 dark:bg-surface-muted/20 border-t border-slate-100 dark:border-surface-muted/60 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+        <span *ngIf="!isLoading && presetPage">
+            <span class="font-medium text-slate-700 dark:text-slate-300">{{ presetPage.content.length || 0 }}
+                Results</span>
+        </span>
+        <span *ngIf="isLoading">Loading results...</span>
+    </div>
+</div>
 
     <ng-container *ngIf="isLoading">
     <div
@@ -136,17 +149,20 @@
                                 [ngClass]="preset.jobTitle ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500 italic'">
                                 {{ preset.jobTitle || 'Not set yet' }}
                             </td>
-                            <td class="px-6 py-4 uppercase text-xs font-mono font-semibold">
-                                <span *ngIf="preset.language; else noLang"
-                                    class="px-2 py-1 rounded-md bg-slate-100 dark:bg-surface-muted border border-slate-200/60 dark:border-surface-muted text-slate-500 dark:text-slate-400">
+                            <td class="px-3 sm:px-6 py-4">
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium uppercase tracking-wider border shadow-sm transition-colors duration-150"
+                                    [ngClass]="(preset.language.toLowerCase() === 'fr' || preset.language.toLowerCase() === 'french')
+                                  ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                  : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
                                     {{ preset.language }}
                                 </span>
                                 <ng-template #noLang>
-                                    <span
-                                        class="text-slate-400 dark:text-slate-500 italic font-sans font-normal normal-case">Not
+                                    <span class="text-slate-400 dark:text-slate-500 italic font-sans font-normal normal-case">Not
                                         set yet</span>
                                 </ng-template>
                             </td>
+                           
                             <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
                                 <button type="button" (click)="$event.stopPropagation(); onSend(preset)"
                                     class="px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-primary hover:opacity-90 transition-all shadow-sm active:scale-95">

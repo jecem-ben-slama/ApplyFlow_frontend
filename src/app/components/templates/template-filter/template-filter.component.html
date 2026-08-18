@@ -23,7 +23,7 @@
             ✕ Clear filters
         </button>
     </div>
-    <span class="text-xs text-slate-400 dark:text-slate-500 font-mono" *ngIf="totalElements > 0">
-        Showing {{ currentCount }} of {{ totalElements }} entries
-    </span>
+<span class="text-xs text-slate-400 dark:text-slate-500 font-mono" *ngIf="loading || totalElements > 0">
+    {{ loading ? 'Loading…' : ('Showing ' + currentCount + ' of ' + totalElements + ' entries') }}
+</span>
 </div>
