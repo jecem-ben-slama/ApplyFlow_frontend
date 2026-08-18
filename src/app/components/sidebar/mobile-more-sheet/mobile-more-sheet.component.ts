@@ -19,4 +19,5 @@ export class MobileMoreSheetComponent {
   @Output() toggleTheme = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
   @Output() photoError = new EventEmitter<void>();
+  @Output() requestDeleteAccount = new EventEmitter<void>();
 }

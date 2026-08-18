@@ -44,9 +44,15 @@
             <app-sidebar-nav (navigate)="close()"></app-sidebar-nav>
         </div>
 
-        <!-- Bottom: Theme Toggle & Logout -->
+        <!-- Bottom: Theme Toggle, Delete Account & Logout -->
         <div class="space-y-2 pt-4 border-t border-slate-100 dark:border-surface-muted">
             <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
+
+            <button type="button" (click)="onDeleteAccountClick()"
+                class="flex items-center gap-3 w-full px-3.5 py-3 text-xs font-medium text-danger dark:text-danger-textDark hover:bg-danger-bgLight/40 dark:hover:bg-danger-bgDark/20 rounded-xl transition-all">
+                <mat-icon class="scale-95">delete_forever</mat-icon>
+                <span>Delete Account</span>
+            </button>
 
             <button type="button" (click)="onLogoutClick()"
                 class="flex items-center gap-3 w-full px-3.5 py-3 text-xs font-medium text-danger dark:text-danger-textDark bg-danger-bgLight/40 dark:bg-danger-bgDark/20 rounded-xl transition-all">

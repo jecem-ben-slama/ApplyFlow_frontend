@@ -32,6 +32,7 @@ export class MobileSidebarComponent implements OnDestroy {
   @Output() toggleTheme = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
   @Output() photoError = new EventEmitter<void>();
+  @Output() requestDeleteAccount = new EventEmitter<void>();
 
   @ViewChild('drawer') private drawerRef?: ElementRef<HTMLElement>;
   @ViewChild('fab') private fabRef?: ElementRef<HTMLButtonElement>;
@@ -67,6 +68,11 @@ export class MobileSidebarComponent implements OnDestroy {
   onLogoutClick(): void {
     this.close();
     this.logout.emit();
+  }
+
+  onDeleteAccountClick(): void {
+    this.close();
+    this.requestDeleteAccount.emit();
   }
 
   @HostListener('document:keydown.escape')

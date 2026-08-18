@@ -82,6 +82,18 @@
             </div>
 
             <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
+
+            <div class="my-2 border-t border-slate-200/80 dark:border-surface-muted"></div>
+
+            <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Danger Zone
+            </div>
+
+            <button (click)="onDeleteAccountClick()"
+                class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-danger hover:bg-danger-bgLight dark:hover:bg-danger-bgDark/30 rounded-xl transition-all">
+                <mat-icon class="scale-75">delete_forever</mat-icon>
+                Delete Account
+            </button>
         </div>
     </div>
 </aside>

@@ -1,14 +1,18 @@
-<!-- Desktop -->
-<app-sidebar-desktop [collapsed]="isCollapsed" (collapsedChange)="isCollapsed = $event" [userName]="userName"
-    [userProfilePic]="userProfilePic" [isDark]="!!(isDarkMode$ | async)" (toggleTheme)="toggleTheme()"
-    (logout)="requestLogout()" (photoError)="onPhotoError()">
+<app-sidebar-desktop [collapsed]="isCollapsed" [userName]="userName" [userProfilePic]="userProfilePic"
+    [isDark]="(isDarkMode$ | async) ?? false" (toggleCollapse)="isCollapsed = !isCollapsed"
+    (toggleTheme)="toggleTheme()" (photoError)="onPhotoError()" (logout)="requestLogout()"
+    (requestDeleteAccount)="requestDeleteAccount()">
 </app-sidebar-desktop>
 
-<!-- Mobile: FAB + slide-out drawer -->
-<app-mobile-sidebar [userName]="userName" [userProfilePic]="userProfilePic" [isDark]="!!(isDarkMode$ | async)"
-    (toggleTheme)="toggleTheme()" (logout)="requestLogout()" (photoError)="onPhotoError()">
+<app-mobile-sidebar [userName]="userName" [userProfilePic]="userProfilePic" [isDark]="(isDarkMode$ | async) ?? false"
+    (toggleTheme)="toggleTheme()" (photoError)="onPhotoError()" (logout)="requestLogout()"
+    (requestDeleteAccount)="requestDeleteAccount()">
 </app-mobile-sidebar>
 
-<!-- Shared logout confirmation (desktop + mobile) -->
 <app-logout-confirm-dialog [open]="isConfirmLogoutOpen" (confirm)="confirmLogout()" (cancel)="cancelLogout()">
 </app-logout-confirm-dialog>
+
+<app-delete-popup [isModalOpen]="isConfirmDeleteOpen" title="Delete Account" [message]="deleteAccountMessage"
+    confirmLabel="Yes, delete my account" cancelLabel="Cancel" [isLoading]="isDeletingAccount"
+    (confirm)="confirmDeleteAccount()" (close)="cancelDeleteAccount()">
+</app-delete-popup>

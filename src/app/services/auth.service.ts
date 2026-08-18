@@ -69,6 +69,24 @@ export class AuthService {
         })
       );
   }
+  deleteAccount(): Observable<boolean> {
+    return this.http
+      .delete<ApiResponse<void>>(
+        this.api.endpoints.auth.deleteAccount,
+        this.api.httpOptions
+      )
+      .pipe(
+        tap(() => {
+          // Backend already killed the session server-side, same as logout.
+          // Reuse the exact same cross-tab broadcast so every open tab redirects.
+          this.clearLocalState();
+          localStorage.setItem(this.LOGOUT_EVENT_KEY, Date.now().toString());
+        }),
+        map((response) => !!response.success)
+        // No catchError here — let the component see the raw error (e.g. 409
+        // if deletion was already requested) and surface response.error.message.
+      );
+  }
 
   logout(): void {
     this.http

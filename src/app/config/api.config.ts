@@ -23,6 +23,7 @@ export class ApiConfig {
         login: `${base}/oauth2/authorization/google`,
         logout: `${base}/api/auth/logout`,
         me: `${base}/api/auth/me`,
+        deleteAccount: `${base}/api/auth/account`,
       },
       applications: {
         base: `${base}/api/applications`,

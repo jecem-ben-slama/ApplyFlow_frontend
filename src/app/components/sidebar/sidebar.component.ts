@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
 import { AuthService } from '../../services/auth.service';
 import { SidebarDesktopComponent } from './sidebar-desktop/sidebar-desktop.component';
 import { MobileSidebarComponent } from './mobile-sidebar/mobile-sidebar.component';
 import { LogoutConfirmDialogComponent } from './logout/logout-confirm-dialog.component';
+import { DeletePopupComponent } from '../common/delete-popup/delete-popup.component';
 
 /** BroadcastChannel event key used to sync logout across tabs. */
 const LOGOUT_CHANNEL = 'applyflow_auth';
@@ -17,12 +19,14 @@ const LOGOUT_CHANNEL = 'applyflow_auth';
     SidebarDesktopComponent,
     MobileSidebarComponent,
     LogoutConfirmDialogComponent,
+    DeletePopupComponent,
   ],
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   private readonly themeService = inject(ThemeService);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   userName = 'New User';
   userProfilePic?: string;
@@ -30,6 +34,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
   isConfirmLogoutOpen = false;
 
   isDarkMode$ = this.themeService.isDarkMode$;
+
+  // ─── Delete account state ───
+  isConfirmDeleteOpen = false;
+  isDeletingAccount = false;
+  deleteAccountMessage =
+    'This will schedule your account and all associated data — applications, templates, CVs, and presets — for permanent deletion in 7 days. You can cancel by logging back in before then.';
 
   /**
    * BroadcastChannel lets tabs on the same origin communicate without
@@ -84,5 +94,41 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.isConfirmLogoutOpen = false;
     this.logoutChannel.postMessage('logout');
     this.authService.logout();
+  }
+
+  // ─── Delete account ───
+
+  requestDeleteAccount(): void {
+    this.deleteAccountMessage =
+      'This will schedule your account and all associated data — applications, templates, CVs, and presets — for permanent deletion in 7 days. You can cancel by logging back in before then.';
+    this.isConfirmDeleteOpen = true;
+  }
+
+  cancelDeleteAccount(): void {
+    if (this.isDeletingAccount) return;
+    this.isConfirmDeleteOpen = false;
+  }
+
+  confirmDeleteAccount(): void {
+    this.isDeletingAccount = true;
+    this.authService.deleteAccount().subscribe({
+      next: () => {
+        this.isDeletingAccount = false;
+        this.isConfirmDeleteOpen = false;
+        this.logoutChannel.postMessage('logout'); // sync other tabs, same as confirmLogout
+        this.router
+          .navigate(['/login'], {
+            queryParams: { accountDeletion: 'scheduled' },
+          })
+          .then(() => window.location.reload());
+      },
+      error: (err) => {
+        this.isDeletingAccount = false;
+        this.deleteAccountMessage =
+          err?.error?.message ||
+          'Something went wrong while scheduling deletion. Please try again.';
+        // Modal stays open so the error is visible.
+      },
+    });
   }
 }
