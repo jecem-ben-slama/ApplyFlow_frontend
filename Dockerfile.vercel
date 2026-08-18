@@ -1,0 +1,27 @@
+# --- STAGE 1: Build the Angular app ---
+FROM node:24.13.0-alpine AS build
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+ARG BUILD_PROFILE=production
+RUN npm run build -- --configuration=${BUILD_PROFILE}
+
+# --- STAGE 2: Serve with Nginx ---
+FROM nginx:alpine
+
+COPY --from=build /app/dist/applyflow-ui /usr/share/nginx/html
+
+# Use a template so we can substitute $PORT at container start
+COPY nginx.conf.template /etc/nginx/templates/nginx.conf.template
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENV PORT=80
+EXPOSE 80
+
+ENTRYPOINT ["/entrypoint.sh"]
