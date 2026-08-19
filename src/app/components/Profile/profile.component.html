@@ -1,0 +1,111 @@
+<div class="min-h-screen bg-background-light dark:bg-background-dark">
+    <div class="max-w-2xl mx-auto px-5 py-8">
+
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-6">
+            <button (click)="goBack()" aria-label="Go back"
+                class="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-surface-muted rounded-xl transition-colors">
+                <mat-icon class="scale-90">arrow_back</mat-icon>
+            </button>
+            <h1 class="text-lg font-bold text-slate-900 dark:text-white">Profile &amp; Settings</h1>
+        </div>
+
+        <!-- Identity card -->
+        <div
+            class="rounded-[28px] overflow-hidden ring-1 ring-black/5 dark:ring-white/10 bg-surface-light dark:bg-surface-dark shadow-sm mb-6">
+            <div
+                class="px-7 pt-9 pb-7 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent dark:from-primary/15 dark:via-accent/10">
+                <div class="flex items-center gap-4">
+                    <img *ngIf="userProfilePic" [src]="userProfilePic" alt="Profile picture" (error)="onPhotoError()"
+                        class="w-20 h-20 rounded-2xl object-cover ring-4 ring-white dark:ring-surface-dark shadow-lg shrink-0" />
+                    <div *ngIf="!userProfilePic"
+                        class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-accent-light to-accent flex items-center justify-center font-bold text-white text-2xl ring-4 ring-white dark:ring-surface-dark shadow-lg shrink-0">
+                        {{ displayName.substring(0, 2) | uppercase }}
+                    </div>
+                    <div class="flex flex-col min-w-0 gap-1">
+                        <span class="text-xl font-bold text-slate-900 dark:text-white truncate leading-tight">{{
+                            displayName }}</span>
+                        <span *ngIf="username"
+                            class="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">&#64;{{ username
+                            }}</span>
+                        <span
+                            class="inline-flex items-center gap-1 w-fit text-[10px] font-semibold uppercase tracking-wide text-primary bg-primary/10 dark:bg-primary/15 rounded-full px-2 py-0.5 mt-1">
+                            <mat-icon class="!text-[12px] !w-3 !h-3">bolt</mat-icon>
+                            ApplyFlow account
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Read-only fields -->
+            <div class="px-7 py-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">First name</p>
+                    <p class="text-sm font-medium text-slate-800 dark:text-slate-100">{{ firstName || '—' }}</p>
+                </div>
+                <div>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Last name</p>
+                    <p class="text-sm font-medium text-slate-800 dark:text-slate-100">{{ lastName || '—' }}</p>
+                </div>
+                <div>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Username</p>
+                    <p class="text-sm font-medium text-slate-800 dark:text-slate-100">{{ username || '—' }}</p>
+                </div>
+                <div>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Email</p>
+                    <p class="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{{ email || '—' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preferences -->
+        <div class="space-y-2.5 mb-6">
+            <div class="flex items-center gap-1.5 px-1">
+                <mat-icon class="scale-75 text-slate-400">tune</mat-icon>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Preferences</span>
+            </div>
+            <app-theme-toggle [isDark]="(isDarkMode$ | async) ?? false" (toggle)="toggleTheme()"></app-theme-toggle>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="space-y-2.5">
+            <div class="flex items-center gap-1.5 px-1">
+                <mat-icon class="scale-75 text-danger/70">warning</mat-icon>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-danger/70">Danger Zone</span>
+            </div>
+
+            <div class="rounded-2xl border border-danger/15 bg-danger-bgLight/30 dark:bg-danger-bgDark/10 p-5">
+                <div class="flex items-start gap-3 mb-4">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-danger/10 dark:bg-danger/15 flex items-center justify-center shrink-0">
+                        <mat-icon class="scale-90 text-danger">delete_forever</mat-icon>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-danger dark:text-danger-textDark">Delete Account</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            This will schedule your account and all associated data — applications, templates, CVs,
+                            and presets — for permanent deletion in 7 days. You can cancel by logging back in before
+                            then.
+                        </p>
+                    </div>
+                </div>
+
+                <label class="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                    Type <span class="font-mono font-semibold text-danger">delete {{ email }}</span> to confirm
+                </label>
+                <input type="text" [(ngModel)]="confirmText" [disabled]="isDeleting" autocomplete="off"
+                    spellcheck="false"
+                    class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-danger/25 bg-white dark:bg-black/20 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-danger/40 mb-3"
+                    [placeholder]="'delete ' + (email || 'you@example.com')" />
+
+                <p *ngIf="deleteError" class="text-xs text-danger mb-3">{{ deleteError }}</p>
+
+                <button type="button" (click)="deleteAccount()" [disabled]="!canDelete || isDeleting"
+                    class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white bg-danger hover:bg-danger/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                    <mat-icon *ngIf="isDeleting" class="scale-90 animate-spin">progress_activity</mat-icon>
+                    {{ isDeleting ? 'Scheduling deletion…' : 'Delete my account' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

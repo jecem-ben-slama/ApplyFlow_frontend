@@ -6,6 +6,7 @@ import {
   Output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { SidebarNavComponent } from '../sidebar-nav/sidebar-nav.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
@@ -15,6 +16,7 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatIconModule,
     SidebarNavComponent,
     ThemeToggleComponent,
@@ -27,34 +29,39 @@ export class SidebarDesktopComponent {
   @Input() userProfilePic?: string;
   @Input() isDark = false;
 
-  @Output() collapsedChange = new EventEmitter<boolean>();
+  @Output() toggleCollapse = new EventEmitter<boolean>();
   @Output() toggleTheme = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
   @Output() photoError = new EventEmitter<void>();
-  @Output() requestDeleteAccount = new EventEmitter<void>();
 
-  isGearOpen = false;
+  isProfileOpen = false;
 
-  toggleCollapse(): void {
-    const next = !this.collapsed;
-    this.collapsedChange.emit(next);
-    if (next) this.isGearOpen = false;
+  onToggleCollapseClick(): void {
+    this.toggleCollapse.emit(!this.collapsed);
   }
 
-  toggleGearMenu(event: MouseEvent): void {
-    event.stopPropagation();
-    this.isGearOpen = !this.isGearOpen;
-    this.collapsedChange.emit(false);
+  onGearClick(): void {
+    // If the sidebar is collapsed, the inline panel has no room to show
+    // labels, so expand it first — then open (or toggle) the panel.
+    if (this.collapsed) {
+      this.toggleCollapse.emit(false);
+      this.isProfileOpen = true;
+    } else {
+      this.isProfileOpen = !this.isProfileOpen;
+    }
   }
 
-  onDeleteAccountClick(): void {
-    this.isGearOpen = false;
-    this.requestDeleteAccount.emit();
+  closeProfileMenu(): void {
+    this.isProfileOpen = false;
   }
 
-  /** Closes the settings dropdown on any outside click. */
   @HostListener('document:click')
   onDocumentClick(): void {
-    this.isGearOpen = false;
+    if (this.isProfileOpen) this.closeProfileMenu();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.isProfileOpen) this.closeProfileMenu();
   }
 }

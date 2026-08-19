@@ -1,18 +1,12 @@
 <app-sidebar-desktop [collapsed]="isCollapsed" [userName]="userName" [userProfilePic]="userProfilePic"
     [isDark]="(isDarkMode$ | async) ?? false" (toggleCollapse)="isCollapsed = !isCollapsed"
-    (toggleTheme)="toggleTheme()" (photoError)="onPhotoError()" (logout)="requestLogout()"
-    (requestDeleteAccount)="requestDeleteAccount()">
+    (toggleTheme)="toggleTheme()" (photoError)="onPhotoError()" (logout)="requestLogout()">
 </app-sidebar-desktop>
 
-<app-mobile-sidebar [userName]="userName" [userProfilePic]="userProfilePic" [isDark]="(isDarkMode$ | async) ?? false"
-    (toggleTheme)="toggleTheme()" (photoError)="onPhotoError()" (logout)="requestLogout()"
-    (requestDeleteAccount)="requestDeleteAccount()">
+<app-mobile-sidebar [userName]="userName" [userEmail]="userEmail" [userProfilePic]="userProfilePic"
+    [isDark]="(isDarkMode$ | async) ?? false" (toggleTheme)="toggleTheme()" (photoError)="onPhotoError()"
+    (logout)="requestLogout()">
 </app-mobile-sidebar>
 
 <app-logout-confirm-dialog [open]="isConfirmLogoutOpen" (confirm)="confirmLogout()" (cancel)="cancelLogout()">
 </app-logout-confirm-dialog>
-
-<app-delete-popup [isModalOpen]="isConfirmDeleteOpen" title="Delete Account" [message]="deleteAccountMessage"
-    confirmLabel="Yes, delete my account" cancelLabel="Cancel" [isLoading]="isDeletingAccount"
-    (confirm)="confirmDeleteAccount()" (close)="cancelDeleteAccount()">
-</app-delete-popup>

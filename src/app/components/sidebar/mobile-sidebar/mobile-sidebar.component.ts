@@ -9,6 +9,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { SidebarNavComponent } from '../sidebar-nav/sidebar-nav.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
@@ -18,6 +19,7 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatIconModule,
     SidebarNavComponent,
     ThemeToggleComponent,
@@ -26,13 +28,13 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 })
 export class MobileSidebarComponent implements OnDestroy {
   @Input() userName = 'New User';
+  @Input() userEmail = '';
   @Input() userProfilePic?: string;
   @Input() isDark = false;
 
   @Output() toggleTheme = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
   @Output() photoError = new EventEmitter<void>();
-  @Output() requestDeleteAccount = new EventEmitter<void>();
 
   @ViewChild('drawer') private drawerRef?: ElementRef<HTMLElement>;
   @ViewChild('fab') private fabRef?: ElementRef<HTMLButtonElement>;
@@ -70,11 +72,6 @@ export class MobileSidebarComponent implements OnDestroy {
     this.logout.emit();
   }
 
-  onDeleteAccountClick(): void {
-    this.close();
-    this.requestDeleteAccount.emit();
-  }
-
   @HostListener('document:keydown.escape')
   onEscape(): void {
     if (this.isOpen) this.close();
@@ -105,11 +102,6 @@ export class MobileSidebarComponent implements OnDestroy {
   }
 
   // ─── Swipe-to-close ──────────────────────────────────────
-  // Only treated as a drag once movement clearly exceeds a small threshold and is
-  // more horizontal than vertical. Until then nothing is touched, so a plain tap
-  // on a link or button behaves like a normal click — this is what avoids
-  // swallowing taps on iOS/Android, which can happen if classes/transform change
-  // mid-tap.
   private readonly DRAG_THRESHOLD = 10;
   private startY = 0;
   private isHorizontalSwipe = false;
@@ -132,7 +124,6 @@ export class MobileSidebarComponent implements OnDestroy {
         Math.abs(deltaX) > this.DRAG_THRESHOLD ||
         Math.abs(deltaY) > this.DRAG_THRESHOLD
       ) {
-        // Whichever axis moved further decides whether this is a swipe or a scroll.
         this.isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
       }
     }

@@ -68,7 +68,13 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard], // Protected from anonymous access
   },
-
+  {
+    path:'profile',
+    loadComponent:() =>
+      import('./components/Profile/profile.component').then(  
+(m) => m.ProfileComponent),
+canActivate: [authGuard], // Protected from anonymous access},
+      },
   {
     path: '',
     redirectTo: 'applications',

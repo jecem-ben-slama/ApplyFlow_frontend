@@ -44,21 +44,29 @@
             <app-sidebar-nav (navigate)="close()"></app-sidebar-nav>
         </div>
 
-        <!-- Bottom: Theme Toggle, Delete Account & Logout -->
-        <div class="space-y-2 pt-4 border-t border-slate-100 dark:border-surface-muted">
-            <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
-
-            <button type="button" (click)="onDeleteAccountClick()"
-                class="flex items-center gap-3 w-full px-3.5 py-3 text-xs font-medium text-danger dark:text-danger-textDark hover:bg-danger-bgLight/40 dark:hover:bg-danger-bgDark/20 rounded-xl transition-all">
-                <mat-icon class="scale-95">delete_forever</mat-icon>
-                <span>Delete Account</span>
-            </button>
-
+    <!-- Bottom: Preferences (always visible, not tucked behind a settings button) -->
+    <div class="space-y-2 pt-4 border-t border-slate-100 dark:border-surface-muted">
+    
+        <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
+    
+        <a [routerLink]="['/profile']" (click)="close()"
+            class="flex items-center gap-3 px-3.5 py-3 text-xs font-medium text-slate-700 dark:text-slate-200 bg-background-light dark:bg-surface-muted/30 hover:bg-slate-100 dark:hover:bg-surface-muted/60 rounded-xl transition-all no-underline">
+            <mat-icon class="scale-95 text-slate-400">person</mat-icon>
+            <span class="flex-1">View Profile</span>
+            <mat-icon class="scale-75 text-slate-300 dark:text-slate-600">chevron_right</mat-icon>
+        </a>
+    
+        <div class="flex items-center gap-3 px-3.5 py-3 bg-background-light dark:bg-surface-muted/30 rounded-xl">
+            <span class="flex-1 min-w-0 text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
+                {{ userEmail }}
+            </span>
+    
             <button type="button" (click)="onLogoutClick()"
-                class="flex items-center gap-3 w-full px-3.5 py-3 text-xs font-medium text-danger dark:text-danger-textDark bg-danger-bgLight/40 dark:bg-danger-bgDark/20 rounded-xl transition-all">
+                class="shrink-0 text-slate-400 hover:text-danger dark:hover:text-danger-textDark hover:bg-danger-bgLight dark:hover:bg-danger-bgDark/30 rounded-lg p-1.5 -m-1.5 transition-all"
+                aria-label="Sign out">
                 <mat-icon class="scale-95">logout</mat-icon>
-                <span>Sign Out</span>
             </button>
         </div>
+    </div>
     </div>
 </div>

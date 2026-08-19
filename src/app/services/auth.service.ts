@@ -69,12 +69,19 @@ export class AuthService {
         })
       );
   }
-  deleteAccount(): Observable<boolean> {
+
+  /**
+   * Schedules the current account for deletion. `confirmationPhrase` is
+   * whatever the user typed (e.g. "delete jane@example.com") — sent as-is;
+   * the backend independently verifies it matches the account's real email
+   * before doing anything.
+   */
+  deleteAccount(confirmationPhrase: string): Observable<boolean> {
     return this.http
-      .delete<ApiResponse<void>>(
-        this.api.endpoints.auth.deleteAccount,
-        this.api.httpOptions
-      )
+      .delete<ApiResponse<void>>(this.api.endpoints.auth.deleteAccount, {
+        ...this.api.httpOptions,
+        body: { confirmationPhrase },
+      })
       .pipe(
         tap(() => {
           // Backend already killed the session server-side, same as logout.
@@ -83,8 +90,8 @@ export class AuthService {
           localStorage.setItem(this.LOGOUT_EVENT_KEY, Date.now().toString());
         }),
         map((response) => !!response.success)
-        // No catchError here — let the component see the raw error (e.g. 409
-        // if deletion was already requested) and surface response.error.message.
+        // No catchError here — let the component see the raw error (e.g. 400
+        // if the confirmation phrase didn't match) and surface response.error.message.
       );
   }
 
