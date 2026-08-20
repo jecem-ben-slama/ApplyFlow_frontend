@@ -1,12 +1,32 @@
 #!/bin/sh
 set -e
 
-# Create assets directory if it doesn't exist
+echo "=========================================="
+echo "ApplyFlow container starting..."
+echo "PORT=${PORT}"
+echo "=========================================="
+
+# Make sure runtime assets directory exists
 mkdir -p /usr/share/nginx/html/assets
 
-# Runtime API configuration
-# The actual API URL can be injected here later if needed.
+# Runtime Angular configuration
 echo '{ "apiUrl": "" }' > /usr/share/nginx/html/assets/config.json
 
-# Keep nginx running in the foreground
-exec nginx -g 'daemon off;'
+echo "Generating nginx configuration..."
+
+# Replace ${PORT} with the actual PORT
+envsubst '${PORT}' \
+    < /etc/nginx/nginx.conf \
+    > /tmp/nginx.conf
+
+echo "Testing nginx configuration..."
+
+nginx -t -c /tmp/nginx.conf
+
+echo "=========================================="
+echo "Nginx configuration is valid."
+echo "Starting nginx on port ${PORT}..."
+echo "=========================================="
+
+# Run nginx in foreground
+exec nginx -c /tmp/nginx.conf -g 'daemon off;'
