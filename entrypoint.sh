@@ -9,12 +9,11 @@ echo "=========================================="
 # Make sure runtime assets directory exists
 mkdir -p /usr/share/nginx/html/assets
 
-# Runtime Angular configuration
+# Runtime configuration
 echo '{ "apiUrl": "" }' > /usr/share/nginx/html/assets/config.json
 
 echo "Generating nginx configuration..."
 
-# Replace ${PORT} with the actual PORT
 envsubst '${PORT}' \
     < /etc/nginx/nginx.conf \
     > /tmp/nginx.conf
@@ -28,5 +27,4 @@ echo "Nginx configuration is valid."
 echo "Starting nginx on port ${PORT}..."
 echo "=========================================="
 
-# Run nginx in foreground
 exec nginx -c /tmp/nginx.conf -g 'daemon off;'

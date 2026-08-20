@@ -23,19 +23,16 @@ RUN npm run build -- --configuration=${BUILD_PROFILE}
 
 FROM nginx:alpine
 
-# Angular production build
 COPY --from=build /app/dist/applyflow-ui /usr/share/nginx/html
 
-# Custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Container startup script
 COPY entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
 
-# Vercel provides PORT.
-# 80 is the default fallback.
+# Vercel provides PORT at runtime.
+# 80 is the fallback/default.
 ENV PORT=80
 
 EXPOSE 80
