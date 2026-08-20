@@ -1,5 +1,6 @@
 # --- STAGE 1: Build the Angular app ---
 FROM node:24.13.0-alpine AS build
+
 WORKDIR /app
 
 COPY package*.json ./
@@ -14,14 +15,19 @@ RUN npm run build -- --configuration=${BUILD_PROFILE}
 # --- STAGE 2: Serve with Nginx ---
 FROM nginx:alpine
 
+# Copy Angular production build
 COPY --from=build /app/dist/applyflow-ui /usr/share/nginx/html
 
-# Copy your nginx.conf and entrypoint from the root context
+# Copy Nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy startup script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+# Vercel container port
 ENV PORT=80
+
 EXPOSE 80
 
 ENTRYPOINT ["/entrypoint.sh"]
