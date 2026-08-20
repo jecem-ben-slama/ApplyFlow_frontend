@@ -220,7 +220,6 @@ export class AnalyticsDashboardComponent implements OnInit {
     return `${before} / ${after}`;
   });
 
-  // "Seen but nothing after" — viewed, then no response/rejection/progression.
   ignoredPercentage = computed(() =>
     Math.round((this.summary()?.ignoredRate ?? 0) * 100)
   );
