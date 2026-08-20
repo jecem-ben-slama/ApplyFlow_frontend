@@ -6,7 +6,7 @@ import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-legal',
   standalone: true,
-  imports: [CommonModule,RouterLink ],
+  imports: [CommonModule, RouterLink ],
   templateUrl: './legal.component.html',
   styleUrls: ['./legal.component.css'],
 })
