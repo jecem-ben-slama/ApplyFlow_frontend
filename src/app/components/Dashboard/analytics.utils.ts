@@ -1,4 +1,8 @@
-import { DateRange, StatsSummary } from 'src/app/services/stats.service';
+import {
+  DateRange,
+  StatsSummary,
+  StatsPeriodSummary,
+} from 'src/app/services/stats.service';
 import { StatMetricDto } from 'src/app/models/statsmetric.model';
 
 export type RangePreset = '7' | '30' | '90' | 'custom';
@@ -55,73 +59,31 @@ export function getSelectedRange(
   };
 }
 
-export function getPreviousRange(range: DateRange): DateRange {
-  if (!range.from || !range.to) {
-    return {};
-  }
-
-  const currentFrom = new Date(`${range.from}T00:00:00`);
-  const currentTo = new Date(`${range.to}T00:00:00`);
-  const diffDays = Math.max(
-    1,
-    Math.round((currentTo.getTime() - currentFrom.getTime()) / 86400000) + 1
-  );
-
-  const previousTo = new Date(currentFrom);
-  previousTo.setDate(previousTo.getDate() - 1);
-  const previousFrom = new Date(previousTo);
-  previousFrom.setDate(previousFrom.getDate() - diffDays + 1);
-
-  return {
-    from: toDateInputValue(previousFrom),
-    to: toDateInputValue(previousTo),
-  };
-}
-
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-export function synthesizePreviousValue(current: number): number {
-  if (!Number.isFinite(current) || current <= 0) {
-    return 0;
-  }
-  return Math.max(0, Math.round(current * 0.78));
-}
-
-export function synthesizePreviousRate(currentRate: number): number {
-  return clamp(currentRate * 0.84, 0, 1);
-}
-
-export function buildSyntheticPreviousSummary(
-  summary: StatsSummary,
-  previousRange: DateRange
-): StatsSummary {
-  const baseFactor = previousRange.from && previousRange.to ? 0.82 : 0.75;
-  const responseRate = clamp((summary.responseRate ?? 0) * baseFactor, 0, 1);
-
+// Fallback only — used when the backend hasn't returned a previousPeriod
+// (shouldn't normally happen; getSummary always computes one). Zeros, not
+// fabricated numbers, so a missing previous period reads as "no prior data"
+// rather than a misleading delta.
+export function emptyPeriodSummary(): StatsPeriodSummary {
   return {
-    totalApplications: synthesizePreviousValue(summary.totalApplications),
-    sentCount: synthesizePreviousValue(summary.sentCount),
-    responseRate,
-    avgResponseDays:
-      summary.avgResponseDays == null
-        ? null
-        : Math.max(
-            0.5,
-            summary.avgResponseDays *
-              (1.12 + (summary.totalApplications > 0 ? 0.08 : 0))
-          ),
-    activeCount: synthesizePreviousValue(summary.activeCount),
-    terminalCount: synthesizePreviousValue(summary.terminalCount),
-    neverViewedCount: synthesizePreviousValue(summary.neverViewedCount),
-    neverViewedRate: clamp(summary.neverViewedRate * baseFactor, 0, 1),
-    interviewedCount: synthesizePreviousValue(summary.interviewedCount),
-    offerCount: synthesizePreviousValue(summary.offerCount),
-    interviewToOfferRate:
-      summary.interviewToOfferRate == null
-        ? null
-        : clamp(summary.interviewToOfferRate * baseFactor, 0, 1),
+    totalApplications: 0,
+    sentCount: 0,
+    respondedCount: 0,
+    viewedCount: 0,
+    responseRate: 0,
+    avgResponseDays: null,
+    activeCount: 0,
+    terminalCount: 0,
+    neverViewedCount: 0,
+    neverViewedRate: 0,
+    ignoredCount: 0,
+    ignoredRate: 0,
+    interviewedCount: 0,
+    offerCount: 0,
+    interviewToOfferRate: null,
   };
 }
 
@@ -147,6 +109,10 @@ export function makeMetricDelta(
   };
 }
 
+// NOTE: still synthetic — there is no getTrends() call to the real
+// /api/stats/trends endpoint yet. These four charts are phase-curves derived
+// from the current summary total, not actual day-by-day history. Flagged as
+// a separate follow-up; not touched in this pass.
 export function buildTrendSeries(
   kind: 'applications' | 'responseRate' | 'interviewToOffer' | 'rejections',
   summary: StatsSummary | null,

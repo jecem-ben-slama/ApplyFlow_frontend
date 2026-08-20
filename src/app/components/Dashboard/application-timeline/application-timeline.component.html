@@ -46,15 +46,16 @@
             </span>
             <div
                 class="rounded-xl border border-slate-100 dark:border-surface-muted/60 bg-background-light/50 dark:bg-surface-muted/20 p-3.5 transition-all hover:border-primary/40 dark:hover:border-primary/50">
-                <div class="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 mb-1">
+                <div class="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 mb-1">
                     <p class="text-sm font-semibold text-slate-900 dark:text-slate-50">{{ label(event.status) }}</p>
-                    <div class="flex items-center gap-2">
-                        <span *ngIf="event.daysSincePrevious !== null"
-                            class="rounded-md bg-indigo-50 dark:bg-indigo-950/50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-300">
-                            +{{ event.daysSincePrevious }}d
-                        </span>
+                    <div class="flex flex-col items-end gap-1">
                         <p class="text-xs text-slate-400 dark:text-slate-500 font-mono tabular-nums">{{ event.occurredAt
                             | date: 'MMM d, y, h:mm a' }}</p>
+                        <span *ngIf="event.daysAgo !== null"
+                            class="rounded-md bg-indigo-50 dark:bg-indigo-950/50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-300">
+                            {{ event.daysAgo === 0 ? 'Today' : (event.daysAgo === 1 ? '1 day ago' : event.daysAgo + '
+                            days ago') }}
+                        </span>
                     </div>
                 </div>
                 <p *ngIf="event.note" class="text-xs text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">{{

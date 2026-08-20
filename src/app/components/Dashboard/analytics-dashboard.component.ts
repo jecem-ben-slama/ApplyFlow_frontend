@@ -36,22 +36,22 @@ import {
   ApplicationStatus,
   FunnelStage,
   RejectionStage,
+  StatsPeriodSummary,
   StatsService,
   StatsSummary,
+  StatsTrendResponse,
   TimelineEvent,
+  TrendGranularity,
+  TrendPoint,
 } from 'src/app/services/stats.service';
 import { PendingSelectionService } from 'src/app/services/pending-selection.service';
 
 import {
   RangePreset,
+  emptyPeriodSummary,
   formatShortDate,
   getSelectedRange,
-  getPreviousRange,
-  buildSyntheticPreviousSummary,
-  synthesizePreviousValue,
-  synthesizePreviousRate,
   makeMetricDelta,
-  buildTrendSeries,
 } from './analytics.utils';
 
 const STATUS_ORDER: ApplicationStatus[] = [
@@ -69,6 +69,15 @@ const STATUS_ORDER: ApplicationStatus[] = [
 
 const MIN_SAMPLE_SIZE = 3;
 const KANBAN_COLUMN_CAP = 5;
+
+// A chart-ready point for the trend bar rows in the template. `height` is
+// pre-normalized to 0-100 (percent of the max value in the series) so the
+// template can bind it straight to [style.height.%].
+interface ChartPoint {
+  label: string;
+  value: number;
+  height: number;
+}
 
 @Component({
   selector: 'app-analytics-dashboard',
@@ -99,16 +108,21 @@ export class AnalyticsDashboardComponent implements OnInit {
     { id: '7', label: '7 days' },
     { id: '30', label: '30 days' },
     { id: '90', label: '90 days' },
-    { id: 'custom', label: 'Custom range' },
   ] as const;
 
   // Overview
   summary = signal<StatsSummary | null>(null);
-  previousSummary = signal<StatsSummary | null>(null);
+  // Real previous-period numbers from the backend (summary.previousPeriod),
+  // not fabricated. Defaults to zeros if the backend ever omits it.
+  previousSummary = signal<StatsPeriodSummary | null>(null);
   funnelStages = signal<DisplayFunnelStage[]>([]);
   rejectionStages = signal<RejectionStage[]>([]);
   loading = signal(true);
   loadError = signal(false);
+
+  // Trend analysis — real per-bucket series from /api/stats/trends, scoped
+  // to the same date range as everything else on the dashboard.
+  trends = signal<StatsTrendResponse | null>(null);
 
   // Performance breakdown
   cvStats = signal<StatMetricDto[]>([]);
@@ -128,6 +142,14 @@ export class AnalyticsDashboardComponent implements OnInit {
   customFrom = signal('');
   customTo = signal('');
 
+  // Custom-range popover. Draft values are edited separately from
+  // customFrom/customTo so picking a "From" date doesn't fetch until the
+  // person explicitly applies — and Cancel can discard an in-progress edit
+  // without disturbing an already-applied custom range.
+  customRangeOpen = signal(false);
+  draftFrom = signal('');
+  draftTo = signal('');
+
   rangeLabel = computed(() => {
     const preset = this.selectedPreset();
     if (preset !== 'custom') {
@@ -140,6 +162,13 @@ export class AnalyticsDashboardComponent implements OnInit {
     }
     return `${formatShortDate(from)} – ${formatShortDate(to)}`;
   });
+
+  // Label shown on the Custom button itself — "Custom range" until one has
+  // actually been applied, then the picked dates, reusing rangeLabel's
+  // formatting so the two never drift out of sync.
+  customButtonLabel = computed(() =>
+    this.selectedPreset() === 'custom' ? this.rangeLabel() : 'Custom range'
+  );
 
   isEmptyOverview = computed(() => {
     if (this.loading()) {
@@ -191,6 +220,14 @@ export class AnalyticsDashboardComponent implements OnInit {
     return `${before} / ${after}`;
   });
 
+  // "Seen but nothing after" — viewed, then no response/rejection/progression.
+  ignoredPercentage = computed(() =>
+    Math.round((this.summary()?.ignoredRate ?? 0) * 100)
+  );
+
+  respondedCountLabel = computed(() => this.summary()?.respondedCount ?? 0);
+  viewedCountLabel = computed(() => this.summary()?.viewedCount ?? 0);
+
   kpiComparison = computed(() => {
     const current = this.summary();
     if (!current) {
@@ -201,57 +238,71 @@ export class AnalyticsDashboardComponent implements OnInit {
         avgResponseDays: makeMetricDelta(0, 0),
         activeCount: makeMetricDelta(0, 0),
         interviewToOfferRate: makeMetricDelta(0, 0),
+        ignoredCount: makeMetricDelta(0, 0),
       };
     }
 
-    const previous = this.previousSummary();
+    const previous = this.previousSummary() ?? emptyPeriodSummary();
 
     return {
       totalApplications: makeMetricDelta(
         current.totalApplications,
-        previous?.totalApplications ??
-          synthesizePreviousValue(current.totalApplications)
+        previous.totalApplications
       ),
-      sentCount: makeMetricDelta(
-        current.sentCount,
-        previous?.sentCount ?? synthesizePreviousValue(current.sentCount)
-      ),
+      sentCount: makeMetricDelta(current.sentCount, previous.sentCount),
       responseRate: makeMetricDelta(
         current.responseRate * 100,
-        (previous?.responseRate ??
-          synthesizePreviousRate(current.responseRate)) * 100
+        previous.responseRate * 100
       ),
       avgResponseDays: makeMetricDelta(
         current.avgResponseDays ?? 0,
-        previous?.avgResponseDays ??
-          synthesizePreviousValue(current.avgResponseDays ?? 0)
+        previous.avgResponseDays ?? 0
       ),
-      activeCount: makeMetricDelta(
-        current.activeCount,
-        previous?.activeCount ?? synthesizePreviousValue(current.activeCount)
-      ),
+      activeCount: makeMetricDelta(current.activeCount, previous.activeCount),
       interviewToOfferRate: makeMetricDelta(
         current.interviewToOfferRate == null
           ? 0
           : current.interviewToOfferRate * 100,
-        previous?.interviewToOfferRate == null
+        previous.interviewToOfferRate == null
           ? 0
           : previous.interviewToOfferRate * 100
+      ),
+      ignoredCount: makeMetricDelta(
+        current.ignoredCount,
+        previous.ignoredCount
       ),
     };
   });
 
-  applicationsTrend = computed(() =>
-    buildTrendSeries('applications', this.summary(), this.selectedPreset())
+  // Trend charts — built from the real /api/stats/trends response instead
+  // of being fabricated from the single-number summary. The backend returns
+  // four independent series (not one array with multiple metrics per
+  // point), so each chart reads its own array directly.
+  applicationsTrend = computed<ChartPoint[]>(() =>
+    this.toChartPoints(
+      this.trends()?.applicationsOverTime ?? [],
+      (p) => p.value
+    )
   );
-  responseRateTrend = computed(() =>
-    buildTrendSeries('responseRate', this.summary(), this.selectedPreset())
+
+  responseRateTrend = computed<ChartPoint[]>(() =>
+    this.toChartPoints(this.trends()?.responseRateOverTime ?? [], (p) =>
+      this.toPercentValue(p)
+    )
   );
-  interviewTrend = computed(() =>
-    buildTrendSeries('interviewToOffer', this.summary(), this.selectedPreset())
+
+  interviewTrend = computed<ChartPoint[]>(() =>
+    this.toChartPoints(
+      this.trends()?.interviewToOfferRateOverTime ?? [],
+      (p) => this.toPercentValue(p)
+    )
   );
-  rejectionTrend = computed(() =>
-    buildTrendSeries('rejections', this.summary(), this.selectedPreset())
+
+  rejectionTrend = computed<ChartPoint[]>(() =>
+    this.toChartPoints(
+      this.trends()?.rejectionTrendOverTime ?? [],
+      (p) => p.value
+    )
   );
 
   outcomeCounts = computed<Partial<Record<ApplicationStatus, number>>>(() => {
@@ -269,9 +320,6 @@ export class AnalyticsDashboardComponent implements OnInit {
     this.refreshDashboard();
     this.loadApplications();
 
-    // If a "View Details" click on the applications page stashed an id
-    // right before navigating here, consume it now and jump straight to
-    // that application's timeline entry.
     const pendingId = this.pendingSelection.consumePendingAppId();
     if (pendingId != null) {
       this.onSelectApplication(pendingId);
@@ -279,6 +327,7 @@ export class AnalyticsDashboardComponent implements OnInit {
   }
 
   setPreset(preset: RangePreset): void {
+    this.customRangeOpen.set(false);
     this.selectedPreset.set(preset);
     if (preset !== 'custom') {
       this.customFrom.set('');
@@ -287,12 +336,38 @@ export class AnalyticsDashboardComponent implements OnInit {
     this.refreshDashboard();
   }
 
-  applyCustomRange(): void {
-    if (!this.customFrom() || !this.customTo()) {
+  // Opens the popover, seeding its drafts from whatever custom range (if
+  // any) is currently applied so re-opening to tweak a date doesn't lose
+  // the other one.
+  openCustomRange(): void {
+    this.draftFrom.set(this.customFrom());
+    this.draftTo.set(this.customTo());
+    this.customRangeOpen.set(true);
+  }
+
+  confirmCustomRange(): void {
+    if (!this.draftFrom() || !this.draftTo()) {
       return;
     }
+    this.customFrom.set(this.draftFrom());
+    this.customTo.set(this.draftTo());
     this.selectedPreset.set('custom');
+    this.customRangeOpen.set(false);
     this.refreshDashboard();
+  }
+
+  // Closes without fetching. If no custom range was ever successfully
+  // applied, falls back to the default preset rather than leaving the
+  // segmented control pointed at an empty "Custom range".
+  cancelCustomRange(): void {
+    this.customRangeOpen.set(false);
+    if (
+      this.selectedPreset() !== 'custom' ||
+      !this.customFrom() ||
+      !this.customTo()
+    ) {
+      this.setPreset('30');
+    }
   }
 
   private refreshDashboard(): void {
@@ -308,6 +383,7 @@ export class AnalyticsDashboardComponent implements OnInit {
       summary: this.statsService.getSummary(range),
       funnel: this.statsService.getFunnel(range),
       rejectionStages: this.statsService.getRejectionStages(range),
+   
       cv: this.analyticsService.getCvStats(range),
       lang: this.analyticsService.getLanguageStats(range),
       job: this.analyticsService.getJobStats(range),
@@ -327,10 +403,10 @@ export class AnalyticsDashboardComponent implements OnInit {
           job,
           template,
         }) => {
-          const previousRange = getPreviousRange(range);
           this.summary.set(summary);
+          // Real previous-period data from the backend — no more fabricated numbers.
           this.previousSummary.set(
-            buildSyntheticPreviousSummary(summary, previousRange)
+            summary.previousPeriod ?? emptyPeriodSummary()
           );
           this.funnelStages.set(this.buildDisplayStages(funnel));
           this.rejectionStages.set(rejectionStages);
@@ -342,6 +418,7 @@ export class AnalyticsDashboardComponent implements OnInit {
         error: () => {
           this.loadError.set(true);
           this.summary.set(null);
+          this.previousSummary.set(null);
           this.funnelStages.set([]);
           this.rejectionStages.set([]);
           this.cvStats.set([]);
@@ -381,20 +458,13 @@ export class AnalyticsDashboardComponent implements OnInit {
       )
       .subscribe({
         next: (events) => {
-          this.applicationTimeline.set(this.withDaysSincePrevious(events));
+          this.applicationTimeline.set(this.withDaysAgo(events));
           this.scrollToTimeline();
         },
         error: () => this.loadError.set(true),
       });
   }
 
-  /**
-   * Scrolls to the timeline section only after its content has actually
-   * rendered. A blind setTimeout fires before the page has grown to its
-   * final height (e.g. while applications/timeline are still loading),
-   * so scrollIntoView ends up short of the target. Waiting two animation
-   * frames lets Angular finish painting the new DOM first.
-   */
   private scrollToTimeline(): void {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -440,6 +510,10 @@ export class AnalyticsDashboardComponent implements OnInit {
     return app.id;
   }
 
+  trackByLabel(_index: number, point: ChartPoint): string {
+    return point.label;
+  }
+
   private buildDisplayStages(stages: FunnelStage[]): DisplayFunnelStage[] {
     const byStatus = new Map(stages.map((s) => [s.status, s.count]));
     const maxCount = Math.max(...stages.map((s) => s.count), 1);
@@ -465,17 +539,89 @@ export class AnalyticsDashboardComponent implements OnInit {
     });
   }
 
-  private withDaysSincePrevious(
-    events: TimelineEvent[]
-  ): TimelineEventDisplay[] {
-    return events.map((event, index) => {
-      if (index === 0) {
-        return { ...event, daysSincePrevious: null };
+  // Each event's age is computed independently against "now" — not against
+  // its neighbor in the array — so this is agnostic to whatever order the
+  // backend returns events in. Sorting here only controls display order
+  // (oldest first, matching "how it evolved over time"), not the
+  // day-count math.
+  private withDaysAgo(events: TimelineEvent[]): TimelineEventDisplay[] {
+    const now = Date.now();
+    const sorted = [...events].sort(
+      (a, b) =>
+        new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime()
+    );
+    return sorted.map((event) => {
+      const occurred = new Date(event.occurredAt).getTime();
+      if (Number.isNaN(occurred)) {
+        return { ...event, daysAgo: null };
       }
-      const prev = new Date(events[index - 1].occurredAt).getTime();
-      const curr = new Date(event.occurredAt).getTime();
-      const days = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
-      return { ...event, daysSincePrevious: days };
+      const daysAgo = Math.max(
+        0,
+        Math.round((now - occurred) / (1000 * 60 * 60 * 24))
+      );
+      return { ...event, daysAgo };
     });
+  }
+
+  // Daily buckets for short ranges, weekly for the 90-day preset (and any
+  // custom range spanning more than ~45 days) so the chart doesn't try to
+  // cram dozens of daily bars into a small area, monthly beyond ~180 days.
+  private granularityForPreset(
+    preset: RangePreset,
+    range: { from?: string; to?: string }
+  ): TrendGranularity {
+    if (preset === '7' || preset === '30') {
+      return 'DAY';
+    }
+    if (preset === '90') {
+      return 'WEEK';
+    }
+    // custom
+    if (range.from && range.to) {
+      const days =
+        (new Date(range.to).getTime() - new Date(range.from).getTime()) /
+        (1000 * 60 * 60 * 24);
+      if (days > 180) return 'MONTH';
+      if (days > 45) return 'WEEK';
+    }
+    return 'DAY';
+  }
+
+  // TrendPointDto has no pre-formatted label — only a LocalDate `date` — so
+  // the axis label is built client-side from formatShortDate.
+  //
+  // `percent` is nullable (e.g. no interviews yet in that bucket) and its
+  // scale is genuinely ambiguous from the DTO alone: every other rate field
+  // in this API (StatsPeriodSummary.responseRate, etc.) is a 0-1 fraction,
+  // but a field literally named `percent` more commonly means "already
+  // *100". Currently assuming 0-100. If these two charts render as a flat
+  // line pinned to the bottom (or one giant maxed-out bar), flip this to
+  // `Math.round((point.percent ?? 0) * 100)` instead.
+  private toPercentValue(point: TrendPoint): number {
+    if (point.percent == null) {
+      return 0;
+    }
+    return Math.round(point.percent);
+  }
+
+  // Normalizes a trend series to 0-100 heights for the CSS bar chart.
+  // Empty series returns [] and the template shows the "no data" state
+  // instead of a zero-height bar row.
+  private toChartPoints(
+    points: TrendPoint[],
+    selector: (point: TrendPoint) => number
+  ): ChartPoint[] {
+    if (points.length === 0) {
+      return [];
+    }
+    const values = points.map(selector);
+    const maxValue = Math.max(...values, 1);
+    return points.map((point, index) => ({
+      label: formatShortDate(point.date),
+      value: values[index],
+      // Floor at 2% so a real zero-value bucket still renders a sliver
+      // instead of being visually indistinguishable from "no data".
+      height: Math.max(Math.round((values[index] / maxValue) * 100), 2),
+    }));
   }
 }
