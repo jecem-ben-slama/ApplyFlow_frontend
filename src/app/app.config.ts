@@ -1,7 +1,8 @@
 import { ApplicationConfig, APP_INITIALIZER, inject } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ConfigService } from './core/config.service';
 import { ApiConfig } from './config/api.config';
+import { authInterceptor } from './services/auth.interceptor'; // adjust path to wherever you put it
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -15,6 +16,6 @@ export const appConfig: ApplicationConfig = {
       },
       multi: true,
     },
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authInterceptor])),
   ],
 };

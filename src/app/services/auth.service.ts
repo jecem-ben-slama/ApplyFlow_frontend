@@ -1,7 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, of, BehaviorSubject } from 'rxjs';
+import {
+  Observable,
+  tap,
+  catchError,
+  of,
+  BehaviorSubject,
+  retry,
+  timer,
+} from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiConfig } from '../config/api.config';
 import { ApiResponse, User } from '../models';
@@ -26,6 +34,13 @@ export class AuthService {
   public readonly isCheckingSession$ =
     this.isCheckingSessionSubject.asObservable();
 
+  // Flag components (e.g. a settings banner) can watch to prompt reconnect
+  private readonly needsGoogleReconnectSubject = new BehaviorSubject<boolean>(
+    false
+  );
+  public readonly needsGoogleReconnect$ =
+    this.needsGoogleReconnectSubject.asObservable();
+
   // ─── LOGOUT BROADCAST KEY ───
   private readonly LOGOUT_EVENT_KEY = 'applyflow_logout_event';
 
@@ -46,12 +61,27 @@ export class AuthService {
     window.location.href = this.api.endpoints.auth.login;
   }
 
+  /**
+   * Checks whether the SESSION cookie is still valid server-side.
+   * Retries transient failures (network blips, cold starts, 5xx) up to twice
+   * before giving up — but never retries a genuine 401, and never clears
+   * local auth state for anything other than a confirmed 401.
+   */
   checkSession(): Observable<boolean> {
     this.isCheckingSessionSubject.next(true);
 
     return this.http
       .get<ApiResponse<User>>(this.api.endpoints.auth.me, this.api.httpOptions)
       .pipe(
+        retry({
+          count: 2,
+          delay: (error, retryCount) => {
+            if (error?.status === 401) {
+              throw error; // don't retry a real "not logged in"
+            }
+            return timer(1500 * retryCount); // 1.5s, then 3s
+          },
+        }),
         tap((response) => {
           if (response.success && response.data) {
             this.currentUserSubject.next(response.data);
@@ -62,9 +92,21 @@ export class AuthService {
           this.isCheckingSessionSubject.next(false);
         }),
         map((response) => !!response.success),
-        catchError(() => {
-          this.clearLocalState();
+        catchError((err) => {
           this.isCheckingSessionSubject.next(false);
+
+          if (err?.status === 401) {
+            // Session is genuinely dead — this is a real logout
+            this.clearLocalState();
+          } else {
+            // Network blip, cold start, 503, CORS hiccup, etc.
+            // Don't assert logged-out state on a transient failure.
+            console.warn(
+              'checkSession failed after retries with non-401 status, preserving auth state:',
+              err?.status
+            );
+          }
+
           return of(false);
         })
       );
@@ -102,6 +144,19 @@ export class AuthService {
         next: () => this.handleLogoutRedirect(),
         error: () => this.handleLogoutRedirect(),
       });
+  }
+
+  /** Called by the interceptor when any API call returns a genuine 401 mid-session */
+  handleUnauthorized(): void {
+    this.clearLocalState();
+    localStorage.setItem(this.LOGOUT_EVENT_KEY, Date.now().toString());
+    this.router.navigate(['/login']);
+  }
+
+  /** Google-specific re-consent — does NOT touch app session state */
+  reconnectGoogle(): void {
+    this.needsGoogleReconnectSubject.next(false);
+    window.location.href = this.api.endpoints.auth.login;
   }
 
   handleCrossTabLogout(): void {
