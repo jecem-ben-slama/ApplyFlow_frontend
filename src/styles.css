@@ -26,6 +26,12 @@ body
     --text: #0f172a;
     --muted: #64748b;
     --accent: #5b60ff;
+
+    /* ApplyFlow logo colors (light mode) */
+    --logo-bg: #0f172a;
+    --logo-trail: #6366f1;
+    --logo-plane-start: #818cf8;
+    --logo-plane-end: #5b60ff;
 }
 
 html.dark
@@ -38,6 +44,12 @@ html.dark
     --text: #e2e8f0;
     --muted: #94a3b8;
     --accent: #818cf8;
+
+    /* ApplyFlow logo colors (dark mode) */
+    --logo-bg: #f8fafc;
+    --logo-trail: #818cf8;
+    --logo-plane-start: #a5b4fc;
+    --logo-plane-end: #818cf8;
 }
 
 body

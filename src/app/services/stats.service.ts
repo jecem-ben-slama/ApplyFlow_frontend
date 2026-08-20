@@ -22,18 +22,49 @@ export interface FunnelStage {
   count: number;
 }
 
-export interface StatsSummary {
+// Mirrors backend StatsPeriodSummaryDto — one period's worth of raw numbers.
+// Used for both currentPeriod and previousPeriod on StatsSummary.
+export interface StatsPeriodSummary {
   totalApplications: number;
   sentCount: number;
+  respondedCount: number;
+  viewedCount: number;
   responseRate: number; // 0-1
   avgResponseDays: number | null;
   activeCount: number;
   terminalCount: number;
   neverViewedCount: number;
   neverViewedRate: number; // 0-1
+  // "Seen but nothing after" — currently sitting at VIEWED with no response,
+  // rejection, or further progression.
+  ignoredCount: number;
+  ignoredRate: number; // 0-1, of viewedCount
   interviewedCount: number;
   offerCount: number;
   interviewToOfferRate: number | null; // 0-1, null if no interviews yet
+  periodLabel?: string | null;
+}
+
+export interface StatsSummary {
+  totalApplications: number;
+  sentCount: number;
+  respondedCount: number;
+  viewedCount: number;
+  responseRate: number; // 0-1
+  avgResponseDays: number | null;
+  activeCount: number;
+  terminalCount: number;
+  neverViewedCount: number;
+  neverViewedRate: number; // 0-1
+  ignoredCount: number;
+  ignoredRate: number; // 0-1
+  interviewedCount: number;
+  offerCount: number;
+  interviewToOfferRate: number | null; // 0-1, null if no interviews yet
+  // Real current/previous period breakdowns from the backend — use these for
+  // any current-vs-previous comparison instead of fabricating deltas.
+  currentPeriod: StatsPeriodSummary | null;
+  previousPeriod: StatsPeriodSummary | null;
 }
 
 export interface RejectionStage {
@@ -54,6 +85,35 @@ export interface TimelineEvent {
 export interface DateRange {
   from?: string; // ISO datetime
   to?: string;
+}
+
+// --- Trend endpoint (/api/stats/trends) ---
+
+export type TrendGranularity = 'DAY' | 'WEEK' | 'MONTH';
+
+// Mirrors backend TrendPointDto exactly. The same shape is reused across
+// all four series below — which field is meaningful depends on which
+// series the point came from:
+//   - applicationsOverTime / rejectionTrendOverTime -> read `value` (count)
+//   - responseRateOverTime / interviewToOfferRateOverTime -> read `percent`
+// `currentValue`/`previousValue` are available for tooltips/comparisons but
+// aren't required to render the bars.
+export interface TrendPoint {
+  date: string; // LocalDate, serializes as "YYYY-MM-DD"
+  value: number;
+  percent: number | null;
+  currentValue: number | null;
+  previousValue: number | null;
+}
+
+// Mirrors backend StatsTrendResponseDto exactly — four independent series,
+// not one array with multiple metrics per point.
+export interface StatsTrendResponse {
+  applicationsOverTime: TrendPoint[];
+  responseRateOverTime: TrendPoint[];
+  interviewToOfferRateOverTime: TrendPoint[];
+  rejectionTrendOverTime: TrendPoint[];
+  granularity: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -97,6 +157,8 @@ export class StatsService {
       })
       .pipe(map((response) => response.data));
   }
+
+
 
   getRecentEvents(limit: number = 8): Observable<TimelineEvent[]> {
     const params = new HttpParams().set('limit', limit.toString());

@@ -5,10 +5,7 @@
         <!-- Logo & Collapse Button -->
         <div class="flex items-center justify-between px-3.5 pt-4">
             <div class="flex items-center gap-3 min-w-0">
-                <div
-                    class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center font-black text-white text-base shadow-md shadow-primary/25 shrink-0">
-                    A
-                </div>
+            <app-logo class="w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-md shadow-primary/25"></app-logo>
                 <span
                     [class]="'text-sm font-bold text-slate-900 dark:text-white tracking-wide whitespace-nowrap transition-all duration-200 ' + (collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100')">
                     ApplyFlow

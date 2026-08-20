@@ -13,6 +13,7 @@ import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { SidebarNavComponent } from '../sidebar-nav/sidebar-nav.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
+import { LogoComponent } from '../../logo/logo.component';
 
 @Component({
   selector: 'app-mobile-sidebar',
@@ -23,6 +24,7 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
     MatIconModule,
     SidebarNavComponent,
     ThemeToggleComponent,
+    LogoComponent
   ],
   templateUrl: './mobile-sidebar.component.html',
 })

@@ -1,18 +1,92 @@
-<div
-    class="bg-surface-light dark:bg-surface rounded-xl border border-slate-200 dark:border-surface-muted px-4 py-3.5 shadow-sm">
-    <div class="flex items-center justify-between gap-2">
-        <p class="text-[11px] uppercase tracking-wide font-medium text-slate-400 dark:text-slate-500">
+<div class="group relative bg-white dark:bg-surface rounded-xl border border-slate-200 dark:border-surface-muted px-4 py-3.5 transition-colors duration-150
+           hover:border-slate-300 dark:hover:border-slate-700">
+
+    <!-- Accent tab: blue at rest, green on hover/click -->
+    <div class="absolute left-0 top-3 bottom-3 w-[3px] rounded-full bg-blue-500 dark:bg-blue-400
+               group-hover:bg-emerald-500 dark:group-hover:bg-emerald-400
+               transition-colors duration-150" [class.bg-emerald-500]="showTooltip"
+        [class.dark:bg-emerald-400]="showTooltip">
+    </div>
+
+    <div class="pl-2.5">
+
+        <!-- Label -->
+        <p class="text-[10.5px] uppercase tracking-[0.08em] font-semibold leading-none
+                   text-slate-500 dark:text-slate-400">
             {{ label }}
         </p>
-        <span *ngIf="deltaText"
-            class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium border"
-            [ngClass]="deltaPositive ? 'text-success-textLight bg-success-bgLight dark:text-success-textDark dark:bg-success-bgDark border-success/20' : 'text-danger-textLight bg-danger-bgLight dark:text-danger-textDark dark:bg-danger-bgDark border-danger/20'">
-            {{ deltaText }}
-        </span>
+
+        <!-- Underline: blue at rest, green on hover/click -->
+        <div class="w-5 h-[1.5px] bg-blue-300 dark:bg-blue-800 mt-2 mb-2.5
+                   group-hover:w-8 group-hover:bg-emerald-500 dark:group-hover:bg-emerald-400
+                   transition-all duration-200" [class.w-8]="showTooltip" [class.bg-emerald-500]="showTooltip"
+            [class.dark:bg-emerald-400]="showTooltip">
+        </div>
+
+        <!-- Info button + smart popup -->
+        <div *ngIf="explanation" class="absolute top-3.5 right-3.5 z-20">
+
+            <!-- Info button -->
+            <button #infoButton type="button" (click)="toggleTooltip($event)" [attr.aria-expanded]="showTooltip"
+                aria-controls="tile-explanation" aria-label="More information" class="flex items-center justify-center w-5 h-5 rounded-full
+                       text-slate-400 dark:text-slate-500
+                       hover:text-emerald-700 dark:hover:text-slate-200
+                       hover:bg-emerald-50 dark:hover:bg-slate-700/60
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40
+                       transition-all duration-150">
+
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0
+                           1.172 1.025 1.172 2.687 0 3.712
+                           -.203.179-.43.326-.67.442
+                           -.745.361-1.45.999-1.45 1.827v.75
+                           M12 17h.008
+                           M9.879 7.519c-.373.326-.647.735-.786 1.176
+                           M12 21a9 9 0 100-18 9 9 0 000 18z" />
+                </svg>
+            </button>
+
+            <!-- Smart tooltip -->
+            <div *ngIf="showTooltip" #tooltip id="tile-explanation" role="tooltip" class="absolute top-7 w-56 sm:w-64
+                       rounded-lg border border-slate-200 dark:border-slate-700
+                       bg-white dark:bg-slate-800
+                       shadow-xl shadow-slate-900/10 dark:shadow-black/30
+                       p-3
+                       animate-[tooltip-in_150ms_ease-out]" [class.left-0]="tooltipPosition === 'right'"
+                [class.right-0]="tooltipPosition === 'left'">
+
+                <!-- Arrow -->
+                <div class="absolute -top-1.5 w-3 h-3 rotate-45
+                           border-l border-t border-slate-200 dark:border-slate-700
+                           bg-white dark:bg-slate-800" [class.left-1.5]="tooltipPosition === 'right'"
+                    [class.right-1.5]="tooltipPosition === 'left'">
+                </div>
+
+                <!-- Explanation -->
+                <div class="relative text-[11px] leading-relaxed
+                           text-slate-600 dark:text-slate-300">
+                    <pre class="font-sans whitespace-pre-line m-0">{{ explanation }}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Value -->
+        <p class="font-mono tabular-nums text-slate-900 dark:text-slate-50" [class.text-2xl]="emphasis === 'primary'"
+            [class.font-semibold]="emphasis === 'primary'" [class.tracking-tight]="emphasis === 'primary'"
+            [class.text-lg]="emphasis === 'secondary'" [class.font-medium]="emphasis === 'secondary'">
+
+            <ng-container *ngIf="!loading; else skeleton">
+                {{ value }}
+            </ng-container>
+
+            <ng-template #skeleton>
+                <span class="inline-block h-[1em] w-14 rounded
+                           bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200
+                           dark:bg-slate-700
+                           bg-[length:200%_100%]
+                           animate-pulse">
+                </span>
+            </ng-template>
+        </p>
     </div>
-    <p class="mt-2 font-mono tabular-nums text-slate-900 dark:text-slate-50" [class.text-2xl]="emphasis === 'primary'"
-        [class.font-semibold]="emphasis === 'primary'" [class.text-lg]="emphasis === 'secondary'"
-        [class.font-medium]="emphasis === 'secondary'">
-        {{ loading ? '—' : value }}
-    </p>
 </div>

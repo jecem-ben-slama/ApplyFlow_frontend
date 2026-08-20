@@ -69,6 +69,9 @@ export interface DisplayFunnelStage {
   dropOffPercent: number | null; // % drop vs previous stage, null for the first
 }
 
+// `daysAgo` is the event's age relative to now (today - occurredAt), not a
+// gap to the previous event in the list — computed in the dashboard
+// component's withDaysAgo().
 export interface TimelineEventDisplay extends TimelineEvent {
-  daysSincePrevious: number | null;
+  daysAgo: number | null;
 }
