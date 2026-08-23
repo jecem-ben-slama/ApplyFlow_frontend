@@ -9,6 +9,7 @@ import { SkillsService } from '../../../services/skills.service';
 import { CvVariantsService } from '../../../services/cv-variants.service';
 import { TemplateService } from '../../../services/template.service';
 import { EmailService } from '../../../services/email.service';
+import { ApplicationActionService } from '../../../services/application-action.service';
 
 import {
   ApplicationResponseDto,
@@ -71,16 +72,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   filterKeyword = '';
   filterLanguage = '';
 
-  /** Tab control state */
   activeTab: 'all' | 'compiled' | 'presets' = 'all';
-
-  /** The preset currently loaded into the popup, if opened via "Send" from the presets tab. */
   selectedPreset: ApplicationPresetDto | null = null;
-
-  /** Controls the collapsible filter panel on mobile. Always visible on desktop. */
   filtersOpen = false;
 
-  /** Used to render the mobile status pill chips in the filter bar. */
   statusOptions = [
     { label: 'All', value: '' },
     { label: 'Sent', value: 'SENT' },
@@ -94,7 +89,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     { label: 'Withdrawn', value: 'WITHDRAWN' },
   ];
 
-  /** Used to render both the desktop select and the mobile language pill chips. */
   languageOptions: LanguageOption[] = [
     { label: 'All', value: '' },
     { label: 'English', value: 'EN' },
@@ -109,25 +103,15 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   isLoading = false;
   isRefreshing = false;
 
-  /**
-   * Per-application "email currently sending" tracker, replacing the old
-   * single global `isSendingEmail` boolean. A global flag made every row's
-   * send button/spinner light up whenever *any* email was in flight, which
-   * looked and behaved like the whole app was blocked. Tracking by id lets
-   * every other row, tab, filter, and the create button stay fully usable
-   * while one send is in progress.
-   */
   sendingEmailIds = new Set<number>();
+  pendingStatusIds = new Set<number>();
+  sendErrors = new Map<number, string>();
 
   isModalOpen = false;
   errorMessage = '';
-
-  pendingStatusIds = new Set<number>();
-  sendErrors = new Map<number, string>();
   showDeleteModal = false;
   deleteTargetIds: number[] = [];
   deleteMessage = 'Permanently purge this compiled tracking profile record?';
-
   expandedAppId: number | null = null;
 
   private searchSubject = new Subject<void>();
@@ -171,6 +155,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     private cvService: CvVariantsService,
     private templateService: TemplateService,
     private emailService: EmailService,
+    private actionService: ApplicationActionService,
     private toastService: ToastService
   ) {}
 
@@ -188,8 +173,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.searchSubject.complete();
   }
 
-  // ── Tabs ───────────────────────────────────────────────────────────────────
-
   switchTab(tab: 'all' | 'compiled' | 'presets'): void {
     if (this.activeTab === tab) return;
     this.activeTab = tab;
@@ -198,11 +181,9 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     if (tab === 'presets') return;
 
     this.currentPage = 0;
-    this.filterStatus = ''; // Reset status filter when switching tabs
+    this.filterStatus = '';
     this.loadApplicationsPage();
   }
-
-  // ── Filters ────────────────────────────────────────────────────────────────
 
   get hasActiveFilters(): boolean {
     return (
@@ -239,8 +220,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.loadApplicationsPage();
   }
 
-  // ── Sorting ────────────────────────────────────────────────────────────────
-
   onSortChange(column: SortableColumn): void {
     if (this.sortBy === column) {
       this.direction = this.direction === 'asc' ? 'desc' : 'asc';
@@ -260,8 +239,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   isActiveSort(column: SortableColumn): boolean {
     return this.sortBy === column;
   }
-
-  // ── Data loading ───────────────────────────────────────────────────────────
 
   loadInitialWorkspaceData(): void {
     this.isLoading = true;
@@ -330,11 +307,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (page) => {
-          // If a delete (or filter change) emptied out the page we're
-          // currently viewing but earlier pages still have content,
-          // step back one page and re-fetch instead of showing a blank
-          // list. Guards against currentPage=0 to avoid looping forever
-          // on a genuinely empty result set.
           if (page.content.length === 0 && this.currentPage > 0) {
             this.currentPage -= 1;
             this.isLoading = false;
@@ -360,7 +332,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       });
   }
 
-  /** Ensures that if we are on the 'all' tab, 'COMPILED' records are filtered out locally just in case backend returns them. */
   private postProcessApplications(
     page: Page<ApplicationResponseDto>
   ): Page<ApplicationResponseDto> {
@@ -377,15 +348,11 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     return page;
   }
 
-  // ── Pagination ─────────────────────────────────────────────────────────────
-
   onPageChange(newPage: number): void {
     this.currentPage = newPage;
     this.expandedAppId = null;
     this.loadApplicationsPage();
   }
-
-  // ── Row events ─────────────────────────────────────────────────────────────
 
   onTogglePanel(appId: number): void {
     this.expandedAppId = this.expandedAppId === appId ? null : appId;
@@ -399,55 +366,70 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     app.status = status;
     this.pendingStatusIds.add(id);
 
-    this.appService
-      .patchApplicationStatusOrNotes(id, status, undefined)
-      .subscribe({
-        next: () => {
-          this.pendingStatusIds.delete(id);
-          this.toastService.success(`Status updated to ${status}.`);
+    this.actionService.queueStatusChange(
+      id,
+      status,
+      () => {
+        this.pendingStatusIds.delete(id);
+        if (status === 'COMPILED' && this.activeTab === 'all') {
+          this.loadApplicationsPage();
+        } else if (
+          previousStatus === 'COMPILED' &&
+          status !== 'COMPILED' &&
+          this.activeTab === 'compiled'
+        ) {
+          this.activeTab = 'all';
+          this.loadApplicationsPage();
+        }
+      },
+      (err) => {
+        app.status = previousStatus;
+        this.pendingStatusIds.delete(id);
+        this.toastService.error(
+          err.error?.message || 'Could not update status.'
+        );
+      }
+    );
 
-          if (status === 'COMPILED' && this.activeTab === 'all') {
-            // Moved INTO 'Compiled' while looking at 'All' — it no longer
-            // belongs in this list, reload to drop it.
-            this.loadApplicationsPage();
-          } else if (
-            previousStatus === 'COMPILED' &&
-            status !== 'COMPILED' &&
-            this.activeTab === 'compiled'
-          ) {
-            // Moved OUT of 'Compiled' (e.g. a send sets it to 'SENT') while
-            // looking at the 'Compiled' tab. That tab only ever queries
-            // status=COMPILED, so simply reloading here would filter the
-            // row straight out of view — the row (and its expanded panel)
-            // would just vanish. Follow it over to 'All', where every
-            // non-compiled status actually lives, then reload there.
-            this.activeTab = 'all';
-            this.loadApplicationsPage();
-          }
-        },
-        error: (err) => {
-          app.status = previousStatus;
-          this.pendingStatusIds.delete(id);
-          this.toastService.error(
-            err.error?.message || 'Could not update status.'
-          );
-        },
-      });
+    this.toastService.info(
+      `Updating status to ${status}…`,
+      this.actionService.UNDO_WINDOW_MS,
+      {
+        label: 'Undo',
+        onClick: () => this.cancelStatusUpdate(id, previousStatus),
+      }
+    );
+  }
+
+  private cancelStatusUpdate(id: number, previousStatus: string): void {
+    this.actionService.cancelStatusChange(id);
+    this.pendingStatusIds.delete(id);
+
+    const app = this.appPage?.content.find((a) => a.id === id);
+    if (app) {
+      app.status = previousStatus;
+    }
+
+    this.toastService.success('Status change cancelled.');
   }
 
   onSaveNotes(appId: number, notes: string): void {
+    const app = this.appPage?.content.find((a) => a.id === appId);
+    const previousNotes = app ? app.notes : '';
+    if (app) app.notes = notes;
+
+    this.toastService.success('Notes saved.');
+
     this.appService
       .patchApplicationStatusOrNotes(appId, undefined, notes)
       .subscribe({
-        next: () => {
-          const app = this.appPage?.content.find((a) => a.id === appId);
-          if (app) app.notes = notes;
-          this.toastService.success('Notes saved.');
-        },
-        error: (err) =>
+        next: () => {},
+        error: (err) => {
+          if (app) app.notes = previousNotes;
           this.toastService.error(
             err.error?.message || 'Could not save notes.'
-          ),
+          );
+        },
       });
   }
 
@@ -457,49 +439,85 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.sendingEmailIds.add(app.id);
     this.sendErrors.delete(app.id);
+    this.sendingEmailIds.add(app.id);
 
     const wasCompiled = app.status === 'COMPILED';
+    app.status = 'SENT';
 
-    this.emailService
-      .sendEmail({
-        recipientEmail: app.recipientEmail,
-        subject: app.generatedSubject,
-        body: app.generatedBody,
-        cvVariantId: app.cvVariantId ? Number(app.cvVariantId) : undefined,
-        applicationId: app.id,
-      })
-      .subscribe({
-        next: (msg) => {
-          this.toastService.success(msg || 'Email sent!');
-          this.sendingEmailIds.delete(app.id);
+    this.queueSend(app, wasCompiled, false);
+  }
 
-          // The backend already flips the status to SENT as part of
-          // sending the email — don't PATCH it again from the client.
-          // Reflect it locally so the UI is correct even before the
-          // reload below comes back, and if we were viewing the
-          // 'compiled' tab, follow the row to 'all' since it no longer
-          // matches that tab's status=COMPILED filter.
-          app.status = 'SENT';
-          if (wasCompiled && this.activeTab === 'compiled') {
-            this.activeTab = 'all';
-          }
-          this.loadApplicationsPage();
-        },
-        error: (err) => {
-          const message = err.error?.message || 'Email delivery failed.';
-          this.sendErrors.set(app.id, message);
-          this.sendingEmailIds.delete(app.id);
-        },
-      });
+  private queueSend(
+    app: ApplicationResponseDto,
+    wasCompiled: boolean,
+    isCompileFlow: boolean
+  ): void {
+    this.actionService.queueEmailSend(
+      app,
+      wasCompiled,
+      isCompileFlow,
+      (msg) => {
+        this.sendingEmailIds.delete(app.id);
+        this.toastService.success(
+          msg ||
+            (isCompileFlow
+              ? 'Application compiled and email sent!'
+              : 'Email sent!')
+        );
+        app.status = 'SENT';
+        if (wasCompiled && this.activeTab === 'compiled') {
+          this.activeTab = 'all';
+        }
+        this.loadApplicationsPage();
+      },
+      (err) => {
+        this.sendingEmailIds.delete(app.id);
+        app.status = wasCompiled ? 'COMPILED' : 'VIEWED';
+        const message = err.error?.message || 'Email delivery failed.';
+        this.sendErrors.set(app.id, message);
+        this.toastService.error(message);
+      }
+    );
+
+    this.toastService.info(
+      'Sending email…',
+      this.actionService.UNDO_WINDOW_MS,
+      {
+        label: 'Undo',
+        onClick: () => this.cancelSend(app.id, isCompileFlow, wasCompiled),
+      }
+    );
+  }
+
+  private cancelSend(
+    appId: number,
+    isCompileFlow: boolean,
+    wasCompiled: boolean = false
+  ): void {
+    this.actionService.cancelEmailSend(appId);
+    this.sendingEmailIds.delete(appId);
+
+    const app = this.appPage?.content.find((a) => a.id === appId);
+    if (app) {
+      app.status = wasCompiled
+        ? 'COMPILED'
+        : app.status === 'SENT'
+        ? 'VIEWED'
+        : app.status;
+    }
+
+    this.toastService.success(
+      isCompileFlow
+        ? 'Application compiled — email not sent.'
+        : 'Send cancelled.'
+    );
   }
 
   sendErrorFor(appId: number): string {
     return this.sendErrors.get(appId) || '';
   }
 
-  /** Per-application send state, used by row/panel bindings so only the row actually sending shows a spinner. */
   isSending(appId: number): boolean {
     return this.sendingEmailIds.has(appId);
   }
@@ -511,9 +529,9 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       .catch(() => this.toastService.error('Could not copy to clipboard.'));
   }
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
-
   onDelete(id: number): void {
+    if (this.sendingEmailIds.has(id) || this.pendingStatusIds.has(id)) return;
+
     this.deleteTargetIds = [id];
     this.deleteMessage =
       'Permanently delete this application — it cannot be undone';
@@ -526,20 +544,34 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
     this.showDeleteModal = false;
 
+    ids.forEach((id) => {
+      this.actionService.cancelEmailSend(id);
+      this.actionService.cancelStatusChange(id);
+    });
+
+    if (this.appPage) {
+      this.appPage.content = this.appPage.content.filter(
+        (a) => !ids.includes(a.id)
+      );
+      this.appPage.totalElements! -= ids.length;
+    }
+
+    if (this.expandedAppId !== null && ids.includes(this.expandedAppId)) {
+      this.expandedAppId = null;
+    }
+
+    this.toastService.success('Application deleted successfully.');
+
     const requests = ids.map((id) => this.appService.deleteApplication(id));
 
     forkJoin(requests).subscribe({
       next: () => {
-        this.toastService.success('Application deleted successfully.');
-
-        if (this.expandedAppId !== null && ids.includes(this.expandedAppId)) {
-          this.expandedAppId = null;
-        }
-
         this.loadApplicationsPage();
       },
-      error: (err) =>
-        this.toastService.error(err.error?.message || 'Could not delete.'),
+      error: (err) => {
+        this.toastService.error(err.error?.message || 'Could not delete.');
+        this.loadApplicationsPage();
+      },
     });
   }
 
@@ -548,15 +580,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     this.deleteTargetIds = [];
   }
 
-  // ── Presets ────────────────────────────────────────────────────────────────
-
-  /** "Send" emitted from <app-preset-list> — opens the existing popup pre-filled with everything but company/email. */
   onSendFromPreset(preset: ApplicationPresetDto): void {
     this.selectedPreset = preset;
     this.isModalOpen = true;
   }
-
-  // ── Modal ──────────────────────────────────────────────────────────────────
 
   openCreateModal(): void {
     this.selectedPreset = null;
@@ -573,63 +600,142 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   popupRef?: ApplicationPopupComponent;
 
   onCreateSubmit(payload: ApplicationCreateDto): void {
-    this.isLoading = true;
+    this.isModalOpen = false;
+    this.selectedPreset = null;
+
+    const tempId = Date.now();
+    const optimisticApp: ApplicationResponseDto = {
+      id: tempId,
+      companyName: payload.companyName || 'New Company',
+      jobTitle: payload.jobTitle || 'New Position',
+      status: 'COMPILED',
+      dateApplied: new Date().toISOString(),
+      recipientEmail: payload.recipientEmail,
+      generatedSubject: '',
+      generatedBody: '',
+      notes: payload.notes || '',
+      language: payload.language || 'EN',
+      userId: 0,
+      skillIds: [],
+    };
+
+    if (this.appPage) {
+      this.appPage.content = [optimisticApp, ...this.appPage.content];
+      this.appPage.totalElements! += 1;
+    } else {
+      this.appPage = {
+        content: [optimisticApp],
+        totalElements: 1,
+        totalPages: 1,
+        size: this.pageSize,
+        number: 0,
+        page: {
+          totalElements: 1,
+          totalPages: 1,
+          number: 0,
+          size: this.pageSize,
+        },
+      };
+    }
+
+    this.toastService.success('Application created successfully!');
+    this.activeTab = 'compiled';
+    this.expandedAppId = tempId;
 
     this.appService.createApplication(payload).subscribe({
       next: (created) => {
-        this.toastService.success('Application created successfully!');
-        this.isModalOpen = false;
-        this.selectedPreset = null;
-        this.activeTab = 'compiled';
-        this.expandedAppId = created.id;
-        this.loadApplicationsPage();
-        this.isLoading = false;
+        if (this.appPage) {
+          this.appPage.content = this.appPage.content.map((a) =>
+            a.id === tempId ? created : a
+          );
+          if (this.expandedAppId === tempId) {
+            this.expandedAppId = created.id;
+          }
+        }
       },
       error: (err) => {
-        this.isLoading = false;
-        this.popupRef?.setError(
+        if (this.appPage) {
+          this.appPage.content = this.appPage.content.filter(
+            (a) => a.id !== tempId
+          );
+          this.appPage.totalElements! -= 1;
+        }
+        this.toastService.error(
           err.error?.message || 'Failed to create application.'
         );
       },
     });
   }
 
-  /** "Compile & Send" from the popup — creates the application, then immediately sends its email. */
   onCreateAndSendSubmit(payload: ApplicationCreateDto): void {
-    this.isLoading = true;
+    this.isModalOpen = false;
+    this.selectedPreset = null;
+
+    const tempId = Date.now();
+    const optimisticApp: ApplicationResponseDto = {
+      id: tempId,
+      companyName: payload.companyName || 'New Company',
+      jobTitle: payload.jobTitle || 'New Position',
+      status: 'SENT',
+      dateApplied: new Date().toISOString(),
+      recipientEmail: payload.recipientEmail,
+      generatedSubject: '',
+      generatedBody: '',
+      notes: payload.notes || '',
+      language: payload.language || 'EN',
+      userId: 0,
+      skillIds: [],
+    };
+
+    if (this.appPage) {
+      this.appPage.content = [optimisticApp, ...this.appPage.content];
+      this.appPage.totalElements! += 1;
+    } else {
+      this.appPage = {
+        content: [optimisticApp],
+        totalElements: 1,
+        totalPages: 1,
+        size: this.pageSize,
+        number: 0,
+        page: {
+          totalElements: 1,
+          totalPages: 1,
+          number: 0,
+          size: this.pageSize,
+        },
+      };
+    }
+
+    this.activeTab = 'compiled';
+    this.expandedAppId = tempId;
 
     this.appService.createApplication(payload).subscribe({
       next: (created) => {
-        this.isModalOpen = false;
-        this.selectedPreset = null;
-        this.isLoading = false; // unblocks the rest of the UI right away — the send below runs in the background
+        if (this.appPage) {
+          this.appPage.content = this.appPage.content.map((a) =>
+            a.id === tempId ? created : a
+          );
+          if (this.expandedAppId === tempId) {
+            this.expandedAppId = created.id;
+          }
+        }
         this.sendEmailAfterCompile(created);
       },
       error: (err) => {
-        this.isLoading = false;
-        this.popupRef?.setError(
+        if (this.appPage) {
+          this.appPage.content = this.appPage.content.filter(
+            (a) => a.id !== tempId
+          );
+          this.appPage.totalElements! -= 1;
+        }
+        this.toastService.error(
           err.error?.message || 'Failed to create application.'
         );
       },
     });
   }
 
-  /**
-   * Sends the email right after a "Compile & Send" creation. The backend
-   * flips the application's status to SENT as part of sending the email,
-   * so no client-side status patch happens here — we just follow the tab
-   * and reload once the send resolves. Tracked per-id via
-   * `sendingEmailIds` so the rest of the app stays fully usable while
-   * this send is in flight.
-   */
   private sendEmailAfterCompile(app: ApplicationResponseDto): void {
-    this.activeTab = 'compiled';
-    this.expandedAppId = app.id;
-    // Show the compiled email immediately — same as "Compile Only" — instead
-    // of waiting for the send round-trip before the list (and the expanded
-    // email panel) appear.
-    this.loadApplicationsPage();
-
     if (!app.recipientEmail) {
       this.sendErrors.set(app.id, 'Cannot send: recipient email is missing.');
       this.toastService.error(
@@ -638,48 +744,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.sendingEmailIds.add(app.id);
     this.sendErrors.delete(app.id);
-
-    this.emailService
-      .sendEmail({
-        recipientEmail: app.recipientEmail,
-        subject: app.generatedSubject,
-        body: app.generatedBody,
-        cvVariantId: app.cvVariantId ? Number(app.cvVariantId) : undefined,
-        applicationId: app.id,
-      })
-      .subscribe({
-        next: (msg) => {
-          this.sendingEmailIds.delete(app.id);
-          this.toastService.success(
-            msg || 'Application compiled and email sent!'
-          );
-
-          // The backend already flips the status to SENT as part of
-          // sending the email — don't PATCH it again from the client.
-          // The row is now SENT, not COMPILED, so the 'compiled' tab's
-          // status=COMPILED filter would drop it on reload, collapsing
-          // the panel out from under the user. Follow it to 'all', the
-          // same destination every COMPILED → non-COMPILED transition
-          // goes to.
-          this.activeTab = 'all';
-          this.loadApplicationsPage();
-        },
-        error: (err) => {
-          this.sendingEmailIds.delete(app.id);
-          this.sendErrors.set(
-            app.id,
-            err.error?.message || 'Email delivery failed.'
-          );
-          this.toastService.error(
-            'Application compiled, but the email failed to send.'
-          );
-        },
-      });
+    this.sendingEmailIds.add(app.id);
+    this.queueSend(app, true, true);
   }
-
-  // ── Mobile card helpers ──────────────────────────────────────────────────
 
   getStatusClasses(status: string): string {
     return this.statusClassMap[status] ?? this.statusClassMap['COMPILED'];
@@ -706,7 +774,6 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     return months < 12 ? `${months}mo ago` : `${Math.floor(months / 12)}y ago`;
   }
 
-  /** Resolves a CV variant name from the already-loaded list, avoiding an extra fetch per row/card. */
   getCvVariantName(cvVariantId: number | string | null | undefined): string {
     if (!cvVariantId) return '';
     const variant = this.availableCvVariants.find(

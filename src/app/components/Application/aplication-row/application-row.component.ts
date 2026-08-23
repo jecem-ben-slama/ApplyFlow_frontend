@@ -86,6 +86,21 @@ export class ApplicationRowComponent {
       : '';
   }
 
+  /**
+   * Deleting a row mid-send (or mid-undo-window) or mid-status-update would
+   * race the in-flight request against the delete — grey the button out
+   * and block the click until whichever operation settles.
+   */
+  get isDeleteDisabled(): boolean {
+    return this.isSendingEmail || this.isStatusPending;
+  }
+
+  get deleteDisabledTitle(): string {
+    if (this.isSendingEmail) return 'Cannot delete while an email is sending';
+    if (this.isStatusPending) return 'Cannot delete while status is updating';
+    return '';
+  }
+
   private readonly statusClassMap: Record<string, string> = {
     // Neutral / Initial states
     COMPILED:

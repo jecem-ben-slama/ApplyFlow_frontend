@@ -3,11 +3,19 @@ import { BehaviorSubject } from 'rxjs';
 
 export type ToastType = 'success' | 'error' | 'info';
 
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
 export interface Toast {
   id: number;
   type: ToastType;
   message: string;
   duration?: number;
+  action?: ToastAction;
+  /** Timestamp (ms) the toast was created — used to compute the live countdown next to an action. */
+  createdAt: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -19,13 +27,20 @@ export class ToastService {
 
   readonly toasts$ = this.toastsSubject.asObservable();
 
-  show(type: ToastType, message: string, durationMs = 4000): number {
+  show(
+    type: ToastType,
+    message: string,
+    durationMs = 4000,
+    action?: ToastAction
+  ): number {
     const id = this.nextId++;
     const toast: Toast = {
       id,
       type,
       message,
       duration: durationMs > 0 ? durationMs : undefined,
+      action,
+      createdAt: Date.now(),
     };
     let next = [...this.toastsSubject.value, toast];
 
@@ -46,16 +61,16 @@ export class ToastService {
     return id;
   }
 
-  success(message: string, durationMs = 4000): number {
-    return this.show('success', message, durationMs);
+  success(message: string, durationMs = 4000, action?: ToastAction): number {
+    return this.show('success', message, durationMs, action);
   }
 
-  error(message: string, durationMs = 6000): number {
-    return this.show('error', message, durationMs);
+  error(message: string, durationMs = 6000, action?: ToastAction): number {
+    return this.show('error', message, durationMs, action);
   }
 
-  info(message: string, durationMs = 4000): number {
-    return this.show('info', message, durationMs);
+  info(message: string, durationMs = 4000, action?: ToastAction): number {
+    return this.show('info', message, durationMs, action);
   }
 
   dismiss(id: number): void {

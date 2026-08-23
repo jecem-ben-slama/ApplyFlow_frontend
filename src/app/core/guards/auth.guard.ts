@@ -7,15 +7,15 @@ export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Use take(1) to ensure the observable completes after the first session verification emission
-  return authService.checkSession().pipe(
+  // Consumes local memory stream instantly. No network traffic generated.
+  return authService.isAuthenticated$.pipe(
     take(1),
     map((isAuthenticated) => {
       if (isAuthenticated) {
         return true;
       }
 
-      // Safe lock: Kick them back to login page if cookie verification fails
+      // Safe lock: Kick back to login page if cookie verification fails
       router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
       return false;
     })

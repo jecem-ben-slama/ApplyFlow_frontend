@@ -18,12 +18,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
         case 409:
           // Google access revoked/needs re-consent — app session stays valid.
-          // No action buttons in ToastService, so tell them what to do and
-          // let them trigger it from wherever you surface reconnectGoogle().
           toast.error(
             err?.error?.message ??
               'Your Google access has expired. Please reconnect your Google account in Settings.',
             8000
+          );
+          break;
+
+        case 429:
+          // Throttling catch — displays warning toast if client pushes rate limits elsewhere
+          toast.error(
+            'Too many requests. Please slow down and try again in a few moments.',
+            6000
           );
           break;
 
