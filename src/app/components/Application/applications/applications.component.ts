@@ -108,7 +108,17 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
 
   isLoading = false;
   isRefreshing = false;
-  isSendingEmail = false;
+
+  /**
+   * Per-application "email currently sending" tracker, replacing the old
+   * single global `isSendingEmail` boolean. A global flag made every row's
+   * send button/spinner light up whenever *any* email was in flight, which
+   * looked and behaved like the whole app was blocked. Tracking by id lets
+   * every other row, tab, filter, and the create button stay fully usable
+   * while one send is in progress.
+   */
+  sendingEmailIds = new Set<number>();
+
   isModalOpen = false;
   errorMessage = '';
 
@@ -447,7 +457,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.isSendingEmail = true;
+    this.sendingEmailIds.add(app.id);
     this.sendErrors.delete(app.id);
 
     const wasCompiled = app.status === 'COMPILED';
@@ -463,7 +473,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (msg) => {
           this.toastService.success(msg || 'Email sent!');
-          this.isSendingEmail = false;
+          this.sendingEmailIds.delete(app.id);
 
           // The backend already flips the status to SENT as part of
           // sending the email — don't PATCH it again from the client.
@@ -480,13 +490,18 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         error: (err) => {
           const message = err.error?.message || 'Email delivery failed.';
           this.sendErrors.set(app.id, message);
-          this.isSendingEmail = false;
+          this.sendingEmailIds.delete(app.id);
         },
       });
   }
 
   sendErrorFor(appId: number): string {
     return this.sendErrors.get(appId) || '';
+  }
+
+  /** Per-application send state, used by row/panel bindings so only the row actually sending shows a spinner. */
+  isSending(appId: number): boolean {
+    return this.sendingEmailIds.has(appId);
   }
 
   onCopyBody(text: string): void {
@@ -587,7 +602,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       next: (created) => {
         this.isModalOpen = false;
         this.selectedPreset = null;
-        this.isLoading = false;
+        this.isLoading = false; // unblocks the rest of the UI right away — the send below runs in the background
         this.sendEmailAfterCompile(created);
       },
       error: (err) => {
@@ -603,7 +618,9 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
    * Sends the email right after a "Compile & Send" creation. The backend
    * flips the application's status to SENT as part of sending the email,
    * so no client-side status patch happens here — we just follow the tab
-   * and reload once the send resolves.
+   * and reload once the send resolves. Tracked per-id via
+   * `sendingEmailIds` so the rest of the app stays fully usable while
+   * this send is in flight.
    */
   private sendEmailAfterCompile(app: ApplicationResponseDto): void {
     this.activeTab = 'compiled';
@@ -621,7 +638,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.isSendingEmail = true;
+    this.sendingEmailIds.add(app.id);
     this.sendErrors.delete(app.id);
 
     this.emailService
@@ -634,7 +651,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (msg) => {
-          this.isSendingEmail = false;
+          this.sendingEmailIds.delete(app.id);
           this.toastService.success(
             msg || 'Application compiled and email sent!'
           );
@@ -650,7 +667,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
           this.loadApplicationsPage();
         },
         error: (err) => {
-          this.isSendingEmail = false;
+          this.sendingEmailIds.delete(app.id);
           this.sendErrors.set(
             app.id,
             err.error?.message || 'Email delivery failed.'

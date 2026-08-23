@@ -3,7 +3,8 @@
     <p class="text-sm italic">Loading board…</p>
 </div>
 
-<div *ngIf="!loading" class="flex gap-3.5 overflow-x-auto pb-4 pt-1 px-1 snap-x snap-mandatory scrollbar-thin">
+<div *ngIf="!loading" cdkDropListGroup
+    class="flex gap-3.5 overflow-x-auto pb-4 pt-1 px-1 snap-x snap-mandatory scrollbar-thin">
     <div *ngFor="let status of statusOrder"
         class="min-w-[85vw] sm:min-w-[260px] md:min-w-[280px] bg-surface-light dark:bg-surface rounded-2xl border border-slate-200 dark:border-surface-muted p-4 flex-shrink-0 shadow-sm snap-start flex flex-col">
 
@@ -19,10 +20,16 @@
             </span>
         </div>
 
-        <!-- Column Cards Container -->
-        <div class="space-y-2.5 flex-1">
-            <div *ngFor="let app of columnCapped(status); trackBy: trackByApp" (click)="cardSelected.emit(app.id)"
-                class="relative bg-background-light dark:bg-surface-muted/30 rounded-xl pl-3.5 pr-3 py-3 border border-slate-100 dark:border-surface-muted/60 overflow-hidden transition-all hover:border-primary/40 dark:hover:border-primary/50 active:scale-[0.99] cursor-pointer shadow-2xs">
+        <!-- Column Cards Container (drop zone) -->
+        <div cdkDropList [id]="dropListId(status)" [cdkDropListData]="column(status)"
+            [cdkDropListConnectedTo]="dropListIds" (cdkDropListDropped)="onDrop($event, status)" cdkDropListAutoScroll
+            class="space-y-2.5 flex-1 min-h-[70px] max-h-[60vh] overflow-y-auto pr-0.5 scrollbar-thin rounded-xl transition-colors">
+
+            <div *ngFor="let app of column(status); trackBy: trackByApp" cdkDrag [cdkDragData]="app"
+                (cdkDragStarted)="$event.source.element.nativeElement.classList.add('opacity-60')"
+                (cdkDragEnded)="$event.source.element.nativeElement.classList.remove('opacity-60')"
+                (click)="cardSelected.emit(app.id)"
+                class="relative bg-background-light dark:bg-surface-muted/30 rounded-xl pl-3.5 pr-3 py-3 border border-slate-100 dark:border-surface-muted/60 overflow-hidden transition-all hover:border-primary/40 dark:hover:border-primary/50 active:scale-[0.99] cursor-grab active:cursor-grabbing shadow-2xs">
 
                 <span class="absolute left-0 top-0 bottom-0 w-1" [class]="colorClass(status)"></span>
 
@@ -32,18 +39,16 @@
                 <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     {{ app.jobTitle || 'Unknown role' }}
                 </p>
+
+                <!-- Ghost shown in the source column while dragging -->
+                <div *cdkDragPlaceholder
+                    class="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 h-[54px]"></div>
             </div>
 
-            <!-- More Counter -->
-            <p *ngIf="column(status).length > cap"
-                class="text-[11px] font-semibold text-primary dark:text-primary-light text-center py-2 bg-primary/5 dark:bg-primary/10 rounded-xl">
-                +{{ column(status).length - cap }} more items
-            </p>
-
-            <!-- Empty State -->
+            <!-- Empty State / drop target hint -->
             <p *ngIf="!column(status).length"
                 class="text-xs text-slate-400 dark:text-slate-500 italic text-center py-8 border border-dashed border-slate-200 dark:border-surface-muted/60 rounded-xl">
-                No items in this stage
+                Drop here to mark as {{ label(status) }}
             </p>
         </div>
     </div>

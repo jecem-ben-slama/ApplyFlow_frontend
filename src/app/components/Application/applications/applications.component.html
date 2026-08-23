@@ -261,22 +261,18 @@
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-surface-muted/60">
                             <ng-container *ngFor="let app of appPage!.content">
-                                <tr app-application-row
-                                    class="hover:bg-slate-50/80 dark:hover:bg-surface-muted/20 transition-all"
-                                    [app]="app" [isExpanded]="expandedAppId === app.id"
-                                    [isSendingEmail]="isSendingEmail" [isStatusPending]="pendingStatusIds.has(app.id)"
-                                    (togglePanel)="onTogglePanel($event)"
-                                    (statusChange)="onUpdateStatus($event.id, $event.status)"
-                                    (deleteApp)="onDelete($event)" (sendEmail)="onSendEmail($event)"
-                                    (copyBody)="onCopyBody($event)"
+                                <tr app-application-row class="hover:bg-slate-50/80 dark:hover:bg-surface-muted/20 transition-all" [app]="app"
+                                    [isExpanded]="expandedAppId === app.id" [isSendingEmail]="isSending(app.id)"
+                                    [isStatusPending]="pendingStatusIds.has(app.id)" (togglePanel)="onTogglePanel($event)"
+                                    (statusChange)="onUpdateStatus($event.id, $event.status)" (deleteApp)="onDelete($event)"
+                                    (sendEmail)="onSendEmail($event)" (copyBody)="onCopyBody($event)"
                                     (notesSaved)="onSaveNotes($event.appId, $event.notes)">
                                 </tr>
                                 <tr *ngIf="expandedAppId === app.id"
                                     class="bg-background-light/50 dark:bg-surface-muted/20">
                                     <td colspan="6" class="px-4 pb-4">
-                                        <app-email-panel [app]="app" [isSending]="isSendingEmail"
-                                            [sendError]="sendErrorFor(app.id)" (sendEmail)="onSendEmail($event)"
-                                            (copyBody)="onCopyBody($event)"
+                                        <app-email-panel [app]="app" [isSending]="isSending(app.id)" [sendError]="sendErrorFor(app.id)"
+                                            (sendEmail)="onSendEmail($event)" (copyBody)="onCopyBody($event)"
                                             (notesSaved)="onSaveNotes($event.appId, $event.notes)">
                                         </app-email-panel>
                                     </td>
@@ -390,9 +386,8 @@
                             <!-- Expanded email panel -->
                             <div *ngIf="expandedAppId === app.id"
                                 class="border-t border-slate-100 dark:border-surface-muted/60 p-4 pt-3 bg-background-light/50 dark:bg-surface-muted/10">
-                                <app-email-panel [app]="app" [isSending]="isSendingEmail"
-                                    [sendError]="sendErrorFor(app.id)" (sendEmail)="onSendEmail($event)"
-                                    (copyBody)="onCopyBody($event)"
+                                <app-email-panel [app]="app" [isSending]="isSending(app.id)" [sendError]="sendErrorFor(app.id)"
+                                    (sendEmail)="onSendEmail($event)" (copyBody)="onCopyBody($event)"
                                     (notesSaved)="onSaveNotes($event.appId, $event.notes)">
                                 </app-email-panel>
                             </div>

@@ -1,5 +1,8 @@
 <div
     class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+
+    <app-toast-container></app-toast-container>
+
     <div class="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8 space-y-8">
 
         <!-- ============ HEADER & GLOBAL CONTROLS ============ -->
@@ -120,42 +123,43 @@
                     range.</p>
             </div>
 
-        <!-- Primary Metrics Grid -->
-        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        
-            <app-stat-tile label="Sent" [value]="summary()?.sentCount ?? 0" [loading]="loading()"
-                explanation="Total number of applications sent during the selected period.">
-            </app-stat-tile>
-        
-            <app-stat-tile label="Response rate" [value]="responseRatePercentage() + '%'" [loading]="loading()"
-                explanation="Applications that received any reply from an employer.">
-            </app-stat-tile>
-        
-            <app-stat-tile emphasis="secondary" label="Never viewed" [value]="neverViewedPercentage() + '%'"
-                [loading]="loading()" explanation="Applications that have not been opened by the recipient yet.">
-            </app-stat-tile>
-        
-            <app-stat-tile emphasis="secondary" label="Active / stalled" [value]="activeStalledLabel()" [loading]="loading()"
-                explanation="Active: applications still progressing. 
+            <!-- Primary Metrics Grid -->
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+
+                <app-stat-tile label="Sent" [value]="summary()?.sentCount ?? 0" [loading]="loading()"
+                    explanation="Total number of applications sent during the selected period.">
+                </app-stat-tile>
+
+                <app-stat-tile label="Response rate" [value]="responseRatePercentage() + '%'" [loading]="loading()"
+                    explanation="Applications that received any reply from an employer.">
+                </app-stat-tile>
+
+                <app-stat-tile emphasis="secondary" label="Never viewed" [value]="neverViewedPercentage() + '%'"
+                    [loading]="loading()" explanation="Applications that have not been opened by the recipient yet.">
+                </app-stat-tile>
+
+                <app-stat-tile emphasis="secondary" label="Active / stalled" [value]="activeStalledLabel()"
+                    [loading]="loading()" explanation="Active: applications still progressing. 
                 Stalled: Reached an outcome status. ">
-            </app-stat-tile>
-        </div>
-        
-        <!-- Secondary Metrics Grid -->
-        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        
-            <app-stat-tile emphasis="secondary" label="Interview → offer" [value]="interviewToOfferLabel()"
-                [loading]="loading()" explanation="Interviews that recieved a job offer.">
-            </app-stat-tile>
-        
-            <app-stat-tile emphasis="secondary" label="Rejected split" [value]="rejectionSplitLabel()" [loading]="loading()"
-                explanation="Breakdown of rejections received before versus after an interview.">
-            </app-stat-tile>
-        
-            <app-stat-tile emphasis="secondary" label="Ignored" [value]="ignoredPercentage() + '%'"
-                [loading]="loading()" explanation="Viewed applications that got no response.">
-            </app-stat-tile>
-        </div>
+                </app-stat-tile>
+            </div>
+
+            <!-- Secondary Metrics Grid -->
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+
+                <app-stat-tile emphasis="secondary" label="Interview → offer" [value]="interviewToOfferLabel()"
+                    [loading]="loading()" explanation="Interviews that recieved a job offer.">
+                </app-stat-tile>
+
+                <app-stat-tile emphasis="secondary" label="Rejected split" [value]="rejectionSplitLabel()"
+                    [loading]="loading()"
+                    explanation="Breakdown of rejections received before versus after an interview.">
+                </app-stat-tile>
+
+                <app-stat-tile emphasis="secondary" label="Ignored" [value]="ignoredPercentage() + '%'"
+                    [loading]="loading()" explanation="Viewed applications that got no response.">
+                </app-stat-tile>
+            </div>
 
             <!-- Funnel & Outcomes Strip Container -->
             <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
@@ -175,10 +179,22 @@
                     Active Application Board
                 </h2>
                 <span class="h-px flex-1 bg-slate-200 dark:bg-slate-800"></span>
+
+                <!-- Drag-and-drop hint -->
+                <span
+                    class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[10px] font-medium text-primary dark:border-primary/30 dark:bg-primary/10 dark:text-primary-light">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
+                        <path
+                            d="M12 2v6m0 0l3-3m-3 3L9 5M12 22v-6m0 0l3 3m-3-3l-3 3M2 12h6m0 0L5 9m3 3L5 15M22 12h-6m0 0l3-3m-3 3l3 3" />
+                    </svg>
+                    Drag cards to change status
+                </span>
             </div>
 
             <app-application-board [applications]="applications()" [loading]="loadingApplications()"
-                (cardSelected)="onSelectApplication($event)"></app-application-board>
+                (cardSelected)="onSelectApplication($event)" (statusChanged)="onBoardStatusChanged($event)">
+            </app-application-board>
         </section>
 
 
@@ -211,7 +227,7 @@
         </section>
 
 
-   
+
         <!-- ============ SECTION 5: APPLICATION TIMELINE ============ -->
         <section id="timeline-section" class="space-y-4 scroll-mt-6">
             <div class="flex items-center gap-3">

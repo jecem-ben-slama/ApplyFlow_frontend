@@ -2,6 +2,7 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  ViewChild,
   computed,
   inject,
   signal,
@@ -15,7 +16,10 @@ import { finalize } from 'rxjs/operators';
 import { StatTileComponent } from './stat-tile/stat-tile.component';
 import { FunnelChartComponent } from './funnel-chart/funnel-chart.component';
 import { OutcomesStripComponent } from './outcomes-strip/outcomes-strip.component';
-import { ApplicationBoardComponent } from './application-board/application-board.component';
+import {
+  ApplicationBoardComponent,
+  KanbanStatusChange,
+} from './application-board/application-board.component';
 import { PerformanceCardComponent } from './performance-card/performance-card.component';
 import { ApplicationTimelineComponent } from './application-timeline/application-timeline.component';
 
@@ -45,6 +49,11 @@ import {
   TrendPoint,
 } from 'src/app/services/stats.service';
 import { PendingSelectionService } from 'src/app/services/pending-selection.service';
+import { ApplicationsService } from 'src/app/services/applications.service';
+// NOTE: adjust this path to wherever ToastService actually lives in your tree —
+// I've matched the pattern used elsewhere (src/app/services/...); it may
+// instead be under src/app/components/common/toast/toast.service.
+import { ToastService } from 'src/app/components/common/toast/toast.service';
 
 import {
   RangePreset,
@@ -53,6 +62,7 @@ import {
   getSelectedRange,
   makeMetricDelta,
 } from './analytics.utils';
+import { ToastContainerComponent } from '../common/toast/toast-container.component';
 
 const STATUS_ORDER: ApplicationStatus[] = [
   'COMPILED',
@@ -91,14 +101,20 @@ interface ChartPoint {
     ApplicationBoardComponent,
     PerformanceCardComponent,
     ApplicationTimelineComponent,
+    ToastContainerComponent,
   ],
   templateUrl: './analytics-dashboard.component.html',
 })
 export class AnalyticsDashboardComponent implements OnInit {
   private statsService = inject(StatsService);
   private analyticsService = inject(AnalyticsService);
+  private applicationsService = inject(ApplicationsService);
+  private toastService = inject(ToastService);
   private destroyRef = inject(DestroyRef);
   private pendingSelection = inject(PendingSelectionService);
+
+  /** Reference to the kanban board so a failed status PATCH can tell it to roll a card back. */
+  @ViewChild(ApplicationBoardComponent) board?: ApplicationBoardComponent;
 
   readonly outcomeStatuses = OUTCOME_STATUSES;
   readonly statusOrder = STATUS_ORDER;
@@ -291,9 +307,8 @@ export class AnalyticsDashboardComponent implements OnInit {
   );
 
   interviewTrend = computed<ChartPoint[]>(() =>
-    this.toChartPoints(
-      this.trends()?.interviewToOfferRateOverTime ?? [],
-      (p) => this.toPercentValue(p)
+    this.toChartPoints(this.trends()?.interviewToOfferRateOverTime ?? [], (p) =>
+      this.toPercentValue(p)
     )
   );
 
@@ -382,7 +397,7 @@ export class AnalyticsDashboardComponent implements OnInit {
       summary: this.statsService.getSummary(range),
       funnel: this.statsService.getFunnel(range),
       rejectionStages: this.statsService.getRejectionStages(range),
-   
+
       cv: this.analyticsService.getCvStats(range),
       lang: this.analyticsService.getLanguageStats(range),
       job: this.analyticsService.getJobStats(range),
@@ -471,6 +486,48 @@ export class AnalyticsDashboardComponent implements OnInit {
         el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
+  }
+
+  /**
+   * Handles a drag-and-drop status change from the kanban board. The board
+   * has already moved the card optimistically in its own local column
+   * state — here we just persist it and, on failure, tell the board to
+   * snap the card back and roll our own `applications` list back too so
+   * every other view fed by `applications` (funnel, outcomes strip, etc.)
+   * stays consistent with what's on screen.
+   */
+  onBoardStatusChanged(change: KanbanStatusChange): void {
+    // Reflect the move in the shared applications signal immediately so
+    // every other widget on the dashboard (funnel stages, outcome counts)
+    // stays in sync with the board without waiting on a full reload.
+    this.applications.update((apps) =>
+      apps.map((app) =>
+        app.id === change.id ? { ...app, status: change.to } : app
+      )
+    );
+
+    this.applicationsService
+      .patchApplicationStatusOrNotes(change.id, change.to)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.toastService.success(`Moved to ${STATUS_LABELS[change.to]}.`);
+        },
+        error: (err) => {
+          this.toastService.error(
+            err.error?.message || 'Could not update status.'
+          );
+          // Roll back both the board's own column state and the shared
+          // applications signal so nothing on the page is left showing
+          // the failed move.
+          this.board?.revert(change);
+          this.applications.update((apps) =>
+            apps.map((app) =>
+              app.id === change.id ? { ...app, status: change.from } : app
+            )
+          );
+        },
+      });
   }
 
   boardColumn(status: ApplicationStatus): ApplicationSummaryDto[] {
