@@ -3,8 +3,13 @@ import { ApplicationsService } from '../services/applications.service';
 import { EmailService } from '../services/email.service';
 import { ApplicationResponseDto } from '../models';
 
-interface PendingAction {
-  timeoutId: ReturnType<typeof setTimeout>;
+interface QueuedStatusAction {
+  timer: ReturnType<typeof setTimeout>;
+  execute: () => void;
+}
+
+interface QueuedEmailAction {
+  timer: ReturnType<typeof setTimeout>;
   execute: () => void;
 }
 
@@ -12,8 +17,8 @@ interface PendingAction {
   providedIn: 'root',
 })
 export class ApplicationActionService {
-  private pendingSends = new Map<number, PendingAction>();
-  private pendingStatusChanges = new Map<number, PendingAction>();
+  private pendingSends = new Map<number, QueuedEmailAction>();
+  private pendingStatusChanges = new Map<number, QueuedStatusAction>();
   readonly UNDO_WINDOW_MS = 5000;
 
   constructor(
@@ -40,21 +45,22 @@ export class ApplicationActionService {
     };
 
     const timeoutId = setTimeout(execute, this.UNDO_WINDOW_MS);
-    this.pendingStatusChanges.set(id, { timeoutId, execute });
+    this.pendingStatusChanges.set(id, { timer: timeoutId, execute });
     return timeoutId;
   }
 
   executeStatusChangeNow(id: number): void {
-    const pending = this.pendingStatusChanges.get(id);
-    if (pending) {
-      clearTimeout(pending.timeoutId);
-      pending.execute();
+    const item = this.pendingStatusChanges.get(id);
+    if (item) {
+      clearTimeout(item.timer);
+      item.execute();
     }
   }
 
   cancelStatusChange(id: number): void {
-    if (this.pendingStatusChanges.has(id)) {
-      clearTimeout(this.pendingStatusChanges.get(id)!.timeoutId);
+    const item = this.pendingStatusChanges.get(id);
+    if (item) {
+      clearTimeout(item.timer);
       this.pendingStatusChanges.delete(id);
     }
   }
@@ -85,21 +91,22 @@ export class ApplicationActionService {
     };
 
     const timeoutId = setTimeout(execute, this.UNDO_WINDOW_MS);
-    this.pendingSends.set(app.id, { timeoutId, execute });
+    this.pendingSends.set(app.id, { timer: timeoutId, execute });
     return timeoutId;
   }
 
   executeEmailSendNow(appId: number): void {
-    const pending = this.pendingSends.get(appId);
-    if (pending) {
-      clearTimeout(pending.timeoutId);
-      pending.execute();
+    const item = this.pendingSends.get(appId);
+    if (item) {
+      clearTimeout(item.timer);
+      item.execute();
     }
   }
 
   cancelEmailSend(appId: number): void {
-    if (this.pendingSends.has(appId)) {
-      clearTimeout(this.pendingSends.get(appId)!.timeoutId);
+    const item = this.pendingSends.get(appId);
+    if (item) {
+      clearTimeout(item.timer);
       this.pendingSends.delete(appId);
     }
   }

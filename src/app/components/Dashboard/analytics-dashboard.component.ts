@@ -51,9 +51,6 @@ import {
 import { PendingSelectionService } from 'src/app/services/pending-selection.service';
 import { ApplicationsService } from 'src/app/services/applications.service';
 import { ApplicationActionService } from 'src/app/services/application-action.service';
-// NOTE: adjust this path to wherever ToastService actually lives in your tree —
-// I've matched the pattern used elsewhere (src/app/services/...); it may
-// instead be under src/app/components/common/toast/toast.service.
 import { ToastService } from 'src/app/components/common/toast/toast.service';
 
 import {
@@ -518,20 +515,19 @@ export class AnalyticsDashboardComponent implements OnInit {
       }
     );
 
-    // 3. Show an actionable Toast with an Undo button
-    const toastDuration = this.actionService.UNDO_WINDOW_MS;
+    // 3. Show an actionable Toast with an Undo button and onDismiss execution
     this.toastService.info(
-    
       `Moving to ${STATUS_LABELS[change.to]}...`,
-    this.actionService.UNDO_WINDOW_MS,
-     {
+      this.actionService.UNDO_WINDOW_MS,
+      {
         label: 'Undo',
         onClick: () => {
           this.actionService.cancelStatusChange(change.id);
           this.revertBoardMove(change);
           this.toastService.info('Status change cancelled.');
         },
-      },
+        onDismiss: () => this.actionService.executeStatusChangeNow(change.id),
+      }
     );
   }
 

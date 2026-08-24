@@ -397,6 +397,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       {
         label: 'Undo',
         onClick: () => this.cancelStatusUpdate(id, previousStatus),
+        onDismiss: () => this.actionService.executeStatusChangeNow(id),
       }
     );
   }
@@ -486,6 +487,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       {
         label: 'Undo',
         onClick: () => this.cancelSend(app.id, isCompileFlow, wasCompiled),
+        onDismiss: () => this.actionService.executeEmailSendNow(app.id),
       }
     );
   }
