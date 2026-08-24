@@ -10,7 +10,7 @@ import {
   retry,
   timer,
 } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { ApiConfig } from '../config/api.config';
 import { ApiResponse, User } from '../models';
 
@@ -34,16 +34,18 @@ export class AuthService {
   public readonly isCheckingSession$ =
     this.isCheckingSessionSubject.asObservable();
 
+  // Flag components (e.g. a settings banner) can watch to prompt reconnect
   private readonly needsGoogleReconnectSubject = new BehaviorSubject<boolean>(
     false
   );
   public readonly needsGoogleReconnect$ =
     this.needsGoogleReconnectSubject.asObservable();
 
+  // ─── LOGOUT BROADCAST KEY ───
   private readonly LOGOUT_EVENT_KEY = 'applyflow_logout_event';
-  private checkSession$?: Observable<boolean>;
 
   constructor() {
+    // ─── LISTEN FOR LOGOUT ACTIONS FROM OTHER TABS ───
     window.addEventListener('storage', (event) => {
       if (event.key === this.LOGOUT_EVENT_KEY) {
         this.handleCrossTabLogout();
@@ -59,23 +61,25 @@ export class AuthService {
     window.location.href = this.api.endpoints.auth.login;
   }
 
+  /**
+   * Checks whether the SESSION cookie is still valid server-side.
+   * Retries transient failures (network blips, cold starts, 5xx) up to twice
+   * before giving up — but never retries a genuine 401, and never clears
+   * local auth state for anything other than a confirmed 401.
+   */
   checkSession(): Observable<boolean> {
-    if (this.checkSession$) {
-      return this.checkSession$;
-    }
-
     this.isCheckingSessionSubject.next(true);
 
-    this.checkSession$ = this.http
+    return this.http
       .get<ApiResponse<User>>(this.api.endpoints.auth.me, this.api.httpOptions)
       .pipe(
         retry({
           count: 2,
           delay: (error, retryCount) => {
-            if (error?.status === 401 || error?.status === 429) {
-              throw error;
+            if (error?.status === 401) {
+              throw error; // don't retry a real "not logged in"
             }
-            return timer(1500 * retryCount);
+            return timer(1500 * retryCount); // 1.5s, then 3s
           },
         }),
         tap((response) => {
@@ -92,34 +96,28 @@ export class AuthService {
           this.isCheckingSessionSubject.next(false);
 
           if (err?.status === 401) {
+            // Session is genuinely dead — this is a real logout
             this.clearLocalState();
-          } else if (err?.status === 429) {
-            console.warn(
-              'checkSession hit rate limit (429), preserving existing state.'
-            );
           } else {
+            // Network blip, cold start, 503, CORS hiccup, etc.
+            // Don't assert logged-out state on a transient failure.
             console.warn(
-              'checkSession failed after retries with non-401/429 status, preserving auth state:',
+              'checkSession failed after retries with non-401 status, preserving auth state:',
               err?.status
             );
           }
 
           return of(false);
-        }),
-        shareReplay(1),
-        tap({
-          complete: () => {
-            this.checkSession$ = undefined;
-          },
-          error: () => {
-            this.checkSession$ = undefined;
-          },
         })
       );
-
-    return this.checkSession$;
   }
 
+  /**
+   * Schedules the current account for deletion. `confirmationPhrase` is
+   * whatever the user typed (e.g. "delete jane@example.com") — sent as-is;
+   * the backend independently verifies it matches the account's real email
+   * before doing anything.
+   */
   deleteAccount(confirmationPhrase: string): Observable<boolean> {
     return this.http
       .delete<ApiResponse<void>>(this.api.endpoints.auth.deleteAccount, {
@@ -128,10 +126,14 @@ export class AuthService {
       })
       .pipe(
         tap(() => {
+          // Backend already killed the session server-side, same as logout.
+          // Reuse the exact same cross-tab broadcast so every open tab redirects.
           this.clearLocalState();
           localStorage.setItem(this.LOGOUT_EVENT_KEY, Date.now().toString());
         }),
         map((response) => !!response.success)
+        // No catchError here — let the component see the raw error (e.g. 400
+        // if the confirmation phrase didn't match) and surface response.error.message.
       );
   }
 
@@ -144,12 +146,14 @@ export class AuthService {
       });
   }
 
+  /** Called by the interceptor when any API call returns a genuine 401 mid-session */
   handleUnauthorized(): void {
     this.clearLocalState();
     localStorage.setItem(this.LOGOUT_EVENT_KEY, Date.now().toString());
     this.router.navigate(['/login']);
   }
 
+  /** Google-specific re-consent — does NOT touch app session state */
   reconnectGoogle(): void {
     this.needsGoogleReconnectSubject.next(false);
     window.location.href = this.api.endpoints.auth.login;
@@ -158,6 +162,7 @@ export class AuthService {
   handleCrossTabLogout(): void {
     this.clearLocalState();
     this.router.navigate(['/login']).then(() => {
+      // Force a UI refresh to drop existing routing state/DOM trees entirely
       window.location.reload();
     });
   }
@@ -169,7 +174,10 @@ export class AuthService {
 
   private handleLogoutRedirect(): void {
     this.clearLocalState();
+
+    // ─── SIGNAL ALL OTHER OPEN TABS TO LOG OUT ───
     localStorage.setItem(this.LOGOUT_EVENT_KEY, Date.now().toString());
+
     this.router.navigate(['/login']).then(() => {
       window.location.reload();
     });

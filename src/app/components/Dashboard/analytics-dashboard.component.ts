@@ -50,6 +50,7 @@ import {
 } from 'src/app/services/stats.service';
 import { PendingSelectionService } from 'src/app/services/pending-selection.service';
 import { ApplicationsService } from 'src/app/services/applications.service';
+import { ApplicationActionService } from 'src/app/services/application-action.service';
 // NOTE: adjust this path to wherever ToastService actually lives in your tree —
 // I've matched the pattern used elsewhere (src/app/services/...); it may
 // instead be under src/app/components/common/toast/toast.service.
@@ -112,6 +113,7 @@ export class AnalyticsDashboardComponent implements OnInit {
   private toastService = inject(ToastService);
   private destroyRef = inject(DestroyRef);
   private pendingSelection = inject(PendingSelectionService);
+  private actionService = inject(ApplicationActionService);
 
   /** Reference to the kanban board so a failed status PATCH can tell it to roll a card back. */
   @ViewChild(ApplicationBoardComponent) board?: ApplicationBoardComponent;
@@ -489,15 +491,10 @@ export class AnalyticsDashboardComponent implements OnInit {
   }
 
   /**
-   * Handles a drag-and-drop status change from the kanban board. The board
-   * has already moved the card optimistically in its own local column
-   * state — here we just persist it and, on failure, tell the board to
-   * snap the card back and roll our own `applications` list back too so
-   * every other view fed by `applications` (funnel, outcomes strip, etc.)
-   * stays consistent with what's on screen.
+   * Handles a drag-and-drop status change from the kanban board with Undo support.
    */
   onBoardStatusChanged(change: KanbanStatusChange): void {
-    // Reflect the move in the shared applications signal immediately so
+    // 1. Optimistically update the shared applications signal immediately so
     // every other widget on the dashboard (funnel stages, outcome counts)
     // stays in sync with the board without waiting on a full reload.
     this.applications.update((apps) =>
@@ -506,28 +503,45 @@ export class AnalyticsDashboardComponent implements OnInit {
       )
     );
 
-    this.applicationsService
-      .patchApplicationStatusOrNotes(change.id, change.to)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.toastService.success(`Moved to ${STATUS_LABELS[change.to]}.`);
+    // 2. Queue the backend call via ApplicationActionService to allow the undo window
+    this.actionService.queueStatusChange(
+      change.id,
+      change.to,
+      () => {
+        this.toastService.success(`Moved to ${STATUS_LABELS[change.to]}.`);
+      },
+      (err) => {
+        this.toastService.error(
+          err.error?.message || 'Could not update status.'
+        );
+        this.revertBoardMove(change);
+      }
+    );
+
+    // 3. Show an actionable Toast with an Undo button
+    const toastDuration = this.actionService.UNDO_WINDOW_MS;
+    this.toastService.info(
+    
+      `Moving to ${STATUS_LABELS[change.to]}...`,
+    this.actionService.UNDO_WINDOW_MS,
+     {
+        label: 'Undo',
+        onClick: () => {
+          this.actionService.cancelStatusChange(change.id);
+          this.revertBoardMove(change);
+          this.toastService.info('Status change cancelled.');
         },
-        error: (err) => {
-          this.toastService.error(
-            err.error?.message || 'Could not update status.'
-          );
-          // Roll back both the board's own column state and the shared
-          // applications signal so nothing on the page is left showing
-          // the failed move.
-          this.board?.revert(change);
-          this.applications.update((apps) =>
-            apps.map((app) =>
-              app.id === change.id ? { ...app, status: change.from } : app
-            )
-          );
-        },
-      });
+      },
+    );
+  }
+
+  private revertBoardMove(change: KanbanStatusChange): void {
+    this.board?.revert(change);
+    this.applications.update((apps) =>
+      apps.map((app) =>
+        app.id === change.id ? { ...app, status: change.from } : app
+      )
+    );
   }
 
   boardColumn(status: ApplicationStatus): ApplicationSummaryDto[] {
@@ -645,14 +659,6 @@ export class AnalyticsDashboardComponent implements OnInit {
 
   // TrendPointDto has no pre-formatted label — only a LocalDate `date` — so
   // the axis label is built client-side from formatShortDate.
-  //
-  // `percent` is nullable (e.g. no interviews yet in that bucket) and its
-  // scale is genuinely ambiguous from the DTO alone: every other rate field
-  // in this API (StatsPeriodSummary.responseRate, etc.) is a 0-1 fraction,
-  // but a field literally named `percent` more commonly means "already
-  // *100". Currently assuming 0-100. If these two charts render as a flat
-  // line pinned to the bottom (or one giant maxed-out bar), flip this to
-  // `Math.round((point.percent ?? 0) * 100)` instead.
   private toPercentValue(point: TrendPoint): number {
     if (point.percent == null) {
       return 0;
@@ -661,8 +667,6 @@ export class AnalyticsDashboardComponent implements OnInit {
   }
 
   // Normalizes a trend series to 0-100 heights for the CSS bar chart.
-  // Empty series returns [] and the template shows the "no data" state
-  // instead of a zero-height bar row.
   private toChartPoints(
     points: TrendPoint[],
     selector: (point: TrendPoint) => number
