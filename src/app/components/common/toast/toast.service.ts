@@ -5,7 +5,8 @@ export type ToastType = 'success' | 'error' | 'info';
 
 export interface ToastAction {
   label: string;
-  onClick: () => void;
+  onClick: () => void; // Called on "Undo" click -> cancels the operation
+  onDismiss?: () => void; // Called on "X" click -> executes the operation immediately
 }
 
 export interface Toast {

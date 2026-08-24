@@ -31,37 +31,39 @@ import { Toast, ToastService } from './toast.service';
 export class ToastContainerComponent implements OnInit, OnDestroy {
   toasts$: Observable<Toast[]> = this.toastService.toasts$;
 
-  /**
-   * Ticks once a second purely so Angular re-renders the countdown next to
-   * an action toast (e.g. "Undo (5s)"). Zone.js picks up the setInterval
-   * callback and triggers change detection on its own — this field is
-   * never read, its only job is to exist as an interval callback.
-   */
   private tickTimer?: ReturnType<typeof setInterval>;
 
   constructor(private toastService: ToastService) {}
 
   ngOnInit(): void {
-    this.tickTimer = setInterval(() => {
-      /* no-op: presence of this callback is enough to trigger CD each second */
-    }, 1000);
+    this.tickTimer = setInterval(() => {}, 1000);
   }
 
   ngOnDestroy(): void {
     if (this.tickTimer) clearInterval(this.tickTimer);
   }
 
-  dismiss(id: number): void {
-    this.toastService.dismiss(id);
+  /**
+   * Fires when pressing X: If an explicit onDismiss exists (e.g. immediate execution),
+   * trigger it. Otherwise, simply dismiss the toast.
+   */
+  dismiss(toast: Toast): void {
+    if (toast.action?.onDismiss) {
+      toast.action.onDismiss();
+    }
+    this.toastService.dismiss(toast.id);
   }
 
-  /** Fires the toast's action, then dismisses it — an undo shouldn't linger on screen after it's actioned. */
+  /**
+   * Fires when pressing "Undo": Triggers onClick() (cancelling the request).
+   */
   onAction(toast: Toast): void {
-    toast.action?.onClick();
-    this.dismiss(toast.id);
+    if (toast.action?.onClick) {
+      toast.action.onClick();
+    }
+    this.toastService.dismiss(toast.id);
   }
 
-  /** Whole seconds remaining before an actionable toast (e.g. an "Undo" send) auto-fires. Floors at 0. */
   secondsLeft(toast: Toast): number {
     if (!toast.duration) return 0;
     const elapsed = Date.now() - toast.createdAt;

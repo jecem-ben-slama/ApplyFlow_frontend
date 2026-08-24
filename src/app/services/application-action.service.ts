@@ -3,15 +3,17 @@ import { ApplicationsService } from '../services/applications.service';
 import { EmailService } from '../services/email.service';
 import { ApplicationResponseDto } from '../models';
 
+interface PendingAction {
+  timeoutId: ReturnType<typeof setTimeout>;
+  execute: () => void;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class ApplicationActionService {
-  private pendingSends = new Map<number, ReturnType<typeof setTimeout>>();
-  private pendingStatusChanges = new Map<
-    number,
-    ReturnType<typeof setTimeout>
-  >();
+  private pendingSends = new Map<number, PendingAction>();
+  private pendingStatusChanges = new Map<number, PendingAction>();
   readonly UNDO_WINDOW_MS = 5000;
 
   constructor(
@@ -25,11 +27,9 @@ export class ApplicationActionService {
     onSuccess: () => void,
     onError: (err: any) => void
   ): ReturnType<typeof setTimeout> {
-    if (this.pendingStatusChanges.has(id)) {
-      clearTimeout(this.pendingStatusChanges.get(id)!);
-    }
+    this.cancelStatusChange(id);
 
-    const timeoutId = setTimeout(() => {
+    const execute = () => {
       this.pendingStatusChanges.delete(id);
       this.appService
         .patchApplicationStatusOrNotes(id, status, undefined)
@@ -37,15 +37,24 @@ export class ApplicationActionService {
           next: () => onSuccess(),
           error: (err) => onError(err),
         });
-    }, this.UNDO_WINDOW_MS);
+    };
 
-    this.pendingStatusChanges.set(id, timeoutId);
+    const timeoutId = setTimeout(execute, this.UNDO_WINDOW_MS);
+    this.pendingStatusChanges.set(id, { timeoutId, execute });
     return timeoutId;
+  }
+
+  executeStatusChangeNow(id: number): void {
+    const pending = this.pendingStatusChanges.get(id);
+    if (pending) {
+      clearTimeout(pending.timeoutId);
+      pending.execute();
+    }
   }
 
   cancelStatusChange(id: number): void {
     if (this.pendingStatusChanges.has(id)) {
-      clearTimeout(this.pendingStatusChanges.get(id)!);
+      clearTimeout(this.pendingStatusChanges.get(id)!.timeoutId);
       this.pendingStatusChanges.delete(id);
     }
   }
@@ -57,11 +66,9 @@ export class ApplicationActionService {
     onSuccess: (msg?: string) => void,
     onError: (err: any) => void
   ): ReturnType<typeof setTimeout> {
-    if (this.pendingSends.has(app.id)) {
-      clearTimeout(this.pendingSends.get(app.id)!);
-    }
+    this.cancelEmailSend(app.id);
 
-    const timeoutId = setTimeout(() => {
+    const execute = () => {
       this.pendingSends.delete(app.id);
       this.emailService
         .sendEmail({
@@ -75,15 +82,24 @@ export class ApplicationActionService {
           next: (msg) => onSuccess(msg),
           error: (err) => onError(err),
         });
-    }, this.UNDO_WINDOW_MS);
+    };
 
-    this.pendingSends.set(app.id, timeoutId);
+    const timeoutId = setTimeout(execute, this.UNDO_WINDOW_MS);
+    this.pendingSends.set(app.id, { timeoutId, execute });
     return timeoutId;
+  }
+
+  executeEmailSendNow(appId: number): void {
+    const pending = this.pendingSends.get(appId);
+    if (pending) {
+      clearTimeout(pending.timeoutId);
+      pending.execute();
+    }
   }
 
   cancelEmailSend(appId: number): void {
     if (this.pendingSends.has(appId)) {
-      clearTimeout(this.pendingSends.get(appId)!);
+      clearTimeout(this.pendingSends.get(appId)!.timeoutId);
       this.pendingSends.delete(appId);
     }
   }

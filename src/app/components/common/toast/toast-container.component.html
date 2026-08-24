@@ -20,13 +20,14 @@
 
         <span class="flex-1 pt-1 leading-5 text-slate-700 dark:text-slate-200">{{ toast.message }}</span>
 
-        <!-- action button: shows a live countdown (e.g. "Undo (5s)") for actions with a duration, otherwise just the label -->
+        <!-- action button (e.g. "Undo (5s)") -->
         <button *ngIf="toast.action" type="button" (click)="onAction(toast)"
             class="shrink-0 self-center whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-wide text-sky-600 hover:bg-sky-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 dark:text-sky-400 dark:hover:bg-sky-500/10 transition-colors">
             {{ toast.action.label }}<span *ngIf="toast.duration"> ({{ secondsLeft(toast) }}s)</span>
         </button>
 
-        <button type="button" (click)="dismiss(toast.id)" aria-label="Dismiss notification"
+        <!-- close button -->
+        <button type="button" (click)="dismiss(toast)" aria-label="Dismiss notification"
             class="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-slate-900/5 hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-slate-300 transition-colors">
             <mat-icon class="!text-base !w-4 !h-4 block">close</mat-icon>
         </button>
