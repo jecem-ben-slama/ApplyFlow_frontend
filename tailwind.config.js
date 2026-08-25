@@ -12,16 +12,17 @@ module.exports = {
 
         // ─── Backgrounds & Surfaces ───────────────────────
         background: {
-          DEFAULT: '#0f172a', // fallback for bare `bg-background` / `dark:bg-background`
-          light: '#f1f5f9',   // Slate-100 — less bright than #f8fafc
-          dark: '#0f172a',    // Slate-900
+          DEFAULT: '#0f172a', // Slate-900 — dark-mode fallback
+          light: '#f8fafc',   // Slate-50 — main light-mode canvas
+          dark: '#0f172a',    // Slate-900 — main dark-mode canvas
         },
 
         surface: {
-          DEFAULT: '#1e293b', // fallback for bare `bg-surface` / `dark:bg-surface`
-          light: '#ffffff',   // Cards / panels
-          dark: '#1e293b',    // Slate-800
-          muted: '#334155',   // Slate-700
+          DEFAULT: '#1e293b',      // Slate-800 — dark-mode fallback
+          light: '#ffffff',        // White — cards, modals, panels
+          lightMuted: '#f1f5f9',   // Slate-100 — inputs, secondary surfaces
+          dark: '#1e293b',         // Slate-800 — dark-mode surfaces
+          muted: '#334155',        // Slate-700 — dark-mode secondary surfaces
         },
 
         // ─── Primary ──────────────────────────────────────
@@ -69,18 +70,33 @@ module.exports = {
       // ─── Animations ─────────────────────────────────────
       keyframes: {
         'fade-in': {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          '0%': {
+            opacity: '0',
+          },
+          '100%': {
+            opacity: '1',
+          },
         },
+
         'slide-right': {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(0)' },
+          '0%': {
+            transform: 'translateX(-100%)',
+          },
+          '100%': {
+            transform: 'translateX(0)',
+          },
         },
+
         'slide-up': {
-          '0%': { transform: 'translateY(100%)' },
-          '100%': { transform: 'translateY(0)' },
+          '0%': {
+            transform: 'translateY(100%)',
+          },
+          '100%': {
+            transform: 'translateY(0)',
+          },
         },
       },
+
       animation: {
         'fade-in': 'fade-in 0.15s ease-out',
         'slide-right': 'slide-right 0.2s ease-out',
