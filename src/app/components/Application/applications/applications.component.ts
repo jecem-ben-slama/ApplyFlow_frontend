@@ -371,6 +371,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       status,
       () => {
         this.pendingStatusIds.delete(id);
+        this.toastService.success(`Status updated to ${status}.`);
         if (status === 'COMPILED' && this.activeTab === 'all') {
           this.loadApplicationsPage();
         } else if (
@@ -411,7 +412,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
       app.status = previousStatus;
     }
 
-    this.toastService.success('Status change cancelled.');
+    this.toastService.info('Status change cancelled.');
   }
 
   onSaveNotes(appId: number, notes: string): void {
@@ -464,7 +465,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
           msg ||
             (isCompileFlow
               ? 'Application compiled and email sent!'
-              : 'Email sent!')
+              : 'Email sent successfully!')
         );
         app.status = 'SENT';
         if (wasCompiled && this.activeTab === 'compiled') {
@@ -509,7 +510,7 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         : app.status;
     }
 
-    this.toastService.success(
+    this.toastService.info(
       isCompileFlow
         ? 'Application compiled — email not sent.'
         : 'Send cancelled.'
