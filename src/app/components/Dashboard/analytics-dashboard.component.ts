@@ -43,10 +43,9 @@ import {
   StatsPeriodSummary,
   StatsService,
   StatsSummary,
-  StatsTrendResponse,
+  
   TimelineEvent,
-  TrendGranularity,
-  TrendPoint,
+ 
 } from 'src/app/services/stats.service';
 import { PendingSelectionService } from 'src/app/services/pending-selection.service';
 import { ApplicationsService } from 'src/app/services/applications.service';
@@ -137,7 +136,6 @@ export class AnalyticsDashboardComponent implements OnInit {
 
   // Trend analysis — real per-bucket series from /api/stats/trends, scoped
   // to the same date range as everything else on the dashboard.
-  trends = signal<StatsTrendResponse | null>(null);
 
   // Performance breakdown
   cvStats = signal<StatMetricDto[]>([]);
@@ -292,31 +290,12 @@ export class AnalyticsDashboardComponent implements OnInit {
   // of being fabricated from the single-number summary. The backend returns
   // four independent series (not one array with multiple metrics per
   // point), so each chart reads its own array directly.
-  applicationsTrend = computed<ChartPoint[]>(() =>
-    this.toChartPoints(
-      this.trends()?.applicationsOverTime ?? [],
-      (p) => p.value
-    )
-  );
+ 
 
-  responseRateTrend = computed<ChartPoint[]>(() =>
-    this.toChartPoints(this.trends()?.responseRateOverTime ?? [], (p) =>
-      this.toPercentValue(p)
-    )
-  );
 
-  interviewTrend = computed<ChartPoint[]>(() =>
-    this.toChartPoints(this.trends()?.interviewToOfferRateOverTime ?? [], (p) =>
-      this.toPercentValue(p)
-    )
-  );
 
-  rejectionTrend = computed<ChartPoint[]>(() =>
-    this.toChartPoints(
-      this.trends()?.rejectionTrendOverTime ?? [],
-      (p) => p.value
-    )
-  );
+
+
 
   outcomeCounts = computed<Partial<Record<ApplicationStatus, number>>>(() => {
     const counts: Partial<Record<ApplicationStatus, number>> = {};
@@ -627,57 +606,5 @@ export class AnalyticsDashboardComponent implements OnInit {
       );
       return { ...event, daysAgo };
     });
-  }
-
-  // Daily buckets for short ranges, weekly for the 90-day preset (and any
-  // custom range spanning more than ~45 days) so the chart doesn't try to
-  // cram dozens of daily bars into a small area, monthly beyond ~180 days.
-  private granularityForPreset(
-    preset: RangePreset,
-    range: { from?: string; to?: string }
-  ): TrendGranularity {
-    if (preset === '7' || preset === '30') {
-      return 'DAY';
-    }
-    if (preset === '90') {
-      return 'WEEK';
-    }
-    // custom
-    if (range.from && range.to) {
-      const days =
-        (new Date(range.to).getTime() - new Date(range.from).getTime()) /
-        (1000 * 60 * 60 * 24);
-      if (days > 180) return 'MONTH';
-      if (days > 45) return 'WEEK';
-    }
-    return 'DAY';
-  }
-
-  // TrendPointDto has no pre-formatted label — only a LocalDate `date` — so
-  // the axis label is built client-side from formatShortDate.
-  private toPercentValue(point: TrendPoint): number {
-    if (point.percent == null) {
-      return 0;
-    }
-    return Math.round(point.percent);
-  }
-
-  // Normalizes a trend series to 0-100 heights for the CSS bar chart.
-  private toChartPoints(
-    points: TrendPoint[],
-    selector: (point: TrendPoint) => number
-  ): ChartPoint[] {
-    if (points.length === 0) {
-      return [];
-    }
-    const values = points.map(selector);
-    const maxValue = Math.max(...values, 1);
-    return points.map((point, index) => ({
-      label: formatShortDate(point.date),
-      value: values[index],
-      // Floor at 2% so a real zero-value bucket still renders a sliver
-      // instead of being visually indistinguishable from "no data".
-      height: Math.max(Math.round((values[index] / maxValue) * 100), 2),
-    }));
-  }
+  } 
 }
