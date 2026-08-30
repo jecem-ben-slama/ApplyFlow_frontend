@@ -87,34 +87,7 @@ export interface DateRange {
   to?: string;
 }
 
-// --- Trend endpoint (/api/stats/trends) ---
 
-export type TrendGranularity = 'DAY' | 'WEEK' | 'MONTH';
-
-// Mirrors backend TrendPointDto exactly. The same shape is reused across
-// all four series below — which field is meaningful depends on which
-// series the point came from:
-//   - applicationsOverTime / rejectionTrendOverTime -> read `value` (count)
-//   - responseRateOverTime / interviewToOfferRateOverTime -> read `percent`
-// `currentValue`/`previousValue` are available for tooltips/comparisons but
-// aren't required to render the bars.
-export interface TrendPoint {
-  date: string; // LocalDate, serializes as "YYYY-MM-DD"
-  value: number;
-  percent: number | null;
-  currentValue: number | null;
-  previousValue: number | null;
-}
-
-// Mirrors backend StatsTrendResponseDto exactly — four independent series,
-// not one array with multiple metrics per point.
-export interface StatsTrendResponse {
-  applicationsOverTime: TrendPoint[];
-  responseRateOverTime: TrendPoint[];
-  interviewToOfferRateOverTime: TrendPoint[];
-  rejectionTrendOverTime: TrendPoint[];
-  granularity: string;
-}
 
 @Injectable({ providedIn: 'root' })
 export class StatsService {
