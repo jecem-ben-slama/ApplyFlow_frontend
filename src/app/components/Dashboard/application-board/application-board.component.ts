@@ -13,6 +13,7 @@ import {
   moveItemInArray,
   transferArrayItem,
 } from '@angular/cdk/drag-drop';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ApplicationStatus } from '../../../services/stats.service';
 import { ApplicationSummaryDto } from '../../../services/analytics.service';
 import {
@@ -30,7 +31,7 @@ export interface KanbanStatusChange {
 @Component({
   selector: 'app-application-board',
   standalone: true,
-  imports: [CommonModule, DragDropModule],
+  imports: [CommonModule, DragDropModule, ScrollingModule],
   templateUrl: './application-board.component.html',
 })
 export class ApplicationBoardComponent implements OnChanges {
@@ -63,6 +64,14 @@ export class ApplicationBoardComponent implements OnChanges {
    */
   columns: Record<ApplicationStatus, ApplicationSummaryDto[]> =
     this.emptyColumns();
+
+  /**
+   * True while a card is being dragged. Used to temporarily disable
+   * scroll-snap on the horizontal board container, since snap-scrolling
+   * fights with CDK's auto-scroll-to-edge behavior (the snap would yank
+   * the board back to the nearest column mid-drag).
+   */
+  isDragging = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['applications']) {
@@ -106,6 +115,14 @@ export class ApplicationBoardComponent implements OnChanges {
 
   trackByApp(_index: number, app: ApplicationSummaryDto): number {
     return app.id;
+  }
+
+  onDragStarted(): void {
+    this.isDragging = true;
+  }
+
+  onDragEnded(): void {
+    this.isDragging = false;
   }
 
   onDrop(
