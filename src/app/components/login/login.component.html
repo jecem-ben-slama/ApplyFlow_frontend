@@ -31,6 +31,20 @@
                     </svg>
                     <span>Continue with Google</span>
                 </button>
+
+                <div class="divider">
+                    <span>or</span>
+                </div>
+
+                <button (click)="onGuestLogin()" class="guest-signin-btn" type="button" [disabled]="isGuestLoading">
+                    <span *ngIf="!isGuestLoading">Continue as Guest</span>
+                    <span *ngIf="isGuestLoading">Starting guest session…</span>
+                </button>
+                <p class="guest-note">
+                    Explore ApplyFlow without an account. Guest data isn't saved —
+                    sign in with Google any time to keep it.
+                </p>
+                <p class="guest-error" *ngIf="guestError">{{ guestError }}</p>
             </div>
 
             <div class="card-footer">
@@ -79,35 +93,45 @@
         <div class="modal-body">
             <ng-container *ngIf="activeModal === 'privacy'">
                 <p><strong>Effective Date:</strong> August 16, 2026</p>
-            
+
                 <h3>1. Information We Collect</h3>
-                <p><strong>Account Data:</strong> When you sign in with Google OAuth, we collect basic profile details including
+                <p><strong>Account Data:</strong> When you sign in with Google OAuth, we collect basic profile details
+                    including
                     your name, email address, and profile picture URL.</p>
                 <p><strong>Google User Data & Restricted Scopes:</strong></p>
                 <ul>
-                    <li><strong>Google Drive Access (Read-Only):</strong> We access your Google Drive files in read-only mode
-                        strictly to allow you to select, preview, and attach existing resumes, portfolio documents, or cover letter
+                    <li><strong>Google Drive Access (Read-Only):</strong> We access your Google Drive files in read-only
+                        mode
+                        strictly to allow you to select, preview, and attach existing resumes, portfolio documents, or
+                        cover letter
                         templates to your job applications within ApplyFlow.</li>
-                    <li><strong>Gmail Access (Send Only):</strong> We request permission to send emails on your behalf exclusively
-                        to submit application packages, follow-up emails, or inquiries directly to recruiters through your connected
+                    <li><strong>Gmail Access (Send Only):</strong> We request permission to send emails on your behalf
+                        exclusively
+                        to submit application packages, follow-up emails, or inquiries directly to recruiters through
+                        your connected
                         Gmail account. We do not read, process, or store your inbox messages or metadata.</li>
                 </ul>
-            
+
                 <h3>2. How We Use Information</h3>
-                <p>To authenticate your identity, secure access, synchronize application materials, import select Drive files, and
+                <p>To authenticate your identity, secure access, synchronize application materials, import select Drive
+                    files, and
                     transmit job application emails on your command.</p>
-            
+
                 <h3>3. Data Sharing & Google Limited Use Statement</h3>
-                <p>ApplyFlow does not sell, rent, or transfer your personal data or Google user data to third parties, advertising
+                <p>ApplyFlow does not sell, rent, or transfer your personal data or Google user data to third parties,
+                    advertising
                     platforms, or AI models.</p>
-                <p><strong>Google API Limited Use Disclosure:</strong> ApplyFlow's use and transfer to any other app of information
-                    received from Google APIs will adhere to the <a
-                        href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank"
-                        rel="noopener noreferrer">Google API Services User Data Policy</a>, including the Limited Use requirements.
+                <p><strong>Google API Limited Use Disclosure:</strong> ApplyFlow's use and transfer to any other app of
+                    information
+                    received from Google APIs will adhere to the
+                    href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank"
+                    rel="noopener noreferrer"><a>Google API Services User Data Policy</a>, including the Limited Use
+                    requirements.
                 </p>
-            
+
                 <h3>4. Security & Retention</h3>
-                <p>Your data is transmitted using TLS encryption and retained only while your account remains active. You may revoke
+                <p>Your data is transmitted using TLS encryption and retained only while your account remains active.
+                    You may revoke
                     Google API permissions at any time via your Google Security Settings.</p>
             </ng-container>
             <ng-container *ngIf="activeModal === 'terms'">

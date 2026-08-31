@@ -26,6 +26,7 @@ export class SidebarComponent implements OnInit {
   userProfilePic?: string;
   isCollapsed = false;
   isConfirmLogoutOpen = false;
+  isGuest = false;
 
   isDarkMode$ = this.themeService.isDarkMode$;
 
@@ -39,13 +40,15 @@ export class SidebarComponent implements OnInit {
   ngOnInit(): void {
     this.authService.currentUser$.subscribe((user) => {
       if (user) {
-        this.userName = user.name || 'User';
+        this.userName = user.name || (user.isGuest ? 'Guest' : 'User');
         this.userEmail = user.email || '';
         this.userProfilePic = user.pictureUrl || undefined;
+        this.isGuest = user.isGuest;
       } else {
         this.userName = 'New User';
         this.userEmail = '';
         this.userProfilePic = undefined;
+        this.isGuest = false;
       }
     });
   }
@@ -71,5 +74,10 @@ export class SidebarComponent implements OnInit {
   confirmLogout(): void {
     this.isConfirmLogoutOpen = false;
     this.authService.logout();
+  }
+
+  /** Guest → real account. Full top-level redirect, same as the login page. */
+  onSignIn(): void {
+    this.authService.loginWithGoogle();
   }
 }

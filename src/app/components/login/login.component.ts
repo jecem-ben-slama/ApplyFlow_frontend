@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { RouterLink } from '@angular/router';
 
@@ -13,16 +14,20 @@ interface FeatureSlide {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule,RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
 })
 export class LoginComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
+  private router = inject(Router);
 
   activeModal: 'privacy' | 'terms' | null = null;
   currentSlide = 0;
   private slideInterval: any;
+
+  isGuestLoading = false;
+  guestError: string | null = null;
 
   slides: FeatureSlide[] = [
     {
@@ -46,12 +51,12 @@ export class LoginComponent implements OnInit, OnDestroy {
       description:
         'Store modular cover letters, portfolio links, and responses to common application questions for fast execution.',
     },
-    {badge:' Stats and Feedback',
-    title: 'Data-Driven Job Hunt Insights',
-    tagline: 'Track your progress and optimize your strategy.',
-    description:
-      'Analyze application success rates, interview feedback, and industry trends to refine your approach and increase your chances of landing the right role.',
-
+    {
+      badge: ' Stats and Feedback',
+      title: 'Data-Driven Job Hunt Insights',
+      tagline: 'Track your progress and optimize your strategy.',
+      description:
+        'Analyze application success rates, interview feedback, and industry trends to refine your approach and increase your chances of landing the right role.',
     },
   ];
 
@@ -87,6 +92,29 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   onGoogleLogin(): void {
     this.authService.loginWithGoogle();
+  }
+
+  onGuestLogin(): void {
+    if (this.isGuestLoading) return;
+
+    this.isGuestLoading = true;
+    this.guestError = null;
+
+    this.authService.continueAsGuest().subscribe({
+      next: (success) => {
+        this.isGuestLoading = false;
+        if (success) {
+          this.router.navigate(['/dashboard']); // adjust to your authed landing route
+        } else {
+          this.guestError =
+            'Could not start a guest session. Please try again.';
+        }
+      },
+      error: () => {
+        this.isGuestLoading = false;
+        this.guestError = 'Could not start a guest session. Please try again.';
+      },
+    });
   }
 
   openModal(type: 'privacy' | 'terms'): void {

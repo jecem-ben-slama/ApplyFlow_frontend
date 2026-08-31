@@ -85,7 +85,7 @@ export class ApplicationActionService {
           applicationId: app.id,
         })
         .subscribe({
-          next: (msg) => onSuccess(msg),
+          next: (res) => onSuccess(res.message),
           error: (err) => onError(err),
         });
     };

@@ -1,11 +1,11 @@
 <app-sidebar-desktop [collapsed]="isCollapsed" [userName]="userName" [userProfilePic]="userProfilePic"
-    [isDark]="(isDarkMode$ | async) ?? false" (toggleCollapse)="isCollapsed = !isCollapsed"
-    (toggleTheme)="toggleTheme()" (photoError)="onPhotoError()" (logout)="requestLogout()">
+    [isDark]="(isDarkMode$ | async) ?? false" [isGuest]="isGuest" (toggleCollapse)="isCollapsed = !isCollapsed"
+    (toggleTheme)="toggleTheme()" (photoError)="onPhotoError()" (logout)="requestLogout()" (signIn)="onSignIn()">
 </app-sidebar-desktop>
 
 <app-mobile-sidebar [userName]="userName" [userEmail]="userEmail" [userProfilePic]="userProfilePic"
-    [isDark]="(isDarkMode$ | async) ?? false" (toggleTheme)="toggleTheme()" (photoError)="onPhotoError()"
-    (logout)="requestLogout()">
+    [isDark]="(isDarkMode$ | async) ?? false" [isGuest]="isGuest" (toggleTheme)="toggleTheme()"
+    (photoError)="onPhotoError()" (logout)="requestLogout()" (signIn)="onSignIn()">
 </app-mobile-sidebar>
 
 <app-logout-confirm-dialog [open]="isConfirmLogoutOpen" (confirm)="confirmLogout()" (cancel)="cancelLogout()">

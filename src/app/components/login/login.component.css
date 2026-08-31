@@ -88,6 +88,77 @@
     display: block;
 }
 
+/* ==========================================================================
+   2b. Guest Mode
+   ========================================================================== */
+.divider
+{
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #bdc3c7;
+    font-size: 0.8rem;
+    margin: 20px 0;
+}
+
+.divider::before,
+.divider::after
+{
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #eef2f5;
+}
+
+.divider span
+{
+    padding: 0 12px;
+}
+
+.guest-signin-btn
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background-color: #ffffff;
+    color: #2c3e50;
+    border: 1px solid #dadce0;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.guest-signin-btn:hover:not(:disabled)
+{
+    background-color: #f8f9fa;
+    box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3),
+        0 4px 8px 3px rgba(60, 64, 67, 0.15);
+}
+
+.guest-signin-btn:disabled
+{
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.guest-note
+{
+    font-size: 0.8rem;
+    color: #7f8c8d;
+    line-height: 1.5;
+    margin-top: 12px;
+}
+
+.guest-error
+{
+    font-size: 0.85rem;
+    color: #e74c3c;
+    margin-top: 10px;
+}
+
 .card-footer
 {
     font-size: 0.8rem;
@@ -433,5 +504,10 @@
     {
         font-size: 0.875rem;
         margin-bottom: 20px;
+    }
+
+    .guest-note
+    {
+        font-size: 0.75rem;
     }
 }

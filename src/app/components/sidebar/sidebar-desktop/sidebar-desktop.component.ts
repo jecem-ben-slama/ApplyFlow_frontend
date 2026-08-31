@@ -30,11 +30,13 @@ export class SidebarDesktopComponent {
   @Input() userName = 'New User';
   @Input() userProfilePic?: string;
   @Input() isDark = false;
+  @Input() isGuest = false;
 
   @Output() toggleCollapse = new EventEmitter<boolean>();
   @Output() toggleTheme = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
   @Output() photoError = new EventEmitter<void>();
+  @Output() signIn = new EventEmitter<void>();
 
   isProfileOpen = false;
 

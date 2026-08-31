@@ -41,6 +41,11 @@ export class AuthService {
   public readonly needsGoogleReconnect$ =
     this.needsGoogleReconnectSubject.asObservable();
 
+  // True whenever the current session belongs to a guest (not yet linked
+  // to a Google account). Components use this to show upgrade prompts.
+  private readonly isGuestSubject = new BehaviorSubject<boolean>(false);
+  public readonly isGuest$ = this.isGuestSubject.asObservable();
+
   // ─── LOGOUT BROADCAST KEY ───
   private readonly LOGOUT_EVENT_KEY = 'applyflow_logout_event';
 
@@ -57,8 +62,43 @@ export class AuthService {
     return this.isAuthenticatedSubject.value;
   }
 
+  public get isGuest(): boolean {
+    return this.isGuestSubject.value;
+  }
+
   loginWithGoogle(): void {
+    // Full top-level navigation — required for the OAuth redirect round
+    // trip and for the session cookie to survive it. Never call this via
+    // HttpClient/fetch.
     window.location.href = this.api.endpoints.auth.login;
+  }
+
+  /**
+   * Starts an anonymous guest session. Establishes a real session cookie,
+   * identical in kind to a Google login — every other authenticated
+   * endpoint works transparently afterward.
+   */
+  continueAsGuest(): Observable<boolean> {
+    return this.http
+      .post<ApiResponse<User>>(
+        this.api.endpoints.auth.guest,
+        {},
+        this.api.httpOptions
+      )
+      .pipe(
+        tap((response) => {
+          if (response.success && response.data) {
+            this.currentUserSubject.next(response.data);
+            this.isAuthenticatedSubject.next(true);
+            this.isGuestSubject.next(response.data.isGuest);
+          }
+        }),
+        map((response) => !!response.success),
+        catchError((err) => {
+          console.error('Failed to start guest session:', err);
+          return of(false);
+        })
+      );
   }
 
   /**
@@ -86,6 +126,7 @@ export class AuthService {
           if (response.success && response.data) {
             this.currentUserSubject.next(response.data);
             this.isAuthenticatedSubject.next(true);
+            this.isGuestSubject.next(response.data.isGuest);
           } else {
             this.clearLocalState();
           }
@@ -170,6 +211,7 @@ export class AuthService {
   private clearLocalState(): void {
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
+    this.isGuestSubject.next(false);
   }
 
   private handleLogoutRedirect(): void {
