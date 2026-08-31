@@ -32,7 +32,7 @@
         </div>
     </div>
 
-    <!-- Guest mode banner — nudges conversion, hidden once collapsed to avoid crowding -->
+    <!-- Guest mode banner — the single sign-in CTA for this sidebar -->
     <div *ngIf="isGuest && !collapsed" class="mx-3 mb-2">
         <button (click)="signIn.emit()"
             class="w-full flex items-center gap-2 p-2.5 rounded-xl bg-primary/10 dark:bg-primary/15 hover:bg-primary/15 dark:hover:bg-primary/20 border border-primary/20 transition-all text-left">
@@ -68,24 +68,24 @@
                     Profile</span>
                 <mat-icon class="scale-75 text-slate-300 dark:text-slate-600">chevron_right</mat-icon>
             </a>
-
-            <button *ngIf="isGuest" (click)="signIn.emit(); closeProfileMenu()"
-                class="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-surface-dark transition-all text-left">
-                <mat-icon class="scale-90 text-slate-400 dark:text-slate-500">login</mat-icon>
-                <span class="text-xs font-semibold text-slate-800 dark:text-slate-100 flex-1">Sign in with
-                    Google</span>
-                <mat-icon class="scale-75 text-slate-300 dark:text-slate-600">chevron_right</mat-icon>
-            </button>
         </div>
 
         <div [class]="'flex items-center gap-2 p-1.5 ' + (collapsed ? 'justify-center flex-col' : '')">
 
-            <img *ngIf="userProfilePic" [src]="userProfilePic" alt="Profile picture" (error)="photoError.emit()"
-                class="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-xs" />
+            <div class="relative shrink-0">
+                <img *ngIf="userProfilePic" [src]="userProfilePic" alt="Profile picture" (error)="photoError.emit()"
+                    [class]="'w-8 h-8 rounded-full object-cover shadow-xs ' + (isGuest ? 'border-2 border-dashed border-primary/50' : 'border border-slate-200 dark:border-slate-700')" />
 
-            <div *ngIf="!userProfilePic"
-                class="w-8 h-8 rounded-full bg-gradient-to-tr from-accent-light to-accent flex items-center justify-center font-bold text-white text-[10px] shrink-0 shadow-xs">
-                {{ userName.substring(0, 2) | uppercase }}
+                <div *ngIf="!userProfilePic"
+                    [class]="'w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-[10px] shadow-xs ' + (isGuest ? 'bg-slate-400 dark:bg-surface-muted border-2 border-dashed border-primary/60' : 'bg-gradient-to-tr from-accent-light to-accent')">
+                    {{ userName.substring(0, 2) | uppercase }}
+                </div>
+
+                <!-- Guest badge — anchored to the avatar itself, so it's visible whether the sidebar is collapsed or not -->
+                <span *ngIf="isGuest"
+                    class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary ring-2 ring-background-light dark:ring-background-dark flex items-center justify-center">
+                    <mat-icon class="!text-[9px] !w-2.5 !h-2.5 text-white">person_add</mat-icon>
+                </span>
             </div>
 
             <span *ngIf="!collapsed" class="flex-1 min-w-0 flex items-center gap-1.5">
