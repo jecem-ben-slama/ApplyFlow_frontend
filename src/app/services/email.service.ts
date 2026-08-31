@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiConfig } from '../config';
+import { ApiResponse } from '../models'; // adjust path to wherever ApiResponse<T> is typed
 
 export interface EmailSendRequest {
   recipientEmail: string;
@@ -21,10 +22,11 @@ export class EmailService {
   /**
    * Dispatches the compiled form payload over to the Spring Boot pipeline
    */
-  sendEmail(payload: EmailSendRequest): Observable<string> {
-    return this.http.post(this.api.endpoints.emails.send, payload, {
-      ...this.api.httpOptions,
-      responseType: 'text',
-    });
+  sendEmail(payload: EmailSendRequest): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(
+      this.api.endpoints.emails.send,
+      payload,
+      this.api.httpOptions
+    );
   }
 }

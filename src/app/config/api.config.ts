@@ -1,4 +1,3 @@
-// src/app/config/api.config.ts
 import { Injectable } from '@angular/core';
 import { ConfigService } from '../core/config.service';
 
@@ -6,16 +5,10 @@ import { ConfigService } from '../core/config.service';
 export class ApiConfig {
   constructor(private configService: ConfigService) {}
 
-  /**
-   * Root backend microservice location
-   */
   get baseUrl(): string {
     return this.configService.apiUrl;
   }
 
-  /**
-   * Strongly-typed feature route endpoints mapping to Spring Boot Controllers
-   */
   get endpoints() {
     const base = this.baseUrl;
     return {
@@ -24,6 +17,7 @@ export class ApiConfig {
         logout: `${base}/api/auth/logout`,
         me: `${base}/api/auth/me`,
         deleteAccount: `${base}/api/auth/account`,
+        guest: `${base}/api/auth/guest`,
       },
       applications: {
         base: `${base}/api/applications`,
@@ -62,9 +56,6 @@ export class ApiConfig {
     };
   }
 
-  /**
-   * Default configuration options for HttpClient requests
-   */
   get httpOptions() {
     return {
       withCredentials: true,

@@ -24,7 +24,7 @@ import { LogoComponent } from '../../logo/logo.component';
     MatIconModule,
     SidebarNavComponent,
     ThemeToggleComponent,
-    LogoComponent
+    LogoComponent,
   ],
   templateUrl: './mobile-sidebar.component.html',
 })
@@ -33,10 +33,12 @@ export class MobileSidebarComponent implements OnDestroy {
   @Input() userEmail = '';
   @Input() userProfilePic?: string;
   @Input() isDark = false;
+  @Input() isGuest = false;
 
   @Output() toggleTheme = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
   @Output() photoError = new EventEmitter<void>();
+  @Output() signIn = new EventEmitter<void>();
 
   @ViewChild('drawer') private drawerRef?: ElementRef<HTMLElement>;
   @ViewChild('fab') private fabRef?: ElementRef<HTMLButtonElement>;
@@ -72,6 +74,11 @@ export class MobileSidebarComponent implements OnDestroy {
   onLogoutClick(): void {
     this.close();
     this.logout.emit();
+  }
+
+  onSignInClick(): void {
+    this.close();
+    this.signIn.emit();
   }
 
   @HostListener('document:keydown.escape')

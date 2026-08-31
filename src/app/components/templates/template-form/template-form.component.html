@@ -133,8 +133,8 @@
                         Template Subject <span class="text-rose-500">*</span>
                     </label>
                     <div class="flex items-center gap-1.5 flex-wrap">
-                        <button type="button" *ngFor="let p of placeholders" (click)="insertToken('subject', p.token)"
-                            [disabled]="loading" [title]="p.hint"
+                        <button type="button" *ngFor="let p of subjectPlaceholders"
+                            (click)="insertToken('subject', p.token)" [disabled]="loading" [title]="p.hint"
                             class="text-[9px] font-mono font-semibold uppercase tracking-wide bg-primary/10 hover:bg-primary/20 text-primary dark:text-indigo-400 border border-primary/20 px-2.5 py-1 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
                             + {{ p.label }}
                         </button>
@@ -158,10 +158,11 @@
                             <ng-container *ngIf="subjectField.errors?.['maxlength']">Subject must be under
                                 {{ subjectMaxLength }} characters.</ng-container>
                         </p>
-                        <p *ngIf="getUnknownPlaceholders(templateData.subjectTemplate).length"
+                        <p *ngIf="getUnknownPlaceholders(templateData.subjectTemplate, 'subject').length"
                             class="text-[11px] text-amber-500 font-medium">
                             Unrecognized placeholder(s), will not be replaced:
-                            <span class="font-mono">{{ getUnknownPlaceholders(templateData.subjectTemplate).join(', ')
+                            <span class="font-mono">{{ getUnknownPlaceholders(templateData.subjectTemplate,
+                                'subject').join(', ')
                                 }}</span>
                         </p>
                     </div>
@@ -206,10 +207,11 @@
                             <ng-container *ngIf="bodyField.errors?.['maxlength']">Body must be under
                                 {{ bodyMaxLength }} characters.</ng-container>
                         </p>
-                        <p *ngIf="getUnknownPlaceholders(templateData.bodyTemplate).length"
+                        <p *ngIf="getUnknownPlaceholders(templateData.bodyTemplate, 'body').length"
                             class="text-[11px] text-amber-500 font-medium">
                             Unrecognized placeholder(s), will not be replaced:
-                            <span class="font-mono">{{ getUnknownPlaceholders(templateData.bodyTemplate).join(', ')
+                            <span class="font-mono">{{ getUnknownPlaceholders(templateData.bodyTemplate, 'body').join(',
+                                ')
                                 }}</span>
                         </p>
                         <p *ngIf="templateData.bodyTemplate && !templateData.bodyTemplate.includes('{{skills_block}}')"

@@ -15,10 +15,12 @@ export class MobileMoreSheetComponent {
   @Input() userName = 'New User';
   @Input() userProfilePic?: string;
   @Input() isDark = false;
+  @Input() isGuest = false;
 
   @Output() close = new EventEmitter<void>();
   @Output() toggleTheme = new EventEmitter<void>();
   @Output() photoError = new EventEmitter<void>();
+  @Output() signIn = new EventEmitter<void>();
   // requestDeleteAccount removed — deletion now only happens on the full
   // /profile page, which requires typing "delete {email}" to confirm.
 }

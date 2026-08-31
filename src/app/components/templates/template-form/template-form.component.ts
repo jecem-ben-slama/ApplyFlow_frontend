@@ -9,6 +9,7 @@ import {
   OnDestroy,
   OnChanges,
   SimpleChanges,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -36,6 +37,7 @@ interface PlaceholderToken {
   standalone: true,
   imports: [CommonModule, FormsModule, MatIconModule],
   templateUrl: './template-form.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TemplateFormComponent implements OnInit, OnDestroy, OnChanges {
   constructor(private toastService: ToastService) {}
@@ -78,6 +80,11 @@ export class TemplateFormComponent implements OnInit, OnDestroy, OnChanges {
     },
   ];
 
+  /** Subject line has no use for skills_block (it's body-only content), so it's excluded from the subject's quick-insert buttons. */
+  readonly subjectPlaceholders: PlaceholderToken[] = this.placeholders.filter(
+    (p) => p.token !== '{{skills_block}}'
+  );
+
   showPlaceholderInfo = false;
 
   @Output() toggle = new EventEmitter<void>();
@@ -88,8 +95,19 @@ export class TemplateFormComponent implements OnInit, OnDestroy, OnChanges {
   @ViewChild('subjectInput') subjectInputRef?: ElementRef<HTMLInputElement>;
   @ViewChild('bodyInput') bodyInputRef?: ElementRef<HTMLTextAreaElement>;
 
-  private readonly knownTokens = this.placeholders.map((p) => p.token);
+  private readonly knownTokens = new Set(this.placeholders.map((p) => p.token));
   private readonly placeholderPattern = /\{\{\s*[\w]+\s*\}\}/g;
+
+  /** Memoizes getUnknownPlaceholders() per field so the regex/filter work only
+   *  reruns when that field's text actually changed, instead of on every
+   *  change-detection cycle (it's called directly from *ngIf in the template). */
+  private unknownPlaceholderCache: {
+    subject: { input: string | undefined | null; result: string[] };
+    body: { input: string | undefined | null; result: string[] };
+  } = {
+    subject: { input: undefined, result: [] },
+    body: { input: undefined, result: [] },
+  };
 
   /** localStorage key used to persist an unsaved draft across reloads/tab switches. */
   private readonly draftStorageKey = 'templateForm.draft';
@@ -218,12 +236,27 @@ export class TemplateFormComponent implements OnInit, OnDestroy, OnChanges {
     });
   }
 
-  /** Placeholders present in the text that aren't among the backend's known tokens — likely typos. */
-  getUnknownPlaceholders(text: string | undefined | null): string[] {
-    if (!text) return [];
+  /** Placeholders present in the text that aren't among the backend's known tokens — likely typos.
+   *  Called directly from the template on every change-detection cycle, so results are cached per
+   *  field and only recomputed when that field's text has actually changed. */
+  getUnknownPlaceholders(
+    text: string | undefined | null,
+    field: 'subject' | 'body' = 'subject'
+  ): string[] {
+    const cache = this.unknownPlaceholderCache[field];
+    if (cache.input === text) {
+      return cache.result;
+    }
+
+    const result = text ? this.computeUnknownPlaceholders(text) : [];
+    this.unknownPlaceholderCache[field] = { input: text, result };
+    return result;
+  }
+
+  private computeUnknownPlaceholders(text: string): string[] {
     const found = text.match(this.placeholderPattern) ?? [];
     const unknown = found.filter(
-      (t) => !this.knownTokens.includes(t.replace(/\s+/g, ''))
+      (t) => !this.knownTokens.has(t.replace(/\s+/g, ''))
     );
     return Array.from(new Set(unknown));
   }
