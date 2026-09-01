@@ -1,5 +1,12 @@
+// category-list.component.ts
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { trigger, style, transition, animate } from '@angular/animations';
+import {
+  trigger,
+  style,
+  transition,
+  animate,
+  AnimationEvent,
+} from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Category } from '../../../models';
@@ -59,5 +66,17 @@ export class CategoryListComponent {
 
   toggleManage(): void {
     this.isManageOpen = !this.isManageOpen;
+  }
+
+  /**
+   * Fires when the @sectionSlide animation finishes, for both :enter and
+   * :leave. We only care about :enter (panel opening) — dispatched as a
+   * plain DOM CustomEvent on `document` so the tour (which lives outside
+   * this component's injector tree, in toursteps.ts) can await it without
+   * needing an @Output wired all the way up through SkillsComponent.
+   */
+  onSlideDone(event: AnimationEvent): void {
+    if (event.toState === 'void') return; // :leave finished, ignore
+    document.dispatchEvent(new CustomEvent('tour:sectionSlideDone'));
   }
 }

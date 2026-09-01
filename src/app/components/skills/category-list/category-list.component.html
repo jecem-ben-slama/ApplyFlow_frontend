@@ -1,3 +1,4 @@
+<!-- category-list.component.html -->
 <div
     class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-3xl shadow-sm overflow-hidden">
 
@@ -45,7 +46,7 @@
     </div>
 
     <!-- MANAGE PANEL — separate, deliberate, no accidental filter clicks -->
-    <div *ngIf="isManageOpen" @sectionSlide
+    <div *ngIf="isManageOpen" @sectionSlide (@sectionSlide.done)="onSlideDone($event)"
         class="border-t border-slate-200 dark:border-surface-muted bg-background-light/50 dark:bg-surface-muted/20">
         <div class="p-5 md:px-6 space-y-3">
             <div class="flex items-center justify-between">

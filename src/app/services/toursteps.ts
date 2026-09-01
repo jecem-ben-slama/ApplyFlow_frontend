@@ -206,51 +206,72 @@ function waitForElement(
   });
 }
 
-// Waits an extra couple of frames so CSS transitions/animations
-// (like @sectionSlide) have a chance to finish laying out before
-// driver.js snapshots the element's bounding rect.
-function waitForStableLayout(el: HTMLElement): Promise<void> {
+/**
+ * Waits for CategoryListComponent's @sectionSlide :enter animation to
+ * finish, via the 'tour:sectionSlideDone' CustomEvent it dispatches on
+ * document (see category-list.component.ts's onSlideDone()). This
+ * replaces rect-polling for this specific transition: the panel's
+ * cubic-bezier(0.4, 0, 0.2, 1) easing is nearly flat in its first few
+ * frames, so two consecutive rAF reads of getBoundingClientRect() could
+ * look "stable" while the 220ms height animation was still running,
+ * causing Driver.js to snapshot the target element's position too early.
+ *
+ * Falls back to a fixed timeout (duration + buffer) in case the panel was
+ * already open (no :enter transition fires, so the event never dispatches)
+ * or the event listener is otherwise missed — so the tour never hangs.
+ */
+function waitForSectionSlideDone(fallbackMs = 260): Promise<void> {
   return new Promise((resolve) => {
-    let lastRect = el.getBoundingClientRect();
+    let settled = false;
 
-    const check = () => {
-      const rect = el.getBoundingClientRect();
-      const stable =
-        rect.width === lastRect.width &&
-        rect.height === lastRect.height &&
-        rect.top === lastRect.top &&
-        rect.left === lastRect.left;
-
-      if (stable) {
-        resolve();
-        return;
-      }
-
-      lastRect = rect;
-      requestAnimationFrame(check);
+    const onDone = () => {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('tour:sectionSlideDone', onDone);
+      resolve();
     };
 
-    // give it two frames minimum before even checking
-    requestAnimationFrame(() => requestAnimationFrame(check));
+    document.addEventListener('tour:sectionSlideDone', onDone, {
+      once: true,
+    });
+
+    setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('tour:sectionSlideDone', onDone);
+      resolve();
+    }, fallbackMs);
   });
 }
 
+/**
+ * Advances Driver.js to the next step after clicking, waiting for the
+ * target element to exist and be present in the DOM. Use this for
+ * transitions NOT gated behind the sectionSlide animation (modal opens,
+ * simple *ngIf toggles with no Angular animation, etc).
+ */
 async function advanceTo(
   selector: string,
   opts: { driver: any }
 ): Promise<void> {
-  const el = await waitForElement(selector);
-  if (!el) {
-    opts.driver.moveNext();
-    return;
-  }
-  await waitForStableLayout(el);
+  await waitForElement(selector);
   opts.driver.moveNext();
-  // some driver.js versions need an explicit refresh after moveNext
-  // if the target was highlighted before final layout — harmless no-op
-  // if refresh() doesn't exist on your version.
-  opts.driver.refresh?.();
 }
+
+/**
+ * Advances Driver.js to the next step specifically after the "Manage"
+ * panel's @sectionSlide animation completes, then confirms the target
+ * element is actually present before highlighting it.
+ */
+async function advanceAfterSlide(
+  selector: string,
+  opts: { driver: any }
+): Promise<void> {
+  await waitForSectionSlideDone();
+  await waitForElement(selector);
+  opts.driver.moveNext();
+}
+
 export function getSkillsSteps(
   tourService: TourService,
   router: Router
@@ -283,7 +304,7 @@ export function getSkillsSteps(
               'Skills are grouped by category. Click "Manage" to open the category panel.',
             onNextClick: async (element, _step, opts) => {
               (element as HTMLElement).click();
-              await advanceTo('#tour-category-new-btn', opts);
+              await advanceAfterSlide('#tour-category-new-btn', opts);
             },
           },
         },

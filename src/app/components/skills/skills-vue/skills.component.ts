@@ -1,3 +1,4 @@
+// skills.component.ts
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -59,6 +60,10 @@ export class SkillsComponent implements OnInit {
   // Added Debounce property
   private privateDebounce: ReturnType<typeof setTimeout> | null = null;
 
+  // Guards against starting the tour more than once (e.g. if loadSkills()
+  // is re-triggered by a filter/page change after the initial load).
+  private tourStarted = false;
+
   newSkillData = {
     name: '',
     sentenceEn: '',
@@ -85,9 +90,6 @@ export class SkillsComponent implements OnInit {
     private tourService: TourService,
     private router: Router
   ) {}
-  ngAfterViewInit(): void {
-    this.tourService.run(getSkillsSteps(this.tourService, this.router));
-  }
 
   ngOnInit(): void {
     this.loadCategories();
@@ -157,6 +159,8 @@ export class SkillsComponent implements OnInit {
           this.loading = false;
           this.isSearching = false;
           this.initialLoading = false;
+
+          this.maybeStartTour();
         },
         error: (err) => {
           this.errorMessage =
@@ -164,8 +168,26 @@ export class SkillsComponent implements OnInit {
           this.toastService.error(this.errorMessage), (this.loading = false);
           this.isSearching = false;
           this.initialLoading = false;
+          // Deliberately not starting the tour here — nothing rendered to highlight.
         },
       });
+  }
+
+  /**
+   * Starts the onboarding tour exactly once, and only after the first
+   * successful load has flipped initialLoading to false. The setTimeout(0)
+   * defers to the next macrotask so Angular's change-detection pass (which
+   * renders <app-category-list> and every #tour-* element inside it) has
+   * fully completed before Driver.js queries and highlights anything.
+   * A microtask (Promise.resolve().then) is NOT sufficient here — it can
+   * still run before the DOM update within the same zone flush.
+   */
+  private maybeStartTour(): void {
+    if (this.tourStarted) return;
+    this.tourStarted = true;
+    setTimeout(() => {
+      this.tourService.run(getSkillsSteps(this.tourService, this.router));
+    }, 0);
   }
 
   dismissError(): void {
