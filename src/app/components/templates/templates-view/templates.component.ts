@@ -19,6 +19,9 @@ import { ToastService } from '../../common/toast/toast.service';
 import { ToastContainerComponent } from '../../common/toast/toast-container.component';
 import { StatMetricDto } from 'src/app/models/statsmetric.model';
 import { AnalyticsService } from 'src/app/services/analytics.service';
+import { TourService } from 'src/app/services/tour.service';
+import { Router } from '@angular/router';
+import { getTemplatesSteps } from 'src/app/services/toursteps';
 
 export interface TemplateComponent extends TemplateDto {
   isExpanded?: boolean;
@@ -98,8 +101,13 @@ export class TemplatesComponent implements OnInit, OnDestroy {
   constructor(
     private templateService: TemplateService,
     private analyticsService: AnalyticsService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private tourService: TourService,
+    private router: Router
   ) {}
+  ngAfterViewInit(): void {
+    this.tourService.run(getTemplatesSteps(this.tourService, this.router));
+  }
 
   ngOnInit(): void {
     this.adjustFormVisibilityForViewport();

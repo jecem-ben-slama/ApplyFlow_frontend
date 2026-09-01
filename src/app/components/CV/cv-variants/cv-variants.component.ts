@@ -6,13 +6,19 @@ import { CvPopupComponent } from '../cv-popup/cv-popup.component';
 import { DeletePopupComponent } from '../../common/delete-popup/delete-popup.component';
 import { PaginationComponent } from '../../common/pagination/pagination.component';
 import { CvFiltersBarComponent } from '../cv-filters-bar/cv-filters-bar.component';
-import { CvTableComponent, CvSortableColumn } from '../cv-table/cv-table.component';
+import {
+  CvTableComponent,
+  CvSortableColumn,
+} from '../cv-table/cv-table.component';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 import { ToastService } from '../../common/toast/toast.service';
 import { ToastContainerComponent } from '../../common/toast/toast-container.component';
-import { MatIconModule } from "@angular/material/icon";
+import { MatIconModule } from '@angular/material/icon';
+import { Router } from '@angular/router';
+import { TourService } from 'src/app/services/tour.service';
+import { getCvVariantsSteps } from 'src/app/services/toursteps';
 
 @Component({
   selector: 'app-cv-variants',
@@ -71,8 +77,13 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
 
   constructor(
     private cvService: CvVariantsService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private tourService: TourService,
+    private router: Router
   ) {}
+  ngAfterViewInit(): void {
+    this.tourService.run(getCvVariantsSteps(this.tourService, this.router));
+  }
 
   ngOnInit(): void {
     this.searchSubject

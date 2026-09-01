@@ -1,6 +1,6 @@
 <div
     class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-3xl shadow-sm overflow-hidden">
-    <div (click)="toggle.emit()" (keydown.enter)="toggle.emit()"
+    <div id="tour-template-toggle" (click)="toggle.emit()" (keydown.enter)="toggle.emit()"
         (keydown.space)="$event.preventDefault(); toggle.emit()" role="button" tabindex="0"
         [attr.aria-expanded]="isFormVisible"
         class="flex items-center justify-between p-5 md:px-6 border-b border-slate-200 dark:border-surface-muted cursor-pointer select-none hover:bg-background-light/60 dark:hover:bg-surface-muted/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-inset">
@@ -80,7 +80,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="space-y-1.5 md:col-span-2">
+                <div id="tour-template-name-field" class="space-y-1.5 md:col-span-2">
                     <label for="templateName"
                         class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                         Template Name <span class="text-rose-500">*</span>
@@ -104,7 +104,7 @@
                     </div>
                 </div>
 
-                <div class="space-y-1.5">
+                <div id="tour-template-language-field" class="space-y-1.5">
                     <label for="templateLanguage"
                         class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                         Template Language <span class="text-rose-500">*</span>
@@ -126,7 +126,7 @@
             </div>
 
             <!-- Subject -->
-            <div class="space-y-1.5">
+            <div id="tour-template-subject-field" class="space-y-1.5">
                 <div class="flex items-center justify-between flex-wrap gap-2">
                     <label for="templateSubject"
                         class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
@@ -173,7 +173,7 @@
             </div>
 
             <!-- Body -->
-            <div class="space-y-1.5">
+            <div id="tour-template-body-field" class="space-y-1.5">
                 <div class="flex items-center justify-between flex-wrap gap-2">
                     <label for="templateBody"
                         class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
@@ -233,8 +233,8 @@
                     class="border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-background hover:bg-slate-100 dark:hover:bg-surface-muted text-slate-700 dark:text-slate-200 text-xs font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
                     Cancel
                 </button>
-                <button type="submit" [disabled]="loading || (templateForm.submitted && templateForm.invalid)"
-                    [attr.aria-busy]="loading"
+                <button id="tour-template-save-btn" type="submit"
+                    [disabled]="loading || (templateForm.submitted && templateForm.invalid)" [attr.aria-busy]="loading"
                     class="bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition-all w-full sm:w-auto shadow-md shadow-primary/25 inline-flex items-center justify-center gap-2 min-w-[140px]">
                     <svg *ngIf="loading" class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24">

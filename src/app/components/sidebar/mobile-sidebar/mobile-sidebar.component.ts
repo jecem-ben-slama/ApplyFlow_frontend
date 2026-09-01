@@ -9,11 +9,12 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { SidebarNavComponent } from '../sidebar-nav/sidebar-nav.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { LogoComponent } from '../../logo/logo.component';
+import { TourService } from 'src/app/services/tour.service';
 
 @Component({
   selector: 'app-mobile-sidebar',
@@ -29,6 +30,11 @@ import { LogoComponent } from '../../logo/logo.component';
   templateUrl: './mobile-sidebar.component.html',
 })
 export class MobileSidebarComponent implements OnDestroy {
+  constructor(private tourService: TourService, private router: Router) {}
+  onTakeTourClick(): void {
+    this.tourService.start();
+    this.router.navigateByUrl('/applications');
+  }
   @Input() userName = 'New User';
   @Input() userEmail = '';
   @Input() userProfilePic?: string;

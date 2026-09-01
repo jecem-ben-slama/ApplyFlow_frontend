@@ -1,0 +1,172 @@
+/* ---------------------------------------------------------------------
+ * Driver.js theme override — matches ApplyFlow's rounded, slate/primary,
+ * dark-mode-aware visual language instead of the library's default
+ * white-box-with-blue-buttons look.
+ *
+ * Colors below are pulled directly from tailwind.config.js:
+ *   primary        -> #0d9488 (teal-600) / hover #0f766e (teal-700)
+ *   surface.light  -> #ffffff        surface.dark  -> #1e293b (slate-800)
+ *   surface.muted  -> #334155 (slate-700, dark-mode borders)
+ *   slate-200      -> #e2e8f0 (light-mode borders)
+ *   slate-900/500  -> #0f172a / #64748b (light-mode text / muted text)
+ *   slate-100/400  -> #f1f5f9 / #94a3b8 (dark-mode text / muted text)
+ *
+ * Load AFTER driver.js/dist/driver.css in angular.json's "styles" array
+ * (or @import it after driver.css in styles.scss) so these rules win.
+ * --------------------------------------------------------------------- */
+
+:root
+{
+    --tour-primary: #0d9488;
+    --tour-primary-hover: #0f766e;
+    --tour-surface: #ffffff;
+    --tour-border: #e2e8f0;
+    --tour-text: #0f172a;
+    --tour-text-muted: #64748b;
+    --tour-radius: 1.25rem;
+}
+
+.dark
+{
+    --tour-surface: #1e293b;
+    --tour-border: #334155;
+    --tour-text: #f1f5f9;
+    --tour-text-muted: #94a3b8;
+}
+
+/* Explicit z-index layering (don't rely on the library defaults):
+ *   page content        -> auto
+ *   driver overlay       -> 9999   (darkens the page)
+ *   app modals*          -> 10000  (cv-popup / category-popup — see their .html)
+ *   driver popover        -> 10010  (always floats above app modals to point at fields inside them)
+ * *Any modal a tour step targets fields inside of must use z-[10000] on its
+ *  fixed backdrop, or it'll render hidden behind the driver overlay. */
+.driver-overlay
+{
+    z-index: 9999 !important;
+}
+
+.driver-popover
+{
+    z-index: 10010 !important;
+}
+
+/* Overlay: light dim, not a near-black blackout — page should stay
+ * readable/recognizable behind the tour, not disappear. */
+.driver-overlay
+{
+    background: rgba(15, 23, 42, 0.35) !important;
+}
+
+/* Highlighted element: soft primary ring instead of the default hard outline */
+.driver-active-element
+{
+    border-radius: 0.75rem !important;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--tour-primary) 30%, transparent) !important;
+}
+
+/* Popover card */
+.driver-popover
+{
+    background: var(--tour-surface) !important;
+    color: var(--tour-text) !important;
+    border: 1px solid var(--tour-border) !important;
+    border-radius: var(--tour-radius) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;
+    padding: 1.25rem !important;
+    font-family: inherit !important;
+    max-width: 340px !important;
+}
+
+.driver-popover-arrow
+{
+    display: none !important;
+    /* cleaner without the little triangle, matches your popup/modal style */
+}
+
+.driver-popover-title
+{
+    color: var(--tour-text) !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em !important;
+    margin-bottom: 0.375rem !important;
+}
+
+.driver-popover-description
+{
+    color: var(--tour-text-muted) !important;
+    font-size: 0.75rem !important;
+    line-height: 1.5 !important;
+}
+
+.driver-popover-close-btn
+{
+    color: var(--tour-text-muted) !important;
+    font-size: 0 !important;
+    /* hide default 'x' glyph text, use a clean icon instead */
+}
+
+.driver-popover-close-btn::before
+{
+    content: '✕';
+    font-size: 0.8rem;
+}
+
+.driver-popover-close-btn:hover
+{
+    color: var(--tour-text) !important;
+    background: transparent !important;
+}
+
+.driver-popover-footer
+{
+    margin-top: 1rem !important;
+}
+
+.driver-popover-progress-text
+{
+    color: var(--tour-text-muted) !important;
+    font-size: 0.65rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.12em !important;
+}
+
+.driver-popover-footer button
+{
+    background: transparent !important;
+    text-shadow: none !important;
+    border: 1px solid var(--tour-border) !important;
+    color: var(--tour-text) !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.75rem !important;
+    transition: all 0.15s ease !important;
+}
+
+.driver-popover-footer button:hover
+{
+    background: color-mix(in srgb, var(--tour-text) 6%, transparent) !important;
+}
+
+.driver-popover-next-btn,
+.driver-popover-close-btn.driver-popover-done-btn
+{
+    background: var(--tour-primary) !important;
+    border: 1px solid var(--tour-primary) !important;
+    color: #ffffff !important;
+}
+
+.driver-popover-next-btn:hover,
+.driver-popover-close-btn.driver-popover-done-btn:hover
+{
+    background: var(--tour-primary-hover) !important;
+    border-color: var(--tour-primary-hover) !important;
+}
+
+.driver-popover-prev-btn:disabled
+{
+    opacity: 0.4 !important;
+}

@@ -1,5 +1,5 @@
 <div *ngIf="isModalOpen" (click)="onBackdropClick($event)"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md transition-all duration-300">
+    class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md transition-all duration-300">
     <div
         class="w-full max-w-2xl rounded-[2.5rem] border border-slate-200/60 dark:border-surface-muted bg-surface-light dark:bg-surface p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.3)] dark:shadow-slate-950/50 relative overflow-hidden">
 
@@ -25,7 +25,7 @@
             <div class="space-y-4">
 
                 <!-- Name -->
-                <div class="group">
+                <div id="tour-cv-name-field" class="group">
                     <div class="flex items-center gap-2 mb-2.5 ml-1">
                         <label
                             class="text-[10px] font-extrabold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
@@ -52,7 +52,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
+                    <div id="tour-cv-language-field">
                         <label
                             class="block text-[10px] font-extrabold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 mb-2.5 ml-1">
                             Language
@@ -75,7 +75,7 @@
                         </div>
                     </div>
 
-                    <div>
+                    <div id="tour-cv-url-field">
                         <div class="flex items-center gap-1.5 mb-2.5 ml-1 relative">
                             <label
                                 class="text-[10px] font-extrabold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
@@ -157,7 +157,7 @@
                     Cancel
                 </button>
 
-                <button type="submit" [disabled]="isLoading"
+                <button id="tour-cv-save-btn" type="submit" [disabled]="isLoading"
                     class="w-full sm:w-auto rounded-2xl bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 text-sm font-semibold text-white transition-all shadow-lg shadow-primary/10 active:scale-[0.98]">
                     <span *ngIf="isLoading" class="flex items-center justify-center gap-2">
                         <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">

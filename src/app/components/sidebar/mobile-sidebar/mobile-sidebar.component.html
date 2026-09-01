@@ -42,6 +42,13 @@
 
             <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
 
+            <button id="tour-start-btn-mobile" type="button" (click)="onTakeTourClick()"
+                class="w-full flex items-center gap-3 px-3.5 py-3 text-xs font-medium text-slate-700 dark:text-slate-200 bg-background-light dark:bg-surface-muted/30 hover:bg-slate-100 dark:hover:bg-surface-muted/60 rounded-xl transition-all text-left">
+                <mat-icon class="scale-95 text-slate-400">explore</mat-icon>
+                <span class="flex-1">Take a tour</span>
+                <mat-icon class="scale-75 text-slate-300 dark:text-slate-600">chevron_right</mat-icon>
+            </button>
+
             <a *ngIf="!isGuest" [routerLink]="['/profile']" (click)="close()"
                 class="flex items-center gap-3 px-3.5 py-3 text-xs font-medium text-slate-700 dark:text-slate-200 bg-background-light dark:bg-surface-muted/30 hover:bg-slate-100 dark:hover:bg-surface-muted/60 rounded-xl transition-all no-underline">
                 <mat-icon class="scale-95 text-slate-400">person</mat-icon>

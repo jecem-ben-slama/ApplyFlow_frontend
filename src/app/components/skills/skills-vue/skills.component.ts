@@ -13,6 +13,9 @@ import { SkillFormComponent } from '../skills-form/skill-form.component';
 import { SkeletonComponent } from '../../common/skeleton/skeleton.components';
 import { ToastContainerComponent } from '../../common/toast/toast-container.component';
 import { ToastService } from '../../common/toast/toast.service';
+import { Router } from '@angular/router';
+import { TourService } from 'src/app/services/tour.service';
+import { getSkillsSteps } from 'src/app/services/toursteps';
 
 @Component({
   selector: 'app-skills',
@@ -78,8 +81,13 @@ export class SkillsComponent implements OnInit {
   constructor(
     private skillsService: SkillsService,
     private categoryService: CategoryService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private tourService: TourService,
+    private router: Router
   ) {}
+  ngAfterViewInit(): void {
+    this.tourService.run(getSkillsSteps(this.tourService, this.router));
+  }
 
   ngOnInit(): void {
     this.loadCategories();

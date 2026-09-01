@@ -104,7 +104,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       next: (success) => {
         this.isGuestLoading = false;
         if (success) {
-          this.router.navigate(['/dashboard']); // adjust to your authed landing route
+          this.router.navigate(['/applications']); // adjust to your authed landing route
         } else {
           this.guestError =
             'Could not start a guest session. Please try again.';

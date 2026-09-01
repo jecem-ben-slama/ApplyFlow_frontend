@@ -20,7 +20,7 @@
             </button>
         </div>
 
-        <button (click)="addClick.emit()"
+        <button id="tour-cv-add-btn" (click)="addClick.emit()"
             class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary hover:opacity-90 text-white text-sm  px-5 py-2.5 transition-all shadow-sm shadow-primary/10 whitespace-nowrap">
             <span class="text-base leading-none">+</span>
             Add Attachment
@@ -38,11 +38,11 @@
             <mat-icon class="text-base">close</mat-icon>
         </button>
     </div>
-<div *ngIf="resultsLabel || hasActiveFilters || loading" class="flex items-center justify-between gap-3 text-xs">
-    <span class="text-slate-500 dark:text-slate-400 font-medium">
-        {{ loading ? 'Loading…' : resultsLabel }}
-    </span>
-</div>
+    <div *ngIf="resultsLabel || hasActiveFilters || loading" class="flex items-center justify-between gap-3 text-xs">
+        <span class="text-slate-500 dark:text-slate-400 font-medium">
+            {{ loading ? 'Loading…' : resultsLabel }}
+        </span>
+    </div>
 
 
 </div>

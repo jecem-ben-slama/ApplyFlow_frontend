@@ -18,10 +18,10 @@
     <div class="grid grid-cols-1 gap-6 min-w-0">
 
         <!-- Template Form -->
-        <app-template-form [isFormVisible]="isFormVisible" [isEditing]="editingTemplateId !== null" [loading]="loading"
-            [errorMessage]="errorMessage" [templateData]="newTemplate" [subjectPlaceholder]="subjectPlaceholder"
-            (toggle)="onToggleForm()" (formSubmit)="onSubmitTemplate($event)" (cancel)="onCancelEdit()"
-            >
+        <app-template-form id="tour-template-form-section" [isFormVisible]="isFormVisible"
+            [isEditing]="editingTemplateId !== null" [loading]="loading" [errorMessage]="errorMessage"
+            [templateData]="newTemplate" [subjectPlaceholder]="subjectPlaceholder" (toggle)="onToggleForm()"
+            (formSubmit)="onSubmitTemplate($event)" (cancel)="onCancelEdit()">
         </app-template-form>
 
         <!-- Template List: always mounted — it now owns its own skeleton
@@ -32,10 +32,8 @@
             [searchTerm]="searchTerm" [editingId]="editingTemplateId" [templateStats]="templateStats"
             (filterChange)="onLanguageFilterChange($event)" (searchChange)="updateSearchTerm($event)"
             (pageChange)="onPageChange($event)" (edit)="onEditClick($event)" (delete)="onDeleteTemplate($event)"
-            (clearFilters)="onClearFilters()" (createFirst)="scrollToForm()"
-             [sortBy]="sortBy"
-  [direction]="direction"
-  (sortChange)="onSortChange($event)">
+            (clearFilters)="onClearFilters()" (createFirst)="scrollToForm()" [sortBy]="sortBy" [direction]="direction"
+            (sortChange)="onSortChange($event)">
         </app-template-list>
 
         <!-- Delete Modal -->

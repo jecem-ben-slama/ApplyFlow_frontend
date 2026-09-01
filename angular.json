@@ -25,7 +25,12 @@
               "src/icon-512x512.png",
               "src/assets"
             ],
-            "styles": ["src/custom-theme.scss", "src/styles.css"],
+            "styles": [
+              "src/custom-theme.scss",
+              "src/styles.css",
+              "node_modules/driver.js/dist/driver.css",
+              "src/app/core/tour/driver-theme.css"
+            ],
             "scripts": []
           },
           "configurations": {
@@ -91,7 +96,10 @@
               "src/icon-512x512.png",
               "src/assets"
             ],
-            "styles": ["src/styles.css"],
+            "styles": [
+              "src/styles.css",
+              "node_modules/driver.js/dist/driver.css"
+            ],
             "scripts": []
           }
         }

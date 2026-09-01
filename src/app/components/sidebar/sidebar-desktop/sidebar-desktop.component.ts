@@ -6,11 +6,12 @@ import {
   Output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { SidebarNavComponent } from '../sidebar-nav/sidebar-nav.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { LogoComponent } from '../../logo/logo.component';
+import { TourService } from 'src/app/services/tour.service';
 
 @Component({
   selector: 'app-sidebar-desktop',
@@ -26,6 +27,11 @@ import { LogoComponent } from '../../logo/logo.component';
   templateUrl: './sidebar-desktop.component.html',
 })
 export class SidebarDesktopComponent {
+  constructor(private tourService: TourService, private router: Router) {}
+  onTakeTourClick(): void {
+    this.tourService.start();
+    this.router.navigateByUrl('/applications');
+  }
   @Input() collapsed = false;
   @Input() userName = 'New User';
   @Input() userProfilePic?: string;

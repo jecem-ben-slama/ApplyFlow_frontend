@@ -34,6 +34,9 @@ import { ToastContainerComponent } from '../../common/toast/toast-container.comp
 import { ToastService } from '../../common/toast/toast.service';
 import { ApplicationPresetDto } from 'src/app/models/application_preset.model';
 import { PresetListComponent } from '../../Presets/preset-list/preset-list.component';
+import { Router } from '@angular/router';
+import { TourService } from 'src/app/services/tour.service';
+import { getApplicationsSteps } from 'src/app/services/toursteps';
 
 type SortableColumn = 'companyName' | 'jobTitle' | 'dateApplied' | 'status';
 interface LanguageOption {
@@ -154,10 +157,20 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     private categoriesService: CategoryService,
     private cvService: CvVariantsService,
     private templateService: TemplateService,
-    private emailService: EmailService,
     private actionService: ApplicationActionService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private tourService: TourService,
+    private router: Router
   ) {}
+  ngAfterViewInit(): void {
+    if (
+      !localStorage.getItem('applyflow_tour_completed') &&
+      !this.tourService.isActive
+    ) {
+      this.tourService.start();
+    }
+    this.tourService.run(getApplicationsSteps(this.tourService, this.router));
+  }
 
   ngOnInit(): void {
     this.loadInitialWorkspaceData();
