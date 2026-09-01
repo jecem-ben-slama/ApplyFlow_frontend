@@ -5,6 +5,12 @@ import { trigger, style, transition, animate } from '@angular/animations';
 import { Observable } from 'rxjs';
 import { Toast, ToastService } from './toast.service';
 
+interface SwipedToastState {
+  startX: number;
+  currentX: number;
+  isDragging: boolean;
+}
+
 @Component({
   selector: 'app-toast-container',
   standalone: true,
@@ -33,6 +39,8 @@ export class ToastContainerComponent implements OnInit, OnDestroy {
 
   private tickTimer?: ReturnType<typeof setInterval>;
 
+  swipeStates = new Map<number, SwipedToastState>();
+
   constructor(private toastService: ToastService) {}
 
   ngOnInit(): void {
@@ -43,10 +51,6 @@ export class ToastContainerComponent implements OnInit, OnDestroy {
     if (this.tickTimer) clearInterval(this.tickTimer);
   }
 
-  /**
-   * Fires when pressing X: If an explicit onDismiss exists (e.g. immediate execution),
-   * trigger it. Otherwise, simply dismiss the toast.
-   */
   dismiss(toast: Toast): void {
     if (toast.action?.onDismiss) {
       toast.action.onDismiss();
@@ -54,9 +58,6 @@ export class ToastContainerComponent implements OnInit, OnDestroy {
     this.toastService.dismiss(toast.id);
   }
 
-  /**
-   * Fires when pressing "Undo": Triggers onClick() (cancelling the request).
-   */
   onAction(toast: Toast): void {
     if (toast.action?.onClick) {
       toast.action.onClick();
@@ -83,5 +84,52 @@ export class ToastContainerComponent implements OnInit, OnDestroy {
       default:
         return 'info_outline';
     }
+  }
+
+  onPointerDown(event: PointerEvent, toast: Toast): void {
+    const target = event.currentTarget as HTMLElement;
+    target.setPointerCapture(event.pointerId);
+
+    this.swipeStates.set(toast.id, {
+      startX: event.clientX,
+      currentX: 0,
+      isDragging: true,
+    });
+  }
+
+  onPointerMove(event: PointerEvent, toast: Toast): void {
+    const state = this.swipeStates.get(toast.id);
+    if (!state || !state.isDragging) return;
+
+    state.currentX = event.clientX - state.startX;
+  }
+
+  onPointerUp(event: PointerEvent, toast: Toast): void {
+    const state = this.swipeStates.get(toast.id);
+    if (!state || !state.isDragging) return;
+
+    state.isDragging = false;
+    const threshold = 100;
+
+    if (Math.abs(state.currentX) > threshold) {
+      this.dismiss(toast);
+    } else {
+      state.currentX = 0;
+    }
+
+    this.swipeStates.set(toast.id, { ...state });
+  }
+
+  getTransform(toastId: number): string {
+    const state = this.swipeStates.get(toastId);
+    if (!state) return 'translateX(0px)';
+    return `translateX(${state.currentX}px)`;
+  }
+
+  getOpacity(toastId: number): number {
+    const state = this.swipeStates.get(toastId);
+    if (!state) return 1;
+    const distance = Math.abs(state.currentX);
+    return Math.max(0.3, 1 - distance / 250);
   }
 }

@@ -46,7 +46,7 @@
             </div>
 
             <!-- Error message -->
-            <div *ngIf="internalError"
+            <div id="tour-category-error" *ngIf="internalError"
                 class="rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-danger-bgLight dark:bg-danger-bgDark text-danger-textLight dark:text-danger-textDark px-4 py-3 text-sm flex items-start gap-2.5 shadow-sm">
                 <mat-icon class="text-base flex-shrink-0 mt-0.5">error_outline</mat-icon>
                 <span>{{ internalError }}</span>

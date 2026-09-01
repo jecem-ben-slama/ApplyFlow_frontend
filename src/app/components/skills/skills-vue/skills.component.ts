@@ -45,6 +45,20 @@ export class SkillsComponent implements OnInit {
   initialLoading = true; // true only until the first fetch completes; controls the data/table skeleton
   errorMessage = '';
 
+  // NEW: server-side error scoped to the skill-form specifically, distinct
+  // from the page-level `errorMessage` above (which also covers category
+  // load/delete failures unrelated to the form). Bind this to
+  // <app-skill-form [errorMessage]="skillFormError" ...> in skills.component.html,
+  // and add a matching `@Input() errorMessage = '';` to SkillFormComponent
+  // that ORs into its existing internal `errorMessage` display (client-side
+  // validation errors should still show even when this is empty). Without
+  // this, a rejected save from the API never reaches the form's own error
+  // banner — it only ever showed up as a toast, which means
+  // `#tour-skill-error` (the tour's failure selector) would never fire for
+  // a genuine server-side rejection, only for a client-validation failure
+  // that gateNextOnValid should already be blocking upstream.
+  skillFormError = '';
+
   editingSkillId: number | null = null;
   isFormExpanded = false; // Tracks whether edit action forces form expansion
   currentPage = 0;
@@ -198,6 +212,7 @@ export class SkillsComponent implements OnInit {
   onSaveSkill(formData: any): void {
     this.loading = true;
     this.errorMessage = '';
+    this.skillFormError = ''; // clear any stale error from a previous failed attempt
     if (this.editingSkillId !== null) {
       this.skillsService.updateSkill(this.editingSkillId, formData).subscribe({
         next: () => {
@@ -207,10 +222,15 @@ export class SkillsComponent implements OnInit {
           this.toastService.success('Skill updated successfully');
         },
         error: (err) => {
-          this.errorMessage =
+          const message =
             err.error?.message || 'Failed to update skill. Please try again.';
+          this.errorMessage = message;
+          this.skillFormError = message; // NEW: surface it in the form's own banner too
           this.toastService.error(this.errorMessage);
           this.loading = false;
+          // isFormExpanded is deliberately left untouched here — the form
+          // must stay open on failure so the tour (and the user) can see
+          // the error and retry.
         },
       });
     } else {
@@ -234,8 +254,10 @@ export class SkillsComponent implements OnInit {
             });
         },
         error: (err) => {
-          this.errorMessage =
+          const message =
             err.error?.message || 'Failed to create skill. Please try again.';
+          this.errorMessage = message;
+          this.skillFormError = message; // NEW
           this.loading = false;
           this.toastService.error(this.errorMessage);
         },
@@ -246,6 +268,7 @@ export class SkillsComponent implements OnInit {
   onEditSkillClicked(skill: Skill): void {
     this.editingSkillId = skill.id;
     this.isFormExpanded = true;
+    this.skillFormError = ''; // clear any leftover error from a previous attempt
     this.newSkillData = {
       name: skill.name || '',
       sentenceEn: skill.sentenceEn || '',
@@ -261,6 +284,7 @@ export class SkillsComponent implements OnInit {
 
   resetForm(): void {
     this.editingSkillId = null;
+    this.skillFormError = '';
 
     this.newSkillData = {
       name: '',

@@ -185,7 +185,7 @@ export class TemplateFormComponent implements OnInit, OnDestroy, OnChanges {
     if (form.invalid || this.loading) {
       return;
     }
-    this.isFormVisible = false;
+
 
     // Only clear the draft when this was actually a *new* template — saving
     // an edit to an existing template has no relationship to the pending

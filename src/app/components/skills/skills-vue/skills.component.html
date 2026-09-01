@@ -98,11 +98,10 @@
             </app-category-list>
             <!-- space between cards -->
             <div class="h-1"></div>
-            <app-skill-form #skillForm [categories]="categories" [editingSkillId]="editingSkillId"
-                [isFormExpanded]="isFormExpanded" [initialData]="newSkillData" [loading]="loading"
-                (save)="onSaveSkill($event)" (cancel)="resetForm()">
+            <app-skill-form #skillForm [categories]="categories" [editingSkillId]="editingSkillId" [isFormExpanded]="isFormExpanded"
+                [initialData]="newSkillData" [loading]="loading" [serverErrorMessage]="skillFormError" (save)="onSaveSkill($event)"
+                (cancel)="resetForm()">
             </app-skill-form>
-
             <!-- Results region: dims briefly while a filter/search/page change is in flight, but never unmounts -->
             <div [class.opacity-50]="loading" [class.pointer-events-none]="loading"
                 class="transition-opacity duration-150">

@@ -1,6 +1,6 @@
+
 import { Injectable } from '@angular/core';
 import { driver, Driver, DriveStep } from 'driver.js';
-
 
 /**
  * Multi-page onboarding tour built on Driver.js.
@@ -9,62 +9,148 @@ import { driver, Driver, DriveStep } from 'driver.js';
  * Angular destroys the previous component (and its Driver.js instance).
  * To carry a tour across /applications -> /templates -> /cv-variants ->
  * /skills, we:
+ *
  *   1. Persist a single "tour is active" flag in sessionStorage so it
  *      survives navigation (cleared automatically when the tab closes).
+ *
  *   2. Let each page run its OWN short Driver.js instance for the
  *      elements that live on that page.
- *   3. On that page's final step, override `onNextClick` to navigate to
- *      the next route instead of advancing (there's nothing left to
- *      highlight on this page).
+ *
+ *   3. On that page's final step, override `onNextClick` to navigate
+ *      to the next route instead of advancing.
+ *
+ * Closing behavior:
+ *
+ *   X button       -> closes the tour
+ *   Escape         -> ignored
+ *   Backdrop click -> ignored
  */
 @Injectable({ providedIn: 'root' })
 export class TourService {
-  private static readonly ACTIVE_KEY = 'applyflow_tour_active';
+  private static readonly ACTIVE_KEY =
+    'applyflow_tour_active';
 
   private driverObj: Driver | null = null;
 
-  /** Whether an onboarding tour is currently in progress (persists across routes). */
+  /**
+   * Whether an onboarding tour is currently in progress.
+   */
   get isActive(): boolean {
-    return sessionStorage.getItem(TourService.ACTIVE_KEY) === '1';
+    return (
+      sessionStorage.getItem(
+        TourService.ACTIVE_KEY
+      ) === '1'
+    );
   }
 
-  /** Call this once, from wherever the tour is triggered (e.g. a "Take a tour" button, or first login). */
+  /**
+   * Starts the onboarding tour.
+   */
   start(): void {
-    sessionStorage.setItem(TourService.ACTIVE_KEY, '1');
+    sessionStorage.setItem(
+      TourService.ACTIVE_KEY,
+      '1'
+    );
   }
 
-  /** Ends the tour everywhere — call this from the last step's onNextClick, or if the user skips/closes it. */
+  /**
+   * Completely ends the tour.
+   *
+   * Called when the user clicks the X button
+   * or when the tour is successfully completed.
+   */
   stop(): void {
-    sessionStorage.removeItem(TourService.ACTIVE_KEY);
-    localStorage.setItem('applyflow_tour_completed', '1');
+    sessionStorage.removeItem(
+      TourService.ACTIVE_KEY
+    );
+
+    localStorage.setItem(
+      'applyflow_tour_completed',
+      '1'
+    );
+
     this.driverObj?.destroy();
     this.driverObj = null;
   }
 
   /**
-   * Runs a page-local set of steps. No-ops if the tour isn't active, so it's
-   * safe to call unconditionally from every page's ngAfterViewInit.
+   * Runs a page-local set of steps.
+   *
+   * Closing behavior:
+   *
+   *   X button       -> closes
+   *   Escape         -> ignored
+   *   Backdrop click -> ignored
    */
   run(steps: DriveStep[]): void {
-    if (!this.isActive || steps.length === 0) {
+    if (
+      !this.isActive ||
+      steps.length === 0
+    ) {
       return;
     }
 
+    /*
+     * Destroy any previous page-local
+     * Driver.js instance.
+     */
+    this.driverObj?.destroy();
+    this.driverObj = null;
+
     this.driverObj = driver({
       showProgress: true,
+
+      /*
+       * Keep this TRUE so the X close button
+       * remains available.
+       */
       allowClose: true,
+
+      /*
+       * Disable keyboard control.
+       *
+       * This prevents Escape from closing
+       * or otherwise controlling the tour.
+       */
+      allowKeyboardControl: false,
+
+      /*
+       * Override the default backdrop behavior.
+       *
+       * Driver.js normally closes the tour when
+       * the overlay is clicked.
+       *
+       * An empty callback means:
+       * "Do nothing when the backdrop is clicked."
+       */
+      overlayClickBehavior: () => {},
+
       steps,
-      // Fires on Escape / clicking the backdrop / clicking the "x" — treat
-      // a manual close as "user opted out of the rest of the tour".
-      onCloseClick: () => this.stop(),
+
+      /*
+       * This callback belongs specifically to
+       * the X close button.
+       *
+       * Because we have not disabled allowClose,
+       * the close button remains functional.
+       */
+      onCloseClick: () => {
+        this.stop();
+      },
     });
 
     this.driverObj.drive();
   }
 
-  /** Destroys the current page's Driver.js instance without clearing the "active" flag (used before navigating on). */
+  /**
+   * Destroys the current page's Driver.js instance
+   * without clearing the active tour flag.
+   *
+   * Used before navigating to another route.
+   */
   destroyCurrent(): void {
     this.driverObj?.destroy();
     this.driverObj = null;
   }
 }
+

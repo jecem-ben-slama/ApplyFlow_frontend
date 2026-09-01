@@ -67,12 +67,23 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
   };
   @Input() loading = false;
 
+  /**
+   * NEW: server-side error passed down from SkillsComponent (set inside
+   * onSaveSkill()'s error branch, cleared on a fresh attempt/edit-open).
+   * Kept as a separate field from the internal `errorMessage` below
+   * (client-side validation banner) rather than reusing that name — an
+   * @Input() can't cleanly share an identifier with a plain instance
+   * property that's also reassigned internally. The template combines
+   * both via `displayedErrorMessage`.
+   */
+  @Input() serverErrorMessage = '';
+
   @Output() save = new EventEmitter<SkillFormData>();
   @Output() cancel = new EventEmitter<void>();
 
   isFormVisible = false;
 
-  /** General banner shown above the form (e.g. server-side failure) */
+  /** Client-side validation banner (e.g. "please fix the highlighted fields"). */
   errorMessage = '';
 
   /** Per-field validation errors */
@@ -94,31 +105,27 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
 
   // ─── Draft persistence (localStorage) ──────────────────────────────────────
 
-  /** localStorage key used to persist an unsaved draft across reloads/tab switches. */
   private readonly draftStorageKey = 'skillForm.draft';
-  /** Drafts older than this are treated as stale and discarded rather than restored. */
   private readonly draftMaxAgeMs = 24 * 60 * 60 * 1000; // 24h
 
-  /** Last-seen JSON snapshot of formData, used by ngDoCheck to detect edits cheaply. */
   private lastFormSnapshot = '';
   private persistDebounceHandle: ReturnType<typeof setTimeout> | null = null;
 
-  /** Set when a draft was silently restored into formData — the toast fires the next time the form is actually opened, not immediately on load. */
   private draftPendingToast = false;
 
+  /**
+   * What the template actually renders in the error banner: the
+   * client-validation message takes priority if both happen to be set
+   * (it means the user re-triggered a client failure after a prior
+   * server failure), otherwise falls back to the server error.
+   */
+  get displayedErrorMessage(): string {
+    return this.errorMessage || this.serverErrorMessage;
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
-    // Entering edit mode invalidates any draft-save that's still pending from
-    // typing into a *new* skill — without this, the debounce timer would fire
-    // after formData has already been overwritten with the edited skill's
-    // data, and silently persist that as if it were the new-skill draft.
     if (changes['editingSkillId'] && this.editingSkillId !== null) {
       this.cancelPendingDraftPersist();
-
-      // Opening the form for editing must always show it, even if it was
-      // previously closed via Cancel. Relying solely on isFormExpanded
-      // transitioning false->true breaks the second time you click Edit,
-      // since isFormExpanded may stay bound to true across both clicks and
-      // Angular won't re-fire ngOnChanges for a value that didn't change.
       this.isFormVisible = true;
     }
 
@@ -126,8 +133,6 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
       this.formData = { ...this.initialData };
       this.resetValidationState();
 
-      // Only new-skill entries get a draft — editing an existing skill
-      // should always reflect that skill's real saved data.
       if (this.editingSkillId === null) {
         this.restoreDraft();
       }
@@ -144,10 +149,25 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
         this.notifyDraftRestoredIfPending();
       }
     }
+
+    // NEW: SkillsComponent only flips isFormExpanded back to false inside
+    // onSaveSkill()'s SUCCESS branches — never on error. So mirroring that
+    // transition here is what actually closes the form on a confirmed
+    // save, now that onSave() below no longer closes it optimistically
+    // itself. Without this branch, nothing would ever close the form on
+    // success (onCancel() is the only other path that sets
+    // isFormVisible = false, and that's user-initiated).
+    if (
+      changes['isFormExpanded'] &&
+      !this.isFormExpanded &&
+      this.isFormVisible
+    ) {
+      this.isFormVisible = false;
+    }
   }
 
   ngDoCheck(): void {
-    if (this.editingSkillId !== null) return; // don't persist drafts while editing an existing skill
+    if (this.editingSkillId !== null) return;
 
     const snapshot = JSON.stringify(this.formData);
     if (snapshot !== this.lastFormSnapshot) {
@@ -167,18 +187,10 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
     }
   }
 
-  /**
-   * Schedules a persist of the given snapshot (captured at call time, not
-   * re-read from `this.formData` when the timer fires). This is what avoids
-   * the edit-mode race: even if `formData` has since been overwritten by a
-   * switch into editing, we still only ever write the snapshot that was
-   * valid when the user was actually typing it.
-   */
   private scheduleDraftPersist(snapshot: string): void {
     this.cancelPendingDraftPersist();
     this.persistDebounceHandle = setTimeout(() => {
       this.persistDebounceHandle = null;
-      // Extra safety net: if edit mode was entered in between, don't persist.
       if (this.editingSkillId !== null) return;
       this.persistDraftSnapshot(snapshot);
     }, 600);
@@ -189,7 +201,7 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
       const payload = { data: JSON.parse(snapshot), savedAt: Date.now() };
       localStorage.setItem(this.draftStorageKey, JSON.stringify(payload));
     } catch {
-      // localStorage unavailable (private browsing, quota, etc.) — fail silently
+      // localStorage unavailable — fail silently
     }
   }
 
@@ -217,18 +229,15 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
         !this.formData.sentenceFr &&
         this.formData.categoryId === null;
 
-      // Only restore into an empty form so we never clobber data set another way
       if (formIsEmpty) {
         this.formData = { ...this.formData, ...data };
         this.draftPendingToast = true;
       }
     } catch {
-      // Corrupted draft — ignore and start fresh
       this.clearDraft();
     }
   }
 
-  /** Shows the "draft restored" toast, but only the first time the form is actually opened after a silent restore. */
   private notifyDraftRestoredIfPending(): void {
     if (this.draftPendingToast) {
       this.draftPendingToast = false;
@@ -254,7 +263,6 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
     }
   }
 
-  /** Call on (blur) to mark a field as touched and validate it live. */
   onFieldBlur(field: keyof SkillFormData): void {
     this.touched[field] = true;
     this.validateField(field);
@@ -263,7 +271,6 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
   onSave(): void {
     this.errorMessage = '';
 
-    // Mark everything as touched so all relevant errors surface at once.
     (Object.keys(this.touched) as Array<keyof SkillFormData>).forEach(
       (key) => (this.touched[key] = true)
     );
@@ -281,40 +288,36 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
       categoryId: this.formData.categoryId,
     };
 
-    // Only clear the draft when this was a *new* skill — editing an existing
-    // skill has no relationship to the pending new-skill draft, so saving an
-    // edit must never wipe it out.
     if (this.editingSkillId === null) {
       this.clearDraft();
     }
     this.save.emit(payload);
-    this.isFormVisible = false;
+    // isFormVisible is deliberately NOT touched here. Closing only
+    // happens once the parent confirms success by flipping
+    // isFormExpanded to false — see the ngOnChanges branch above. On a
+    // server rejection, isFormExpanded stays true, serverErrorMessage
+    // gets set, and the form correctly stays open with the error visible.
   }
 
   onCancel(): void {
     this.isFormVisible = false;
     this.resetValidationState();
-    // Same guard as onSave: only discard the draft if we were actually
-    // editing the new-skill form, not cancelling an edit of an existing one.
     if (this.editingSkillId === null) {
       this.clearDraft();
     }
     this.cancel.emit();
   }
 
-  /** Convenience getter for the template to know if a field should show as invalid. */
   hasError(field: keyof SkillFormData): boolean {
     return this.touched[field] && !!this.fieldErrors[field];
   }
 
-  /** Returns the border/focus-ring classes for a field, valid vs invalid state. */
   fieldClasses(field: keyof SkillFormData): string {
     return this.hasError(field)
       ? 'border-rose-400 dark:border-rose-500/50 focus:ring-rose-500/20 focus:border-rose-500'
       : 'border-slate-200 dark:border-slate-800 focus:ring-indigo-500/20 focus:border-indigo-500';
   }
 
-  /** Color-codes a character counter as it approaches/exceeds the max length. */
   counterClasses(length: number | undefined): string {
     const len = length ?? 0;
     if (len > SkillFormComponent.MAX_SENTENCE_LENGTH) {
