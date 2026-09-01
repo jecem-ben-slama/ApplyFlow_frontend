@@ -61,11 +61,7 @@
 
             <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
 
-            <button id="tour-start-btn" type="button" (click)="onTakeTourClick()"
-                class="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-surface-dark transition-all text-left">
-                <mat-icon class="scale-90 text-slate-400 dark:text-slate-500">explore</mat-icon>
-                <span class="text-xs font-semibold text-slate-800 dark:text-slate-100 flex-1">Take a tour</span>
-            </button>
+        
 
             <a *ngIf="!isGuest" [routerLink]="['/profile']" (click)="closeProfileMenu()"
                 class="flex items-center gap-2 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-surface-dark transition-all no-underline">

@@ -1,3 +1,4 @@
+// profile.component.ts
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,6 +10,23 @@ import { MatIconModule } from '@angular/material/icon';
 import { ThemeService } from '../../services/theme.service';
 import { AuthService } from '../../services/auth.service';
 import { ThemeToggleComponent } from '../sidebar/theme-toggle/theme-toggle.component';
+
+import { TourService } from '../../services/tour.service';
+import {
+  getApplicationsSteps,
+  getTemplatesSteps,
+  getCvVariantsSteps,
+  getSkillsSteps,
+} from '../../services/toursteps';
+
+type TourPage = 'applications' | 'templates' | 'cv-variants' | 'skills';
+
+interface TourPageMeta {
+  id: TourPage;
+  label: string;
+  route: string;
+  icon: string;
+}
 
 @Component({
   selector: 'app-profile',
@@ -26,6 +44,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
+  private readonly tourService = inject(TourService);
 
   // ⚠️ These field names assume AuthService's User model exposes firstName /
   // lastName / username / email. Update to match whatever your API actually returns.
@@ -36,6 +55,24 @@ export class ProfileComponent implements OnInit, OnDestroy {
   userProfilePic?: string;
 
   isDarkMode$ = this.themeService.isDarkMode$;
+
+  // ─── Take a tour ───
+  readonly tourPages: TourPageMeta[] = [
+    {
+      id: 'applications',
+      label: 'Applications',
+      route: '/applications',
+      icon: 'inventory_2',
+    },
+    {
+      id: 'templates',
+      label: 'Templates',
+      route: '/templates',
+      icon: 'description',
+    },
+    { id: 'cv-variants', label: 'CVs', route: '/cv-variants', icon: 'badge' },
+    { id: 'skills', label: 'Skills', route: '/skills', icon: 'star' },
+  ];
 
   // ─── Danger zone ───
   confirmText = '';
@@ -86,6 +123,47 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/']);
+  }
+
+  /**
+   * Starts the multi-page onboarding tour beginning at `page`.
+   *
+   * TourService.run() only actually fires steps when the destination
+   * page's own load path calls it (see each page's ngAfterViewInit /
+   * subscribe callback in skills.component.ts etc), gated on
+   * tourService.isActive. So "start from X" is: turn the tour on, then
+   * get the user onto X's route.
+   *
+   * If the user is already sitting on that exact route, router navigation
+   * to the same URL is a no-op and won't re-trigger that page's lifecycle
+   * hook — so in that case we call the page's own getXSteps() + run()
+   * directly instead of navigating.
+   */
+  startTour(page: TourPage): void {
+    const meta = this.tourPages.find((p) => p.id === page);
+    if (!meta) return;
+
+    this.tourService.start();
+
+    const currentPath = this.router.url.split('?')[0].split('#')[0];
+    if (currentPath === meta.route) {
+      this.tourService.run(this.getStepsFor(page));
+    } else {
+      this.router.navigateByUrl(meta.route);
+    }
+  }
+
+  private getStepsFor(page: TourPage) {
+    switch (page) {
+      case 'applications':
+        return getApplicationsSteps(this.tourService, this.router);
+      case 'templates':
+        return getTemplatesSteps(this.tourService, this.router);
+      case 'cv-variants':
+        return getCvVariantsSteps(this.tourService, this.router);
+      case 'skills':
+        return getSkillsSteps(this.tourService, this.router);
+    }
   }
 
   deleteAccount(): void {
