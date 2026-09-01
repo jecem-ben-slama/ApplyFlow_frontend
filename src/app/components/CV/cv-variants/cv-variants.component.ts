@@ -18,7 +18,7 @@ import { ToastContainerComponent } from '../../common/toast/toast-container.comp
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { TourService } from 'src/app/services/tour.service';
-import { getCvVariantsSteps } from 'src/app/services/toursteps';
+import { getCvVariantsSteps } from 'src/app/core/tour';
 
 @Component({
   selector: 'app-cv-variants',

@@ -23,7 +23,7 @@
 
             <div class="lg:col-span-7 space-y-5">
 
-                <div *ngIf="errorMessage" role="alert"
+                <div *ngIf="errorMessage" role="alert" id="tour-application-error"
                     class="rounded-xl border border-rose-200 dark:border-rose-900 bg-danger-bgLight dark:bg-danger-bgDark text-danger-textLight dark:text-danger-textDark text-xs px-4 py-3">
                     {{ errorMessage }}
                 </div>
@@ -144,7 +144,7 @@
                     <label
                         class="text-xs uppercase tracking-[0.12em] font-semibold text-slate-500 dark:text-slate-400">CV
                         Variant</label>
-                    <select [(ngModel)]="formModel.cvVariantId" name="cvVariantId" (change)="onCvVariantChange()"
+                    <select id="tour-application-cv-field" [(ngModel)]="formModel.cvVariantId" name="cvVariantId" (change)="onCvVariantChange()"
                         class="mt-2 w-full px-3.5 py-2.5 rounded-xl bg-surface-light dark:bg-background-dark border border-slate-200 dark:border-surface-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-slate-800 dark:text-slate-100 shadow-sm transition-all">
                         <option [ngValue]="null">No specific variant</option>
                         <option *ngFor="let cv of filteredCvVariants" [ngValue]="cv.id">{{ cv.name }} ({{ cv.language |
@@ -326,7 +326,7 @@
         <div
             class="px-6 py-4 border-t border-slate-200 dark:border-surface-muted flex flex-col items-end gap-3 bg-background-light/50 dark:bg-surface-muted/20">
 
-            <div *ngIf="noCvConfirmationPending" role="alert"
+            <div *ngIf="noCvConfirmationPending" role="alert" id="tour-application-cv-warning"
                 class="w-full sm:w-auto flex items-center gap-2 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs px-3.5 py-2.5">
                 ⚠ No CV attached — click again to proceed anyway.
             </div>
@@ -338,7 +338,7 @@
                     Cancel
                 </button>
 
-                <button type="button" (click)="onSubmit()"
+                <button type="button" id="tour-application-compile-btn" (click)="onSubmit()"
                     [disabled]="isLoading || (submitAttemptedOnce && !isFormValid())"
                     [attr.title]="submitAttemptedOnce && !isFormValid() ? 'Fix the highlighted fields to continue' : null"
                     class="px-5 py-2.5 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all font-medium flex items-center gap-2"

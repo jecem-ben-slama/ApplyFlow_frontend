@@ -17,7 +17,8 @@ import {
   getTemplatesSteps,
   getCvVariantsSteps,
   getSkillsSteps,
-} from '../../services/toursteps';
+  getApplicationsFillSteps,
+} from 'src/app/core/tour';
 
 type TourPage = 'applications' | 'templates' | 'cv-variants' | 'skills';
 
@@ -138,6 +139,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
    * to the same URL is a no-op and won't re-trigger that page's lifecycle
    * hook — so in that case we call the page's own getXSteps() + run()
    * directly instead of navigating.
+   *
+   * If we're navigating away to a DIFFERENT route, the destination page's
+   * elements don't exist yet, so we can't call run() here — instead we
+   * pass which page we meant via router navigation state (`tourTarget`).
+   * The destination component reads `history.state.tourTarget` in its own
+   * ngAfterViewInit and, if it matches, calls run() itself with the right
+   * steps. This is deliberately NOT routed through TourService.isActive,
+   * since that flag is also used (and already works) for the separate
+   * "mid-chain" case of one tour step navigating to the next page.
    */
   startTour(page: TourPage): void {
     const meta = this.tourPages.find((p) => p.id === page);
@@ -149,14 +159,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (currentPath === meta.route) {
       this.tourService.run(this.getStepsFor(page));
     } else {
-      this.router.navigateByUrl(meta.route);
+      this.router.navigateByUrl(meta.route, { state: { tourTarget: page } });
     }
   }
 
   private getStepsFor(page: TourPage) {
     switch (page) {
       case 'applications':
-        return getApplicationsSteps(this.tourService, this.router);
+        return getApplicationsFillSteps(this.tourService, this.router);
       case 'templates':
         return getTemplatesSteps(this.tourService, this.router);
       case 'cv-variants':

@@ -16,7 +16,7 @@
         </div>
 
         <!-- Create Button (Responsive for both Desktop & Mobile) -->
-        <button [disabled]="isLoading"
+        <button [disabled]="isLoading" id="tour-application-add-btn"
             class="w-full sm:w-auto bg-primary hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 text-white font-medium py-2.5 px-5 rounded-xl shadow-sm transition-all duration-200 text-sm flex items-center justify-center gap-2 shrink-0"
             (click)="openCreateModal()">
             <span *ngIf="!isLoading">+ Compile New Application</span>

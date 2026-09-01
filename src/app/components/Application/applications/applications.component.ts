@@ -36,7 +36,7 @@ import { ApplicationPresetDto } from 'src/app/models/application_preset.model';
 import { PresetListComponent } from '../../Presets/preset-list/preset-list.component';
 import { Router } from '@angular/router';
 import { TourService } from 'src/app/services/tour.service';
-import { getApplicationsSteps } from 'src/app/services/toursteps';
+import { getApplicationsFillSteps, getApplicationsSteps } from 'src/app/core/tour';
 
 type SortableColumn = 'companyName' | 'jobTitle' | 'dateApplied' | 'status';
 interface LanguageOption {
@@ -163,15 +163,49 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     private router: Router
   ) {}
   ngAfterViewInit(): void {
-    if (
-      !localStorage.getItem('applyflow_tour_completed') &&
-      !this.tourService.isActive
-    ) {
-      this.tourService.start();
-    }
-    this.tourService.run(getApplicationsSteps(this.tourService, this.router));
-  }
+    // Direct request from Profile ("start tour here"), passed via router
+    // navigation state rather than TourService.isActive — that flag is
+    // shared with the separate mid-chain case below and can't tell the two
+    // apart on its own. history.state survives the navigation and is still
+    // readable here once this component has mounted.
+    if (history.state?.tourTarget === 'applications') {
+      // Consume it so browser back/forward into this history entry later
+      // doesn't unexpectedly re-trigger the fill tour.
+      history.replaceState({ ...history.state, tourTarget: null }, '');
 
+      // Defer to the next macrotask so Angular's change-detection pass has
+      // fully painted the DOM before Driver.js measures #tour-application-add-btn
+      // and positions its first popover. Without this, .drive() can compute
+      // the popover position against a not-yet-laid-out element, and it only
+      // "fixes itself" once the user clicks Next/Previous and forces Driver.js
+      // to recompute. A microtask (Promise.resolve().then) is NOT sufficient
+      // here — same reasoning as maybeStartTour() in skills.component.ts.
+      setTimeout(() => {
+        this.tourService.run(
+          getApplicationsFillSteps(this.tourService, this.router)
+        );
+      }, 0);
+      return;
+    }
+
+    // If a tour is already running (e.g. we've just been navigated here
+    // mid-flow from the skills step, which already queued
+    // getApplicationsFillSteps), do NOT stomp on it with the intro step.
+    if (this.tourService.isActive) {
+      return;
+    }
+
+    // Only kick off the intro/welcome tour on a genuinely fresh visit
+    // that hasn't completed the tour before.
+    if (!localStorage.getItem('applyflow_tour_completed')) {
+      this.tourService.start();
+      setTimeout(() => {
+        this.tourService.run(
+          getApplicationsSteps(this.tourService, this.router)
+        );
+      }, 0);
+    }
+  }
   ngOnInit(): void {
     this.loadInitialWorkspaceData();
 

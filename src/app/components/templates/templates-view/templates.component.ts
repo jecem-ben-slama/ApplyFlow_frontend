@@ -21,7 +21,7 @@ import { StatMetricDto } from 'src/app/models/statsmetric.model';
 import { AnalyticsService } from 'src/app/services/analytics.service';
 import { TourService } from 'src/app/services/tour.service';
 import { Router } from '@angular/router';
-import { getTemplatesSteps } from 'src/app/services/toursteps';
+import { getTemplatesSteps } from 'src/app/core/tour';
 
 export interface TemplateComponent extends TemplateDto {
   isExpanded?: boolean;

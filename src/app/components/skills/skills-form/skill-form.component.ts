@@ -81,6 +81,24 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
   @Output() save = new EventEmitter<SkillFormData>();
   @Output() cancel = new EventEmitter<void>();
 
+  /**
+   * FIX: two-way sync for the expand/collapse state. Previously
+   * `onToggleForm()` only flipped the LOCAL `isFormVisible` flag and
+   * never told the parent, so a toggle-open followed by a save-success
+   * (which sets the parent's `isFormExpanded` to `false`, its existing
+   * value) produced a `false -> false` non-change: Angular's
+   * `ngOnChanges` never fires for a value that didn't change, so the
+   * "close on confirmed success" branch below never ran and the form
+   * (and #tour-skill-name-field) never unmounted — which made any
+   * consumer polling for that element to disappear (e.g. the onboarding
+   * tour's `waitForElementGone`) time out and treat a successful save
+   * as a failure. Emitting here keeps the parent's `isFormExpanded` in
+   * sync with reality regardless of how the form was opened, so the
+   * later `true -> false` transition on save-success is a real change
+   * and closes the form as intended.
+   */
+  @Output() expandedChange = new EventEmitter<boolean>();
+
   isFormVisible = false;
 
   /** Client-side validation banner (e.g. "please fix the highlighted fields"). */
@@ -258,6 +276,9 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
   onToggleForm(): void {
     const wasVisible = this.isFormVisible;
     this.isFormVisible = !this.isFormVisible;
+    // FIX: tell the parent so its isFormExpanded never silently drifts
+    // out of sync with the child's actual visibility state.
+    this.expandedChange.emit(this.isFormVisible);
     if (!wasVisible && this.isFormVisible && this.editingSkillId === null) {
       this.notifyDraftRestoredIfPending();
     }
@@ -301,6 +322,8 @@ export class SkillFormComponent implements OnChanges, OnDestroy, DoCheck {
 
   onCancel(): void {
     this.isFormVisible = false;
+    // FIX: keep the parent in sync on user-initiated close too.
+    this.expandedChange.emit(false);
     this.resetValidationState();
     if (this.editingSkillId === null) {
       this.clearDraft();

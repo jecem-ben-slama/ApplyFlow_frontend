@@ -16,7 +16,7 @@ import { ToastContainerComponent } from '../../common/toast/toast-container.comp
 import { ToastService } from '../../common/toast/toast.service';
 import { Router } from '@angular/router';
 import { TourService } from 'src/app/services/tour.service';
-import { getSkillsSteps } from 'src/app/services/toursteps';
+import { getSkillsSteps } from 'src/app/core/tour';
 
 @Component({
   selector: 'app-skills',
