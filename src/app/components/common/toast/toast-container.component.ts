@@ -87,6 +87,15 @@ export class ToastContainerComponent implements OnInit, OnDestroy {
   }
 
   onPointerDown(event: PointerEvent, toast: Toast): void {
+    // Don't start a drag/pointer-capture if the press originated on a
+    // button (close / action). Capturing the pointer there swallows the
+    // synthetic click event the browser would otherwise fire on the button,
+    // which is why the X button stopped working.
+    const targetEl = event.target as HTMLElement;
+    if (targetEl.closest('button')) {
+      return;
+    }
+
     const target = event.currentTarget as HTMLElement;
     target.setPointerCapture(event.pointerId);
 

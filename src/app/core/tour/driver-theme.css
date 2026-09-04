@@ -51,11 +51,11 @@
     z-index: 10010 !important;
 }
 
-/* Overlay: light dim, not a near-black blackout — page should stay
- * readable/recognizable behind the tour, not disappear. */
-.driver-overlay
+/* Overlay: light dim via SVG fill-opacity so the background and active modals stay bright and readable */
+div>svg.driver-overlay,
+.driver-overlay path
 {
-    background: rgba(15, 23, 42, 0.35) !important;
+    fill-opacity: 0.1 !important;
 }
 
 /* Highlighted element: soft primary ring instead of the default hard outline */

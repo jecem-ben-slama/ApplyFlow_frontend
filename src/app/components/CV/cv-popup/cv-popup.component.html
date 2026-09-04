@@ -142,11 +142,14 @@
                 </div>
             </div>
 
-            <div *ngIf="errorMessage"
+            <!-- Shows either a local client-side validation message, or the
+                 backend's rejection reason from the last save attempt
+                 (server error takes priority — see displayError getter). -->
+            <div *ngIf="displayError"
                 class="rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-danger-bgLight dark:bg-danger-bgDark px-4 py-3 flex items-start gap-2">
                 <mat-icon class="!text-base !w-5 !h-5 text-danger mt-0.5">error_outline</mat-icon>
                 <p class="text-danger-textLight dark:text-danger-textDark text-sm font-medium">
-                    {{ errorMessage }}
+                    {{ displayError }}
                 </p>
             </div>
 

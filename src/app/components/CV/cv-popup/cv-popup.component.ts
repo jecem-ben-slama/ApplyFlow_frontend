@@ -1,4 +1,13 @@
-import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +21,7 @@ import { CvVariantDto } from '../../../models';
   templateUrl: './cv-popup.component.html',
   styleUrls: ['./cv-popup.component.css'],
 })
-export class CvPopupComponent implements OnInit {
+export class CvPopupComponent implements OnInit, OnChanges {
   @Input() isModalOpen = false;
   @Input() isEditing = false;
 
@@ -24,9 +33,19 @@ export class CvPopupComponent implements OnInit {
 
   @Input() isLoading = false;
 
+  // Backend rejection message for the most recent save attempt (e.g. "This
+  // file is too large to attach...", "This Google Drive file isn't
+  // accessible..."). Owned by the parent: it should set this in the catch
+  // block after a failed save call, and clear it (null) before the next
+  // save attempt. Takes priority over the local client-side validation
+  // message below, since it reflects the most recent real outcome.
+  @Input() serverError: string | null = null;
+
   @Output() close = new EventEmitter<void>();
   @Output() save = new EventEmitter<void>();
 
+  // Client-side validation message — set locally when the form fails
+  // validation before it's ever sent to the parent/backend.
   errorMessage = '';
   showDriveHelp = false;
 
@@ -34,6 +53,29 @@ export class CvPopupComponent implements OnInit {
   readonly driveUrlPattern = '^https:\\/\\/(drive|docs)\\.google\\.com\\/.+$';
 
   ngOnInit(): void {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Reset the local client-side message each time the modal is (re)opened,
+    // so a leftover validation error from a previous open/edit doesn't
+    // flash before the person has touched anything this time around.
+    // serverError is intentionally left alone here — it's parent-owned and
+    // should reflect that specific save attempt's outcome until the parent
+    // clears it.
+    if (
+      changes['isModalOpen'] &&
+      changes['isModalOpen'].currentValue === true &&
+      !changes['isModalOpen'].previousValue
+    ) {
+      this.errorMessage = '';
+    }
+  }
+
+  // What the template actually renders. Server error wins when present,
+  // since it reflects the outcome of the most recent real save attempt;
+  // otherwise fall back to the local pre-submit validation message.
+  get displayError(): string {
+    return this.serverError || this.errorMessage;
+  }
 
   // Esc closes the modal, but never while a save is in flight — don't let the
   // person lose an in-progress submission by accident.
@@ -79,8 +121,7 @@ export class CvPopupComponent implements OnInit {
     if (
       !/^https:\/\/(drive|docs)\.google\.com\/.+/.test(this.formModel.fileUrl)
     ) {
-      this.errorMessage =
-        'The URL must be a Google Drive share link.';
+      this.errorMessage = 'The URL must be a Google Drive share link.';
       return;
     }
 

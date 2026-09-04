@@ -67,7 +67,7 @@
         [isLoading]="isDeleting" (confirm)="onConfirmDelete()" (close)="onCancelDelete()">
     </app-delete-popup>
 
-    <app-cv-popup [isModalOpen]="isModalOpen" [isEditing]="isEditing" [formModel]="formModel" [isLoading]="isSubmitting"
+    <app-cv-popup [isModalOpen]="isModalOpen" [isEditing]="isEditing" [formModel]="formModel" [isLoading]="isSubmitting"  [serverError]="cvSaveError"
         (close)="closeModal()" (save)="onSubmit()">
     </app-cv-popup>
 

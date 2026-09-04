@@ -6,8 +6,8 @@ import { firstValueFrom } from 'rxjs';
 import { ConfigService } from './core/config.service';
 import { ApiConfig } from './config/api.config';
 import { AuthService } from './services/auth.service';
-import { authInterceptor } from './services/auth.interceptor';
 import { routes } from './app-routing.module';
+import { authInterceptor } from './interceptors/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [

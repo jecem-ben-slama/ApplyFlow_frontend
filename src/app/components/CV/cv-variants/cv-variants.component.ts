@@ -211,6 +211,7 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
     this.currentFormId = undefined;
     this.formModel = { name: '', language: 'en', fileUrl: '' };
     this.isModalOpen = true;
+    this.cvSaveError = null; // clear any previous attempt's error before this one runs
   }
 
   openEditModal(cv: CvVariantDto): void {
@@ -223,14 +224,19 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
       fileUrl: cv.fileUrl,
     };
     this.isModalOpen = true;
+    this.cvSaveError = null; // clear any previous attempt's error before this one runs
   }
 
   closeModal(): void {
     this.isModalOpen = false;
   }
 
+  cvSaveError: string | null = null;
+
   onSubmit(): void {
     this.isSubmitting = true;
+    this.cvSaveError = null; // clear any previous attempt's error before this one runs
+
     const request$ =
       this.isEditing && this.currentFormId
         ? this.cvService.updateCvVariant(this.currentFormId, this.formModel)
@@ -246,10 +252,9 @@ export class CvVariantsComponent implements OnInit, OnDestroy {
         this.loadCvVariants();
       },
       error: (err) => {
-        this.toastService.error(
+        this.cvSaveError =
           err.error?.message ??
-            'an unexpected error occurred, please try again.'
-        );
+          'An unexpected error occurred, please try again.';
         this.isSubmitting = false;
       },
     });

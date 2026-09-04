@@ -16,16 +16,7 @@ const SAVE_BTN = '#tour-application-compile-btn';
 const ERROR_BANNER = '#tour-application-error';
 const CV_WARNING = '#tour-application-cv-warning';
 
-/**
- * Final leg of the onboarding tour: open the "new application" modal on
- * /applications and walk through actually compiling one.
- *
- * This form is a manually-validated modal, not an Angular reactive form —
- * there's no ng-invalid state to key off. So instead of the generic
- * saveOrRestart flow used by templates/CVs/skills, the save step here
- * inspects the form's own error banner directly, and separately handles
- * its two-click "no CV attached, click again to confirm" pattern.
- */
+
 export function getApplicationsFillSteps(
   tourService: TourService,
   router: Router
