@@ -96,11 +96,11 @@
         <!-- Table (desktop) -->
         <div *ngIf="presetPage?.content?.length"
             class="hidden md:block bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border border-slate-200/80 dark:border-surface-muted overflow-hidden">
-            <table class="min-w-full text-left text-sm">
+            <table class="w-full table-fixed text-left text-sm">
                 <thead
                     class="bg-background-light/50 dark:bg-surface-muted/30 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-surface-muted">
                     <tr>
-                        <th class="px-6 py-4">
+                        <th class="w-[30%] px-6 py-4">
                             <button type="button" (click)="onSortChange('name')"
                                 class="flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-slate-100 transition font-bold">
                                 Name
@@ -110,7 +110,7 @@
                                 </span>
                             </button>
                         </th>
-                        <th class="px-6 py-4">
+                        <th class="w-[25%] px-6 py-4">
                             <button type="button" (click)="onSortChange('jobTitle')"
                                 class="flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-slate-100 transition font-bold">
                                 Position
@@ -139,17 +139,20 @@
                             class="hover:bg-slate-50/80 dark:hover:bg-surface-muted/20 transition-all cursor-pointer group"
                             [ngClass]="isPresetExpanded(preset) ? 'bg-slate-50/80 dark:bg-surface-muted/20' : ''">
                             <td
-                                class="px-6 py-4 font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                                <span
-                                    class="w-1.5 h-1.5 rounded-full bg-primary/60 group-hover:scale-125 transition-transform"
-                                    *ngIf="!isPresetExpanded(preset)"></span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-primary transition-transform"
-                                    *ngIf="isPresetExpanded(preset)"></span>
-                                {{ preset.name }}
+                                class="px-6 py-4 font-semibold text-slate-900 dark:text-slate-100 break-words [overflow-wrap:anywhere]">
+                                <div class="flex items-start gap-2 min-w-0">
+                                    <span
+                                        class="w-1.5 h-1.5 rounded-full bg-primary/60 group-hover:scale-125 transition-transform"
+                                        *ngIf="!isPresetExpanded(preset)"></span>
+                                    <span class="w-1.5 h-1.5 rounded-full bg-primary transition-transform"
+                                        *ngIf="isPresetExpanded(preset)"></span>
+                                    <span class="min-w-0 break-words [overflow-wrap:anywhere]">{{ preset.name }}</span>
+                                </div>
                             </td>
                             <td class="px-6 py-4 font-medium"
                                 [ngClass]="preset.jobTitle ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500 italic'">
-                                {{ preset.jobTitle || 'Not set yet' }}
+                                <span class="break-words [overflow-wrap:anywhere]">{{ preset.jobTitle || 'Not set yet'
+                                    }}</span>
                             </td>
                             <td class="px-3 sm:px-6 py-4">
                                 <span
@@ -199,11 +202,14 @@
                 class="bg-surface-light dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-surface-muted shadow-sm overflow-hidden">
                 <div (click)="toggleDetails(preset)" class="p-4 space-y-3 cursor-pointer">
                     <div class="flex items-start justify-between">
-                        <div>
-                            <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm">{{ preset.name }}</h3>
+                        <div class="min-w-0">
+                            <h3
+                                class="font-bold text-slate-900 dark:text-slate-100 text-sm break-words [overflow-wrap:anywhere]">
+                                {{ preset.name }}</h3>
                             <p class="text-xs mt-0.5 font-medium"
                                 [ngClass]="preset.jobTitle ? 'text-slate-500 dark:text-slate-400' : 'text-slate-400 dark:text-slate-500 italic'">
-                                {{ preset.jobTitle || 'Not set yet' }}
+                                <span class="break-words [overflow-wrap:anywhere]">{{ preset.jobTitle || 'Not set yet'
+                                    }}</span>
                             </p>
                         </div>
                         <span *ngIf="preset.language; else mobileNoLang"

@@ -214,11 +214,11 @@
                 <!-- Table for desktop -->
                 <div *ngIf="appPage?.content?.length"
                     class="hidden md:block bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border border-slate-200 dark:border-surface-muted overflow-hidden">
-                    <table class="min-w-full text-left text-sm">
+                    <table class="w-full table-fixed text-left text-sm">
                         <thead
                             class="bg-background-light dark:bg-surface-muted/30 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-surface-muted">
                             <tr>
-                                <th class="px-6 py-4">
+                                <th class="w-[22%] px-6 py-4">
                                     <button type="button" (click)="onSortChange('companyName')"
                                         class="flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-slate-100 transition font-semibold">
                                         Company
@@ -228,7 +228,7 @@
                                         </span>
                                     </button>
                                 </th>
-                                <th class="px-6 py-4">
+                                <th class="w-[20%] px-6 py-4">
                                     <button type="button" (click)="onSortChange('jobTitle')"
                                         class="flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-slate-100 transition font-semibold">
                                         Job Title
@@ -238,7 +238,7 @@
                                         </span>
                                     </button>
                                 </th>
-                                <th class="px-6 py-4">
+                                <th class="w-[12%] px-6 py-4">
                                     <button type="button" (click)="onSortChange('dateApplied')"
                                         class="flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-slate-100 transition font-semibold">
                                         Date
@@ -248,8 +248,8 @@
                                         </span>
                                     </button>
                                 </th>
-                                <th class="px-6 py-4 font-semibold">Language</th>
-                                <th class="px-6 py-4">
+                                <th class="w-[10%] px-6 py-4 font-semibold">Language</th>
+                                <th class="w-[14%] px-6 py-4">
                                     <button type="button" (click)="onSortChange('status')"
                                         class="flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-slate-100 transition font-semibold">
                                         Status
@@ -259,7 +259,7 @@
                                         </span>
                                     </button>
                                 </th>
-                                <th class="px-6 py-4 text-right font-semibold">Actions</th>
+                                <th class="w-[22%] px-6 py-4 text-right font-semibold">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-surface-muted/60">
@@ -305,10 +305,10 @@
 
                                 <div class="min-w-0 flex-1">
                                     <h3
-                                        class="font-semibold text-slate-900 dark:text-slate-100 text-sm leading-snug truncate">
+                                        class="font-semibold text-slate-900 dark:text-slate-100 text-sm leading-snug break-words">
                                         {{ app.companyName }}
                                     </h3>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 break-words">
                                         {{ app.jobTitle || 'No title provided' }}
                                     </p>
 
