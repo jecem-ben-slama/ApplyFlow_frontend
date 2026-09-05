@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, shareReplay } from 'rxjs/operators';
 import { ApiResponse, Page, CvVariantDto } from '../models';
 import { ApiConfig } from '../config/api.config';
 
@@ -9,8 +9,13 @@ import { ApiConfig } from '../config/api.config';
   providedIn: 'root',
 })
 export class CvVariantsService {
+  private readonly listCache = new Map<
+    string,
+    Observable<Page<CvVariantDto>>
+  >();
+
   // Pulling the absolute URL directly to guarantee CORS cookies work perfectly
- constructor(private http: HttpClient, private api: ApiConfig) {}
+  constructor(private http: HttpClient, private api: ApiConfig) {}
 
   private get baseUrl(): string {
     return this.api.endpoints.cvVariants.base;
@@ -41,12 +46,22 @@ export class CvVariantsService {
       params = params.set('search', search);
     }
 
-    return this.http
+    const cacheKey = params.toString();
+    const cached = this.listCache.get(cacheKey);
+    if (cached) return cached;
+
+    const request$ = this.http
       .get<ApiResponse<Page<CvVariantDto>>>(this.baseUrl, {
         params,
         withCredentials: this.api.httpOptions.withCredentials,
       })
-      .pipe(map((response) => response.data));
+      .pipe(
+        map((response) => response.data),
+        shareReplay(1)
+      );
+
+    this.listCache.set(cacheKey, request$);
+    return request$;
   }
   /**
    * GET /api/cv-variants/{id}
@@ -67,6 +82,7 @@ export class CvVariantsService {
   createCvVariant(
     cvVariant: Omit<CvVariantDto, 'id' | 'userId' | 'createdAt'>
   ): Observable<CvVariantDto> {
+    this.listCache.clear();
     return this.http
       .post<ApiResponse<CvVariantDto>>(this.baseUrl, cvVariant, {
         withCredentials: this.api.httpOptions.withCredentials,
@@ -82,6 +98,7 @@ export class CvVariantsService {
     id: number,
     cvVariant: Omit<CvVariantDto, 'id' | 'userId' | 'createdAt'>
   ): Observable<CvVariantDto> {
+    this.listCache.clear();
     return this.http
       .put<ApiResponse<CvVariantDto>>(`${this.baseUrl}/${id}`, cvVariant, {
         withCredentials: this.api.httpOptions.withCredentials,
@@ -94,6 +111,7 @@ export class CvVariantsService {
    * Completely removes a tracked CV path block from the workspace pipelines.
    */
   deleteCvVariant(id: number): Observable<void> {
+    this.listCache.clear();
     return this.http
       .delete<ApiResponse<void>>(`${this.baseUrl}/${id}`, {
         withCredentials: this.api.httpOptions.withCredentials,

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, Subject } from 'rxjs';
+import { forkJoin, Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 import { ApplicationsService } from '../../../services/applications.service';
@@ -36,7 +36,10 @@ import { ApplicationPresetDto } from 'src/app/models/application_preset.model';
 import { PresetListComponent } from '../../Presets/preset-list/preset-list.component';
 import { Router } from '@angular/router';
 import { TourService } from 'src/app/services/tour.service';
-import { getApplicationsFillSteps, getApplicationsSteps } from 'src/app/core/tour';
+import {
+  getApplicationsFillSteps,
+  getApplicationsSteps,
+} from 'src/app/core/tour';
 
 type SortableColumn = 'companyName' | 'jobTitle' | 'dateApplied' | 'status';
 interface LanguageOption {
@@ -118,6 +121,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   expandedAppId: number | null = null;
 
   private searchSubject = new Subject<void>();
+  private searchSubscription?: Subscription;
+  private listRequest?: Subscription;
+  private referenceDataLoaded = false;
+  private referenceDataLoading = false;
   private readonly DEBOUNCE_MS = 400;
 
   private readonly avatarPalette = [
@@ -209,14 +216,18 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadInitialWorkspaceData();
 
-    this.searchSubject.pipe(debounceTime(this.DEBOUNCE_MS)).subscribe(() => {
-      this.currentPage = 0;
-      this.expandedAppId = null;
-      this.loadApplicationsPage();
-    });
+    this.searchSubscription = this.searchSubject
+      .pipe(debounceTime(this.DEBOUNCE_MS))
+      .subscribe(() => {
+        this.currentPage = 0;
+        this.expandedAppId = null;
+        this.loadApplicationsPage();
+      });
   }
 
   ngOnDestroy(): void {
+    this.searchSubscription?.unsubscribe();
+    this.listRequest?.unsubscribe();
     this.searchSubject.complete();
   }
 
@@ -287,6 +298,10 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
     return this.sortBy === column;
   }
 
+  trackByApp(_index: number, app: ApplicationResponseDto): number {
+    return app.id;
+  }
+
   loadInitialWorkspaceData(): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -296,8 +311,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         ? 'COMPILED'
         : this.filterStatus || undefined;
 
-    forkJoin({
-      applications: this.appService.getAllApplications(
+    this.appService
+      .getAllApplications(
         this.currentPage,
         this.pageSize,
         this.sortBy,
@@ -305,26 +320,42 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         effectiveStatus,
         this.filterKeyword || undefined,
         this.filterLanguage || undefined
-      ),
+      )
+      .subscribe({
+        next: (applications) => {
+          this.appPage = this.postProcessApplications(applications);
+          const meta = getPageMeta(this.appPage);
+          this.currentPage = meta.number;
+          this.appTotalPages = meta.totalPages;
+          this.isLoading = false;
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Error loading data.';
+          this.isLoading = false;
+        },
+      });
+  }
+
+  private loadReferenceData(): void {
+    if (this.referenceDataLoaded || this.referenceDataLoading) return;
+
+    this.referenceDataLoading = true;
+    forkJoin({
       skills: this.skillsService.getAllSkills(0, 100),
       categories: this.categoriesService.getAllCategories(),
       cvVariants: this.cvService.getAllCvVariants(0, 100),
       templates: this.templateService.getAllTemplates(0, 100),
     }).subscribe({
       next: (result) => {
-        this.appPage = this.postProcessApplications(result.applications);
-        const meta = getPageMeta(this.appPage);
-        this.currentPage = meta.number;
-        this.appTotalPages = meta.totalPages;
         this.availableSkills = result.skills.content;
         this.availableCategories = result.categories;
         this.availableCvVariants = result.cvVariants.content;
         this.availableTemplates = result.templates.content;
-        this.isLoading = false;
+        this.referenceDataLoaded = true;
+        this.referenceDataLoading = false;
       },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Error loading data.';
-        this.isLoading = false;
+      error: () => {
+        this.referenceDataLoading = false;
       },
     });
   }
@@ -342,7 +373,8 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
         ? 'COMPILED'
         : this.filterStatus || undefined;
 
-    this.appService
+    this.listRequest?.unsubscribe();
+    this.listRequest = this.appService
       .getAllApplications(
         this.currentPage,
         this.pageSize,
@@ -631,11 +663,13 @@ export class ApplicationsComponent implements OnInit, OnDestroy {
   }
 
   onSendFromPreset(preset: ApplicationPresetDto): void {
+    this.loadReferenceData();
     this.selectedPreset = preset;
     this.isModalOpen = true;
   }
 
   openCreateModal(): void {
+    this.loadReferenceData();
     this.selectedPreset = null;
     this.isModalOpen = true;
   }

@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import {  ApiConfig } from '../config';
+import { map, shareReplay } from 'rxjs/operators';
+import { ApiConfig } from '../config';
 import { ApiResponse, Page, TemplateDto } from '../models';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TemplateService {
+  private readonly listCache = new Map<string, Observable<Page<TemplateDto>>>();
+
   private readonly baseUrl = this.api.endpoints.templates.base;
 
   constructor(private http: HttpClient, private api: ApiConfig) {}
@@ -35,12 +37,22 @@ export class TemplateService {
     if (language) params = params.set('language', language);
     if (search?.trim()) params = params.set('search', search.trim()); // ← new
 
-    return this.http
+    const cacheKey = params.toString();
+    const cached = this.listCache.get(cacheKey);
+    if (cached) return cached;
+
+    const request$ = this.http
       .get<ApiResponse<Page<TemplateDto>>>(this.baseUrl, {
         params,
         withCredentials: this.api.httpOptions.withCredentials,
       })
-      .pipe(map((response) => response.data));
+      .pipe(
+        map((response) => response.data),
+        shareReplay(1)
+      );
+
+    this.listCache.set(cacheKey, request$);
+    return request$;
   }
 
   /**
@@ -62,6 +74,7 @@ export class TemplateService {
   createTemplate(
     template: Omit<TemplateDto, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
   ): Observable<TemplateDto> {
+    this.listCache.clear();
     return this.http
       .post<ApiResponse<TemplateDto>>(this.baseUrl, template, {
         withCredentials: this.api.httpOptions.withCredentials,
@@ -77,6 +90,7 @@ export class TemplateService {
     id: number,
     template: Omit<TemplateDto, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
   ): Observable<TemplateDto> {
+    this.listCache.clear();
     return this.http
       .put<ApiResponse<TemplateDto>>(`${this.baseUrl}/${id}`, template, {
         withCredentials: this.api.httpOptions.withCredentials,
@@ -89,6 +103,7 @@ export class TemplateService {
    * Deletes a user's custom template from the system tracking pipeline.
    */
   deleteTemplate(id: number): Observable<void> {
+    this.listCache.clear();
     return this.http
       .delete<ApiResponse<any>>(`${this.baseUrl}/${id}`, {
         withCredentials: this.api.httpOptions.withCredentials,

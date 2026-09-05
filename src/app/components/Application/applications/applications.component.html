@@ -263,7 +263,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-surface-muted/60">
-                            <ng-container *ngFor="let app of appPage!.content">
+                            <ng-container *ngFor="let app of appPage!.content; trackBy: trackByApp">
                                 <tr app-application-row
                                     class="hover:bg-slate-50/80 dark:hover:bg-surface-muted/20 transition-all"
                                     [app]="app" [isExpanded]="expandedAppId === app.id"
@@ -292,7 +292,7 @@
 
                 <!-- Cards for mobile -->
                 <div *ngIf="appPage?.content?.length" class="block md:hidden space-y-3 w-full">
-                    <ng-container *ngFor="let app of appPage!.content">
+                    <ng-container *ngFor="let app of appPage!.content; trackBy: trackByApp">
                         <div class="bg-surface-light dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-surface-muted shadow-sm overflow-hidden transition-all"
                             [ngClass]="{'ring-2 ring-primary/35 border-primary': expandedAppId === app.id}">
 

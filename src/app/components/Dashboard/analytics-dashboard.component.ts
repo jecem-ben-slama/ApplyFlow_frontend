@@ -1,5 +1,6 @@
 import {
   Component,
+  ChangeDetectionStrategy,
   DestroyRef,
   OnInit,
   ViewChild,
@@ -43,9 +44,7 @@ import {
   StatsPeriodSummary,
   StatsService,
   StatsSummary,
-  
   TimelineEvent,
- 
 } from 'src/app/services/stats.service';
 import { PendingSelectionService } from 'src/app/services/pending-selection.service';
 import { ApplicationsService } from 'src/app/services/applications.service';
@@ -89,6 +88,7 @@ interface ChartPoint {
 @Component({
   selector: 'app-analytics-dashboard',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     FormsModule,
@@ -132,6 +132,7 @@ export class AnalyticsDashboardComponent implements OnInit {
   funnelStages = signal<DisplayFunnelStage[]>([]);
   rejectionStages = signal<RejectionStage[]>([]);
   loading = signal(true);
+  performanceLoading = signal(true);
   loadError = signal(false);
 
   // Trend analysis — real per-bucket series from /api/stats/trends, scoped
@@ -290,12 +291,6 @@ export class AnalyticsDashboardComponent implements OnInit {
   // of being fabricated from the single-number summary. The backend returns
   // four independent series (not one array with multiple metrics per
   // point), so each chart reads its own array directly.
- 
-
-
-
-
-
 
   outcomeCounts = computed<Partial<Record<ApplicationStatus, number>>>(() => {
     const counts: Partial<Record<ApplicationStatus, number>> = {};
@@ -369,32 +364,20 @@ export class AnalyticsDashboardComponent implements OnInit {
       this.customTo()
     );
     this.loading.set(true);
+    this.performanceLoading.set(true);
     this.loadError.set(false);
 
     forkJoin({
       summary: this.statsService.getSummary(range),
       funnel: this.statsService.getFunnel(range),
       rejectionStages: this.statsService.getRejectionStages(range),
-
-      cv: this.analyticsService.getCvStats(range),
-      lang: this.analyticsService.getLanguageStats(range),
-      job: this.analyticsService.getJobStats(range),
-      template: this.analyticsService.getTemplateStats(range),
     })
       .pipe(
         finalize(() => this.loading.set(false)),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: ({
-          summary,
-          funnel,
-          rejectionStages,
-          cv,
-          lang,
-          job,
-          template,
-        }) => {
+        next: ({ summary, funnel, rejectionStages }) => {
           this.summary.set(summary);
           // Real previous-period data from the backend — no more fabricated numbers.
           this.previousSummary.set(
@@ -402,10 +385,6 @@ export class AnalyticsDashboardComponent implements OnInit {
           );
           this.funnelStages.set(this.buildDisplayStages(funnel));
           this.rejectionStages.set(rejectionStages);
-          this.cvStats.set(cv);
-          this.langStats.set(lang);
-          this.jobStats.set(job);
-          this.templateStats.set(template);
         },
         error: () => {
           this.loadError.set(true);
@@ -413,6 +392,32 @@ export class AnalyticsDashboardComponent implements OnInit {
           this.previousSummary.set(null);
           this.funnelStages.set([]);
           this.rejectionStages.set([]);
+          this.cvStats.set([]);
+          this.langStats.set([]);
+          this.jobStats.set([]);
+          this.templateStats.set([]);
+        },
+      });
+
+    forkJoin({
+      cv: this.analyticsService.getCvStats(range),
+      lang: this.analyticsService.getLanguageStats(range),
+      job: this.analyticsService.getJobStats(range),
+      template: this.analyticsService.getTemplateStats(range),
+    })
+      .pipe(
+        finalize(() => this.performanceLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: ({ cv, lang, job, template }) => {
+          this.cvStats.set(cv);
+          this.langStats.set(lang);
+          this.jobStats.set(job);
+          this.templateStats.set(template);
+        },
+        error: () => {
+          this.loadError.set(true);
           this.cvStats.set([]);
           this.langStats.set([]);
           this.jobStats.set([]);
@@ -606,5 +611,5 @@ export class AnalyticsDashboardComponent implements OnInit {
       );
       return { ...event, daysAgo };
     });
-  } 
+  }
 }

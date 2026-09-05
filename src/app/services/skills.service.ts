@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, shareReplay } from 'rxjs/operators';
 import { ApiResponse, Page, Skill } from '../models';
 import { ApiConfig } from '../config/api.config';
 
@@ -9,6 +9,8 @@ import { ApiConfig } from '../config/api.config';
   providedIn: 'root',
 })
 export class SkillsService {
+  private readonly listCache = new Map<string, Observable<Page<Skill>>>();
+
   constructor(private http: HttpClient, private api: ApiConfig) {}
 
   private get baseUrl(): string {
@@ -33,12 +35,22 @@ export class SkillsService {
       params = params.set('categoryId', categoryId.toString());
     if (search?.trim()) params = params.set('search', search.trim());
 
-    return this.http
+    const cacheKey = params.toString();
+    const cached = this.listCache.get(cacheKey);
+    if (cached) return cached;
+
+    const request$ = this.http
       .get<ApiResponse<Page<Skill>>>(this.baseUrl, {
         ...this.api.httpOptions,
         params,
       })
-      .pipe(map((response) => response.data));
+      .pipe(
+        map((response) => response.data),
+        shareReplay(1)
+      );
+
+    this.listCache.set(cacheKey, request$);
+    return request$;
   }
 
   getSkillById(id: number): Observable<Skill> {
@@ -50,6 +62,7 @@ export class SkillsService {
   createSkill(
     skill: Omit<Skill, 'id' | 'userId' | 'categoryName'>
   ): Observable<Skill> {
+    this.listCache.clear();
     return this.http
       .post<ApiResponse<Skill>>(this.baseUrl, skill, this.api.httpOptions)
       .pipe(map((response) => response.data));
@@ -59,6 +72,7 @@ export class SkillsService {
     id: number,
     skill: Omit<Skill, 'id' | 'userId' | 'categoryName'>
   ): Observable<Skill> {
+    this.listCache.clear();
     return this.http
       .put<ApiResponse<Skill>>(
         `${this.baseUrl}/${id}`,
@@ -69,11 +83,9 @@ export class SkillsService {
   }
 
   deleteSkill(id: number): Observable<void> {
+    this.listCache.clear();
     return this.http
-      .delete<ApiResponse<void>>(
-        `${this.baseUrl}/${id}`,
-        this.api.httpOptions
-      )
+      .delete<ApiResponse<void>>(`${this.baseUrl}/${id}`, this.api.httpOptions)
       .pipe(map(() => undefined));
   }
 }

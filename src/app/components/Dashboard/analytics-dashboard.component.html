@@ -202,26 +202,27 @@
         <section class="space-y-4">
             <div class="flex items-center gap-3">
                 <h2 class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-                    Performance Breakdown 
+                    Performance Breakdown
                 </h2>
                 <span class="h-px flex-1 bg-slate-200 dark:bg-slate-800"></span>
             </div>
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
                 <app-performance-card title="CV variant" accentClass="bg-sky-600" [stats]="cvStats()"
-                    [loading]="loading()"
+                    [loading]="performanceLoading()"
                     emptyMessage="No CV performance data available for this period."></app-performance-card>
 
                 <app-performance-card title="Language" accentClass="bg-teal-600" [stats]="langStats()"
-                    [loading]="loading()" emptyMessage="No language performance data available for this period."
+                    [loading]="performanceLoading()"
+                    emptyMessage="No language performance data available for this period."
                     [uppercaseLabels]="true"></app-performance-card>
 
                 <app-performance-card title="Job title" accentClass="bg-amber-600" [stats]="jobStats()"
-                    [loading]="loading()"
+                    [loading]="performanceLoading()"
                     emptyMessage="No job title performance data available for this period."></app-performance-card>
 
                 <app-performance-card title="Template" accentClass="bg-fuchsia-600" [stats]="templateStats()"
-                    [loading]="loading()"
+                    [loading]="performanceLoading()"
                     emptyMessage="No template performance data available for this period."></app-performance-card>
             </div>
         </section>

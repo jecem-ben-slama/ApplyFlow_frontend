@@ -34,6 +34,8 @@ export class AuthService {
   public readonly isCheckingSession$ =
     this.isCheckingSessionSubject.asObservable();
 
+  private sessionCheckCompleted = false;
+
   // Flag components (e.g. a settings banner) can watch to prompt reconnect
   private readonly needsGoogleReconnectSubject = new BehaviorSubject<boolean>(
     false
@@ -108,6 +110,10 @@ export class AuthService {
    * local auth state for anything other than a confirmed 401.
    */
   checkSession(): Observable<boolean> {
+    if (this.sessionCheckCompleted) {
+      return of(this.isAuthenticatedSubject.value);
+    }
+
     this.isCheckingSessionSubject.next(true);
 
     return this.http
@@ -130,11 +136,13 @@ export class AuthService {
           } else {
             this.clearLocalState();
           }
+          this.sessionCheckCompleted = true;
           this.isCheckingSessionSubject.next(false);
         }),
         map((response) => !!response.success),
         catchError((err) => {
           this.isCheckingSessionSubject.next(false);
+          this.sessionCheckCompleted = true;
 
           if (err?.status === 401) {
             // Session is genuinely dead — this is a real logout
