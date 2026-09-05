@@ -6,8 +6,8 @@ import { BehaviorSubject } from 'rxjs';
   providedIn: 'root',
 })
 export class ThemeService {
-  // BehaviorSubject to track theme state throughout the app (defaults to true/dark mode)
-  private isDarkSubject = new BehaviorSubject<boolean>(true);
+  // Light is the default until the user explicitly chooses a theme.
+  private isDarkSubject = new BehaviorSubject<boolean>(false);
   isDarkMode$ = this.isDarkSubject.asObservable();
 
   private isBrowser: boolean;
@@ -19,15 +19,8 @@ export class ThemeService {
       // 1. Check if there is a user-saved preference in localStorage
       const savedTheme = localStorage.getItem('theme');
 
-      // 2. If no saved preference, check system/OS configuration preferences
-      const prefersDarkSystem = window.matchMedia(
-        '(prefers-color-scheme: dark)'
-      ).matches;
-
-      // 3. Fallback priority: Saved Key -> System Setting -> Default to True (Dark)
-      const finalThemeState = savedTheme
-        ? savedTheme === 'dark'
-        : prefersDarkSystem;
+      // 2. Without a saved preference, always start in light mode.
+      const finalThemeState = savedTheme === 'dark';
 
       this.setTheme(finalThemeState);
     }

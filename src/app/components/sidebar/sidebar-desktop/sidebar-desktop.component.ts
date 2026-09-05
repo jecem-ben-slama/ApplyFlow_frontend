@@ -64,6 +64,7 @@ export class SidebarDesktopComponent {
   }
 
   openShortcutHelp(): void {
+    this.closeProfileMenu();
     this.shortcuts.openHelp();
   }
 
