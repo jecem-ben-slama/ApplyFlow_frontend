@@ -26,6 +26,9 @@ body
     --text: #0f172a;
     --muted: #64748b;
     --accent: #5b60ff;
+    --scrollbar-track: #f1f5f9;
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-thumb-hover: #0d9488;
 
     /* ApplyFlow logo colors (light mode) */
     --logo-bg: #0f172a;
@@ -44,6 +47,9 @@ html.dark
     --text: #e2e8f0;
     --muted: #94a3b8;
     --accent: #818cf8;
+    --scrollbar-track: #111827;
+    --scrollbar-thumb: #475569;
+    --scrollbar-thumb-hover: #2dd4bf;
 
     /* ApplyFlow logo colors (dark mode) */
     --logo-bg: #f8fafc;
@@ -58,6 +64,41 @@ body
     color: var(--text);
 }
 
+/* Shared slim scrollbar for the app shell, panels, and scrollable lists. */
+html
+{
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
+}
+
+::-webkit-scrollbar
+{
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track
+{
+    background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb
+{
+    border: 3px solid var(--scrollbar-track);
+    border-radius: 999px;
+    background: var(--scrollbar-thumb);
+}
+
+::-webkit-scrollbar-thumb:hover
+{
+    background: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-corner
+{
+    background: var(--scrollbar-track);
+}
+
 button,
 input,
 textarea,
@@ -65,6 +106,7 @@ select
 {
     color: inherit;
 }
+
 .cdk-drag-preview
 {
     border-radius: 0.75rem;
