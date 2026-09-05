@@ -63,7 +63,7 @@ export function getTemplatesSteps(
             tourService,
             steps,
             fromIndex: steps.findIndex((s) => s.element === nameFieldSelector),
-            onSuccess: () => goTo(tourService, router, ROUTES.cvVariants),
+            onSuccess: () => goTo(tourService, router, ROUTES.attatchements),
           }),
       },
     },

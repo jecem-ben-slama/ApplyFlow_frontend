@@ -13,7 +13,7 @@ export interface SidebarNavItem {
  */
 export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
   { path: '/templates', label: 'Templates', icon: 'auto_awesome_mosaic', exact: true },
-  { path: '/cv-variants', label: 'Attachments', icon: 'description', exact: true },
+  { path: '/attatchements', label: 'Attachments', icon: 'description', exact: true },
   { path: '/skills', label: 'Skills', icon: 'psychology' },
   { path: '/applications', label: 'Applications', icon: 'send', exact: true },
   { path: '/dashboard', label: 'Dashboard', icon: 'bar_chart', exact: true },

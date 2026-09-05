@@ -45,7 +45,7 @@ export const routes: Routes = [
     canActivate: [authGuard], // Protected from anonymous access
   },
   {
-    path: 'cv-variants',
+    path: 'attatchements',
     loadComponent: () =>
       import('./components/CV/cv-variants/cv-variants.component').then(
         (m) => m.CvVariantsComponent

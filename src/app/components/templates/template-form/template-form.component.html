@@ -1,6 +1,6 @@
 <div
     class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-3xl shadow-sm overflow-hidden">
-    <div id="tour-template-toggle" (click)="toggle.emit()" (keydown.enter)="toggle.emit()"
+    <div id="tour-template-toggle" data-shortcut-new (click)="toggle.emit()" (keydown.enter)="toggle.emit()"
         (keydown.space)="$event.preventDefault(); toggle.emit()" role="button" tabindex="0"
         [attr.aria-expanded]="isFormVisible"
         class="flex items-center justify-between p-5 md:px-6 border-b border-slate-200 dark:border-surface-muted cursor-pointer select-none hover:bg-background-light/60 dark:hover:bg-surface-muted/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-inset">

@@ -1,6 +1,6 @@
-
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { driver, Driver, DriveStep } from 'driver.js';
+import { KeyboardShortcutsService } from './keyboard-shortcuts.service';
 
 /**
  * Multi-page onboarding tour built on Driver.js.
@@ -27,30 +27,24 @@ import { driver, Driver, DriveStep } from 'driver.js';
  */
 @Injectable({ providedIn: 'root' })
 export class TourService {
-  private static readonly ACTIVE_KEY =
-    'applyflow_tour_active';
+  private static readonly ACTIVE_KEY = 'applyflow_tour_active';
 
   private driverObj: Driver | null = null;
+  private readonly keyboardShortcuts = inject(KeyboardShortcutsService);
 
   /**
    * Whether an onboarding tour is currently in progress.
    */
   get isActive(): boolean {
-    return (
-      sessionStorage.getItem(
-        TourService.ACTIVE_KEY
-      ) === '1'
-    );
+    return sessionStorage.getItem(TourService.ACTIVE_KEY) === '1';
   }
 
   /**
    * Starts the onboarding tour.
    */
   start(): void {
-    sessionStorage.setItem(
-      TourService.ACTIVE_KEY,
-      '1'
-    );
+    sessionStorage.setItem(TourService.ACTIVE_KEY, '1');
+    this.keyboardShortcuts.pause();
   }
 
   /**
@@ -60,17 +54,13 @@ export class TourService {
    * or when the tour is successfully completed.
    */
   stop(): void {
-    sessionStorage.removeItem(
-      TourService.ACTIVE_KEY
-    );
+    sessionStorage.removeItem(TourService.ACTIVE_KEY);
 
-    localStorage.setItem(
-      'applyflow_tour_completed',
-      '1'
-    );
+    localStorage.setItem('applyflow_tour_completed', '1');
 
     this.driverObj?.destroy();
     this.driverObj = null;
+    this.keyboardShortcuts.resume();
   }
 
   /**
@@ -83,12 +73,11 @@ export class TourService {
    *   Backdrop click -> ignored
    */
   run(steps: DriveStep[]): void {
-    if (
-      !this.isActive ||
-      steps.length === 0
-    ) {
+    if (!this.isActive || steps.length === 0) {
       return;
     }
+
+    this.keyboardShortcuts.pause();
 
     /*
      * Destroy any previous page-local
@@ -153,4 +142,3 @@ export class TourService {
     this.driverObj = null;
   }
 }
-

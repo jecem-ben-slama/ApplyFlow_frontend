@@ -7,13 +7,15 @@ import {
   OnDestroy,
   Output,
   ViewChild,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {  RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { SidebarNavComponent } from '../sidebar-nav/sidebar-nav.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { LogoComponent } from '../../logo/logo.component';
+import { KeyboardShortcutsService } from '../../../services/keyboard-shortcuts.service';
 
 @Component({
   selector: 'app-mobile-sidebar',
@@ -29,6 +31,7 @@ import { LogoComponent } from '../../logo/logo.component';
   templateUrl: './mobile-sidebar.component.html',
 })
 export class MobileSidebarComponent implements OnDestroy {
+  private readonly shortcuts = inject(KeyboardShortcutsService);
 
   @Input() userName = 'New User';
   @Input() userEmail = '';
@@ -80,6 +83,11 @@ export class MobileSidebarComponent implements OnDestroy {
   onSignInClick(): void {
     this.close();
     this.signIn.emit();
+  }
+
+  openShortcutHelp(): void {
+    this.close();
+    this.shortcuts.openHelp();
   }
 
   @HostListener('document:keydown.escape')

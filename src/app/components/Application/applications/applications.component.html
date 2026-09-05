@@ -16,7 +16,7 @@
         </div>
 
         <!-- Create Button (Responsive for both Desktop & Mobile) -->
-        <button [disabled]="isLoading" id="tour-application-add-btn"
+        <button [disabled]="isLoading" id="tour-application-add-btn" data-shortcut-new
             class="w-full sm:w-auto bg-primary hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 text-white font-medium py-2.5 px-5 rounded-xl shadow-sm transition-all duration-200 text-sm flex items-center justify-center gap-2 shrink-0"
             (click)="openCreateModal()">
             <span *ngIf="!isLoading">+ Compile New Application</span>
@@ -88,8 +88,8 @@
                         class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">
                         Keyword
                     </label>
-                    <input type="text" [(ngModel)]="filterKeyword" placeholder="Search company or job title..."
-                        (ngModelChange)="onFilterInput()"
+                    <input type="text" [(ngModel)]="filterKeyword" data-shortcut-search
+                        placeholder="Search company or job title..." (ngModelChange)="onFilterInput()"
                         class="w-full rounded-xl border border-slate-200 dark:border-surface-muted px-3.5 py-2.5 text-sm min-h-11
                           focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary
                           bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-all shadow-sm" />
