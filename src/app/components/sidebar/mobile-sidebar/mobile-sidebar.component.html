@@ -42,6 +42,15 @@
 
             <app-theme-toggle [isDark]="isDark" (toggle)="toggleTheme.emit()"></app-theme-toggle>
 
+            <button type="button" (click)="openShortcutHelp()" title="Keyboard shortcuts (?)"
+                aria-label="Open keyboard shortcuts"
+                class="w-full flex items-center gap-3 px-3.5 py-3 text-xs font-medium text-slate-700 dark:text-slate-200 bg-background-light dark:bg-surface-muted/30 hover:bg-slate-100 dark:hover:bg-surface-muted/60 rounded-xl transition-all text-left">
+                <span
+                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-slate-200 dark:border-surface-muted text-sm font-bold">?</span>
+                <span class="flex-1">Keyboard shortcuts</span>
+                <span class="text-[10px] font-bold text-slate-400">?</span>
+            </button>
+
 
             <a *ngIf="!isGuest" [routerLink]="['/profile']" (click)="close()"
                 class="flex items-center gap-3 px-3.5 py-3 text-xs font-medium text-slate-700 dark:text-slate-200 bg-background-light dark:bg-surface-muted/30 hover:bg-slate-100 dark:hover:bg-surface-muted/60 rounded-xl transition-all no-underline">

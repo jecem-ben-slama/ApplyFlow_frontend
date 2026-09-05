@@ -3,16 +3,29 @@ export type FieldValidator = (value: string) => string | null;
 /**
  * Read a field's current value.
  */
-function getFieldValue(el: Element | null): string {
-  if (!el) return '';
+function getFieldControl(
+  el: Element | null
+): HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null {
+  if (!el) return null;
 
   if (
     el instanceof HTMLInputElement ||
     el instanceof HTMLTextAreaElement ||
     el instanceof HTMLSelectElement
   ) {
-    return el.value.trim();
+    return el;
   }
+
+  return el.querySelector<
+    HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+  >('input, textarea, select');
+}
+
+function getFieldValue(el: Element | null): string {
+  const control = getFieldControl(el);
+  if (control) return control.value.trim();
+
+  if (!el) return '';
 
   return (el.textContent ?? '').trim();
 }
@@ -55,6 +68,8 @@ export function gateNextOnValid(
 
     if (!field || !nextBtn) return;
 
+    const control = getFieldControl(field) ?? field;
+
     let errorEl =
       field.parentElement?.querySelector<HTMLElement>('.tour-field-error');
 
@@ -73,14 +88,17 @@ export function gateNextOnValid(
       nextBtn.disabled = !!error;
       nextBtn.title = error ?? '';
       field.setAttribute('aria-invalid', String(!!error));
+      if (control !== field) {
+        control.setAttribute('aria-invalid', String(!!error));
+      }
       errorEl!.textContent = error ?? '';
     };
 
     sync();
 
-    field.addEventListener('input', sync);
-    field.addEventListener('change', sync);
-    field.addEventListener('blur', sync);
+    control.addEventListener('input', sync);
+    control.addEventListener('change', sync);
+    control.addEventListener('blur', sync);
   };
 }
 

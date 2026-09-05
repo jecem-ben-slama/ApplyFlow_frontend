@@ -28,8 +28,9 @@
                 class="!w-4.5 !h-4.5 text-base absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                 search
             </mat-icon>
-            <input type="text" [ngModel]="searchInputValue" (ngModelChange)="onSearchChange($event)"
-                placeholder="Search skills by name or sentence…" aria-label="Search skills"
+            <input type="text" [ngModel]="searchInputValue" data-shortcut-search
+                (ngModelChange)="onSearchChange($event)" placeholder="Search skills by name or sentence…"
+                aria-label="Search skills"
                 class="w-full rounded-2xl border border-slate-200 dark:border-surface-muted bg-surface-light dark:bg-surface pl-11 pr-11 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm" />
 
             <!-- Spinner while debounce/request is in flight -->

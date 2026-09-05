@@ -4,6 +4,7 @@ import {
   HostListener,
   Input,
   Output,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -11,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { SidebarNavComponent } from '../sidebar-nav/sidebar-nav.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { LogoComponent } from '../../logo/logo.component';
+import { KeyboardShortcutsService } from '../../../services/keyboard-shortcuts.service';
 
 @Component({
   selector: 'app-sidebar-desktop',
@@ -26,7 +28,8 @@ import { LogoComponent } from '../../logo/logo.component';
   templateUrl: './sidebar-desktop.component.html',
 })
 export class SidebarDesktopComponent {
- 
+  private readonly shortcuts = inject(KeyboardShortcutsService);
+
   @Input() collapsed = false;
   @Input() userName = 'New User';
   @Input() userProfilePic?: string;
@@ -58,6 +61,10 @@ export class SidebarDesktopComponent {
 
   closeProfileMenu(): void {
     this.isProfileOpen = false;
+  }
+
+  openShortcutHelp(): void {
+    this.shortcuts.openHelp();
   }
 
   @HostListener('document:click')

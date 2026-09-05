@@ -7,6 +7,7 @@ import {
   OnDestroy,
   Output,
   SimpleChanges,
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -138,6 +139,11 @@ export class PresetPopupComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.draftSub?.unsubscribe();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.close.emit();
   }
 
   /** Call whenever the user edits the form, so the draft gets (debounced) persisted. */

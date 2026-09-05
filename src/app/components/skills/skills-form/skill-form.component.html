@@ -1,6 +1,6 @@
 <div
     class="bg-surface-light dark:bg-surface border border-slate-200 dark:border-surface-muted rounded-3xl shadow-sm overflow-hidden transition-all duration-200">
-    <div id="tour-skill-toggle" (click)="onToggleForm()"
+    <div id="tour-skill-toggle" data-shortcut-new (click)="onToggleForm()"
         class="flex items-center justify-between p-5 md:px-6 cursor-pointer select-none hover:bg-background-light/50 dark:hover:bg-surface-muted/30 transition-colors border-b border-transparent hover:border-slate-200 dark:hover:border-surface-muted">
         <div class="flex items-center gap-3">
             <span class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
@@ -23,11 +23,12 @@
     <div *ngIf="isFormVisible" @formSlide class="border-t border-slate-200 dark:border-surface-muted">
         <div class="p-5 md:p-6 space-y-6 bg-background-light/50 dark:bg-surface-muted/20">
 
-        <div id="tour-skill-error" *ngIf="displayedErrorMessage"
-            class="flex items-start gap-3 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-danger-bgLight dark:bg-danger-bgDark px-4 py-3.5 text-sm text-danger-textLight dark:text-danger-textDark shadow-sm">
-            <mat-icon class="text-danger-textLight dark:text-danger-textDark flex-shrink-0 mt-0.5">error_outline</mat-icon>
-            <p class="text-xs leading-relaxed pt-0.5 font-medium">{{ displayedErrorMessage }}</p>
-        </div>
+            <div id="tour-skill-error" *ngIf="displayedErrorMessage"
+                class="flex items-start gap-3 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-danger-bgLight dark:bg-danger-bgDark px-4 py-3.5 text-sm text-danger-textLight dark:text-danger-textDark shadow-sm">
+                <mat-icon
+                    class="text-danger-textLight dark:text-danger-textDark flex-shrink-0 mt-0.5">error_outline</mat-icon>
+                <p class="text-xs leading-relaxed pt-0.5 font-medium">{{ displayedErrorMessage }}</p>
+            </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <!-- Display Name -->

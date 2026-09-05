@@ -20,7 +20,7 @@ import {
   getApplicationsFillSteps,
 } from 'src/app/core/tour';
 
-type TourPage = 'applications' | 'templates' | 'cv-variants' | 'skills';
+type TourPage = 'applications' | 'templates' | 'attatchements' | 'skills';
 
 interface TourPageMeta {
   id: TourPage;
@@ -71,7 +71,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       route: '/templates',
       icon: 'description',
     },
-    { id: 'cv-variants', label: 'CVs', route: '/cv-variants', icon: 'badge' },
+    { id: 'attatchements', label: 'Attatchements', route: '/attatchements', icon: 'attachment' },
     { id: 'skills', label: 'Skills', route: '/skills', icon: 'star' },
   ];
 
@@ -169,7 +169,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         return getApplicationsFillSteps(this.tourService, this.router);
       case 'templates':
         return getTemplatesSteps(this.tourService, this.router);
-      case 'cv-variants':
+      case 'attatchements':
         return getCvVariantsSteps(this.tourService, this.router);
       case 'skills':
         return getSkillsSteps(this.tourService, this.router);

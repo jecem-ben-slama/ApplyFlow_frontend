@@ -12,10 +12,11 @@ const JOB_TITLE_FIELD = '#field-jobTitle';
 const EMAIL_FIELD = '#field-recipientEmail';
 const LANGUAGE_FIELD = '#field-language';
 const CV_FIELD = '#tour-application-cv-field';
+const SKILLS_SECTION = '#tour-application-skills';
+const NOTES_SECTION = '#tour-application-notes';
 const SAVE_BTN = '#tour-application-compile-btn';
 const ERROR_BANNER = '#tour-application-error';
 const CV_WARNING = '#tour-application-cv-warning';
-
 
 export function getApplicationsFillSteps(
   tourService: TourService,
@@ -71,6 +72,24 @@ export function getApplicationsFillSteps(
         description:
           'Pick the CV variant you set up earlier — or skip this and compile without one.',
         // No onPopoverRender gate: this field is optional, Next stays enabled.
+      },
+    },
+
+    {
+      element: SKILLS_SECTION,
+      popover: {
+        title: 'Highlight your strengths',
+        description:
+          'Choose relevant bullet points from your skill categories. They will be included in the application when your template supports them.',
+      },
+    },
+
+    {
+      element: NOTES_SECTION,
+      popover: {
+        title: 'Add useful context',
+        description:
+          'Keep private notes about this application, such as follow-up reminders or details to remember later.',
       },
     },
 
